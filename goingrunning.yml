@@ -1,0 +1,11 @@
+directory: /Volumes/Data/_TmpMusic_
+library: ~/.config/beets/test_library.db
+
+plugins:
+  - info
+  - inline
+  - the
+  - goingrunning
+
+
+
