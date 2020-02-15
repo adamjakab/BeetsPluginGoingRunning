@@ -1,3 +1,9 @@
+# Copyright: Copyright (c) 2020., Adam Jakab
+#
+#  Author: Adam Jakab <adam at jakab dot pro>
+#  Created: 2/15/20, 11:19 AM
+#  License: See LICENSE.txt
+
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
