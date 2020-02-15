@@ -7,5 +7,7 @@ plugins:
   - the
   - goingrunning
 
+goingrunning:
+  dry-run: True
 
 
