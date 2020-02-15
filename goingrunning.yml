@@ -8,6 +8,11 @@ plugins:
   - goingrunning
 
 goingrunning:
-  dry-run: True
-
-
+  dry-run: yes
+  quiet: true
+  trainings:
+    pyramid:
+      bpm_min: 120
+      bpm_max: 145
+    slow:
+      bpm_min: 90
