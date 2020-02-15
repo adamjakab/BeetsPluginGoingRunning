@@ -19,7 +19,7 @@ from beets.library import ReadError
 from beets.util import cpu_count, displayable_path, syspath
 
 # Module methods
-log = logging.getLogger('beets.check')
+log = logging.getLogger('beets.goingrunning')
 
 
 def get_beets_global_config():

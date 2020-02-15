@@ -10,6 +10,7 @@ plugins:
   - inline
   - the
   - goingrunning
+  - bpmanalyser
 
 goingrunning:
   dry-run: yes

@@ -8,3 +8,7 @@ export PYTHONPATH=~/Documents/Projects/Python/BeetPluginVariousArtists
 beet -c goingrunning.yml version
 ````
 
+### Dependencies
+
+pip install numpy, aubio
+
