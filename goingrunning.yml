@@ -1,6 +1,10 @@
 directory: /Volumes/Data/_TmpMusic_
 library: ~/.config/beets/test_library.db
 
+format_item: "[bpm:$bpm][length:$length][genre:$genre]$artist - $album - $title"
+format_album: $albumartist - $album
+
+
 plugins:
   - info
   - inline
@@ -11,8 +15,9 @@ goingrunning:
   dry-run: yes
   quiet: true
   trainings:
-    pyramid:
+    long-20K:
       bpm_min: 120
-      bpm_max: 145
-    slow:
-      bpm_min: 90
+      bpm_max: 155
+      length_min: 120
+      length_max: 480
+

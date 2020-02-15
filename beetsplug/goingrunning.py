@@ -39,14 +39,20 @@ class GoingRunningPlugin(BeetsPlugin):
                 'slow': {
                     'bpm_min': 120,
                     'bpm_max': 145,
+                    'length_min': 120,
+                    'length_max': 300
                 },
                 'medium': {
                     'bpm_min': 145,
                     'bpm_max': 165,
+                    'length_min': 120,
+                    'length_max': 300
                 },
                 'fast': {
                     'bpm_min': 165,
                     'bpm_max': 220,
+                    'length_min': 120,
+                    'length_max': 300
                 },
             }
         })
@@ -57,10 +63,12 @@ class GoingRunningPlugin(BeetsPlugin):
 
 class GoingRunningCommand(Subcommand):
     config = None
-    quiet = False
     lib = None
     query = None
     parser = None
+
+    quiet = False
+    count_only = False
 
     def __init__(self, cfg):
         self.config = cfg.flatten()
@@ -73,6 +81,12 @@ class GoingRunningCommand(Subcommand):
             '-l', '--list',
             action='store_true', dest='list', default=False,
             help=u'list the preconfigured training you have'
+        )
+
+        self.parser.add_option(
+            '-c', '--count',
+            action='store_true', dest='count', default=False,
+            help=u'count the number of songs available for a specific training'
         )
 
         self.parser.add_option(
@@ -90,6 +104,7 @@ class GoingRunningCommand(Subcommand):
 
     def func(self, lib: BeatsLibrary, options, arguments):
         self.quiet = options.quiet
+        self.count_only = options.count
         self.lib = lib
         arguments = decargs(arguments)
         self.query = arguments
@@ -122,7 +137,8 @@ class GoingRunningCommand(Subcommand):
             self._say("{0} : {1}".format(tkey, tval))
 
     def handle_training(self):
-        training_name = self.query[0]
+        training_name = self.query.pop(0)
+
         training = self.config["trainings"].get(training_name)
         if not training:
             log.warning("There is no training registered with this name!")
@@ -131,9 +147,46 @@ class GoingRunningCommand(Subcommand):
         self._say("Handling training: {}".format(training_name))
         self.list_training_attributes(training_name)
 
-        i = self.lib.items()
-        print(i)
+        # Get the library items
+        items = self._retrieve_library_items(training)
+        if self.count_only:
+            self._say("Number of songs: {}".format(len(items)))
+            return
 
+        for item in items:
+            print(item)
+
+    def _retrieve_library_items(self, training):
+        query = []
+
+        # Filter command line queries
+        nono_fields = ["bpm", "length"]
+        while self.query:
+            el = self.query.pop(0)
+            # filter here
+            el_ok = True
+            for nono_field in nono_fields:
+                nono_field = nono_field + ":"
+                if nono_field == el[:len(nono_field)]:
+                    el_ok = False
+            if el_ok:
+                query.append(el)
+            else:
+                log.debug("bad filter: {}".format(el))
+
+        # Add BPM query
+        query_element = "bpm:{0}..{1}".format(training.get("bpm_min"), training.get("bpm_max"))
+        query.append(query_element)
+
+        # Add Length query
+        query_element = "length:{0}..{1}".format(training.get("length_min"), training.get("length_max"))
+        query.append(query_element)
+
+        log.debug("final song selection query: {}".format(query))
+
+        items = self.lib.items(query)
+
+        return items
 
     def _say(self, msg):
         if not self.quiet:
