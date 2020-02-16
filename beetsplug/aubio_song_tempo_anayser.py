@@ -11,16 +11,16 @@ from numpy import diff, median
 from aubio import source, tempo
 
 
-def _analyseTempo(item_path):
+def _analyse_tempo(item_path):
     sample_rate, win_s, hop_s = 44100, 1024, 512
-    s = source(item_path, sample_rate, hop_s)
-    sample_rate = s.samplerate
+    src = source(item_path, sample_rate, hop_s)
+    sample_rate = src.samplerate
     o = tempo("default", win_s, hop_s, sample_rate)
 
     beats = []
     total_frames = 0
     while True:
-        samples, read = s()
+        samples, read = src()
         is_beat = o(samples)
         if is_beat:
             this_beat = o.get_last_s()
@@ -38,5 +38,5 @@ def _analyseTempo(item_path):
 
 if len(sys.argv) == 2:
     file_name = sys.argv[1]
-    bpm = _analyseTempo(file_name)
+    bpm = _analyse_tempo(file_name)
     print(bpm)
