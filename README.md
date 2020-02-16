@@ -5,10 +5,13 @@ Notes for myself for [plugin development](https://beets.readthedocs.io/en/stable
 
 ```bash
 export PYTHONPATH=~/Documents/Projects/Python/BeetPluginVariousArtists
-beet -c goingrunning.yml version
+beet -c dev.yml version
 ````
 
 ### Dependencies
 
 pip install numpy, aubio
 
+### Thanks
+to https://github.com/geigerzaehler/beets-check 
+for future
