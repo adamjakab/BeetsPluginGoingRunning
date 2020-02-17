@@ -28,6 +28,7 @@ goingrunning:
   targets:
     test: /Users/jackisback/Documents/Projects/Python/BeetsPluginGoingRunning/tmp/songs/
     SONY: /Volumes/WALKMAN/MUSIC/AUTO/
+  clean_target: true
   trainings:
     song_bpm: [11, 22]
     halfmarathon:
@@ -35,25 +36,29 @@ goingrunning:
       song_bpm: [90, 150]
       song_len: [120, 240]
       duration: 90
+    10K:
+      alias: "Non mollare mai!"
+      song_bpm: [155, 175]
+      song_len: [120, 300]
+      duration: 50
+    strides-1k:
+      # Segments will be implemented in some future version
+      segments:
+        - song_bpm: [160, 180]
+          song_len: [120, 240]
+          duration: 5
+        - song_bpm: [130, 150]
+          song_len: [120, 240]
+          duration: 3
+      repeat_segments: 5
 
-
-_goingrunning:
-  dry-run: yes
-  targets:
-    test: /Users/jackisback/Documents/Projects/Python/BeetsPluginGoingRunning/tmp/songs/
-    SONY: /Volumes/WALKMAN/MUSIC/AUTO/
-  target: test
-  clean_target: yes
-  song_bpm: [90, 150]
-  song_len: [120, 240]
-  duration: 60
 
 goingrunning_futute:
   dry-run: yes
   targets:
     test: /Users/jackisback/Documents/Projects/Python/BeetsPluginGoingRunning/tmp/songs/
     SONY: /Volumes/WALKMAN/MUSIC/AUTO/
-  default_target: test
+  target: test
   clean_target: yes
   song_bpm: [90, 150]
   song_len: [120, 240]

@@ -3,23 +3,22 @@
 #  Author: Adam Jakab <adam at jakab dot pro>
 #  Created: 2/15/20, 11:19 AM
 #  License: See LICENSE.txt
-import re
+
+import random
 import os
-import sys
+import string
 import logging
 from collections import OrderedDict
 from optparse import OptionParser
 
-# import beets
 from shutil import copyfile
 from glob import glob
-
 from beets import config as beets_global_config
 from beets.dbcore.db import Results
 from beets.library import Library as BeatsLibrary, Item
 from beets.plugins import BeetsPlugin
 from beets.random import random_objs
-from beets.ui import Subcommand, decargs, colorize, input_yn, UserError
+from beets.ui import Subcommand, decargs
 from beets.library import ReadError
 from beets.util import cpu_count, displayable_path, syspath
 
@@ -48,7 +47,6 @@ class GoingRunningPlugin(BeetsPlugin):
     def __init__(self):
         super(GoingRunningPlugin, self).__init__()
         self.config.add({
-            'dry-run': False,
             'targets': [],
             'target': False,
             'clean_target': False,
@@ -89,6 +87,8 @@ class GoingRunningCommand(Subcommand):
             help=u'count the number of songs available for a specific training'
         )
 
+        # @todo: add dry-run option
+
         self.parser.add_option(
             '-q', '--quiet',
             action='store_true', dest='quiet', default=False,
@@ -105,12 +105,12 @@ class GoingRunningCommand(Subcommand):
     def func(self, lib: BeatsLibrary, options, arguments):
         self.quiet = options.quiet
         self.count_only = options.count
+
         self.lib = lib
-        arguments = decargs(arguments)
-        self.query = arguments
+        self.query = decargs(arguments)
 
         # You must either pass a training name or request listing
-        if len(arguments) < 1 and not options.list:
+        if len(self.query) < 1 and not options.list:
             log.warning("You can either pass the name of a training or request a listing (--list)!")
             self.parser.print_help()
             return
@@ -154,43 +154,40 @@ class GoingRunningCommand(Subcommand):
         self._say("Total song time: {}".format(get_human_readable_seconds(total_time)))
         self._say("Number of songs: {}".format(len(rnd_items)))
 
+        self._clean_target_path(training)
+        self._copy_items_to_target(training, rnd_items)
+        # done.?
 
+    def _clean_target_path(self, training: Subview):
+        if self.config["clean_target"].get():
+            target_path = self._get_target_path(training)
+            self._say("Cleaning target: {}".format(target_path))
 
-        # self._copy_items_to_target(rnd_items)
-        # tval = self._get_config_value_bubble_up(target, tkey)
+            # @todo: Should only clean song files
+            song_extensions = ["mp3", "mp4", "flac", "wav"]
+            target_file_list = []
+            for ext in song_extensions:
+                target_file_list += glob(os.path.join(target_path, "*.{}".format(ext)))
 
+            for f in target_file_list:
+                log.debug("DEL: {}".format(f))
+                os.remove(f)
 
-    @staticmethod
-    def _get_duration_of_items(items):
-        """
-        Calculate the total duration of the items
-        :param items: list
-        :return: int
-        """
-        total_time = 0
-        for item in items:
-            total_time += int(item.get("length"))
+    def _copy_items_to_target(self, training: Subview, rnd_items):
+        target_path = self._get_target_path(training)
+        self._say("Copying to target path: {}".format(target_path))
 
-        return total_time
-
-    def _copy_items_to_target(self, rnd_items):
-        target_path = self._get_target_path()
-
-        target_filelist = glob(os.path.join(target_path, "*.*"))
-        for f in target_filelist:
-            self._say("DEL: {}".format(f))
-            os.remove(f)
+        def random_string(length=6):
+            letters = string.ascii_letters + string.digits
+            return ''.join(random.choice(letters) for i in range(length))
 
         cnt = 0
         for item in rnd_items:
             src = os.path.realpath(item.get("path").decode("utf-8"))
             fn, ext = os.path.splitext(src)
-
-            dst = "{0}/{1}{2}".format(target_path, str(cnt).zfill(6), ext)
-
-            self._say("SRC: {}".format(src))
-            self._say("DST: {}".format(dst))
-
+            gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6), random_string(), ext)
+            dst = "{0}/{1}".format(target_path, gen_filename)
+            log.debug("Copying[{1}]: {0}".format(src, gen_filename))
             copyfile(src, dst)
             cnt += 1
 
@@ -249,6 +246,19 @@ class GoingRunningCommand(Subcommand):
         items = self.lib.items(query)
 
         return items
+
+    @staticmethod
+    def _get_duration_of_items(items):
+        """
+        Calculate the total duration of the items
+        :param items: list
+        :return: int
+        """
+        total_time = 0
+        for item in items:
+            total_time += int(item.get("length"))
+
+        return total_time
 
     def list_trainings(self):
         """
