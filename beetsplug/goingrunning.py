@@ -3,22 +3,33 @@
 #  Author: Adam Jakab <adam at jakab dot pro>
 #  Created: 2/15/20, 11:19 AM
 #  License: See LICENSE.txt
-
 import re
 import os
 import sys
 import logging
+from collections import OrderedDict
 from optparse import OptionParser
 
 # import beets
+from shutil import copyfile
+from glob import glob
+
 from beets import config as beets_global_config
-from beets.library import Library as BeatsLibrary
+from beets.dbcore.db import Results
+from beets.library import Library as BeatsLibrary, Item
 from beets.plugins import BeetsPlugin
+from beets.random import random_objs
 from beets.ui import Subcommand, decargs, colorize, input_yn, UserError
 from beets.library import ReadError
 from beets.util import cpu_count, displayable_path, syspath
 
 # Module methods
+from beets.util.confit import ConfigView, Subview, ConfigTypeError
+
+
+DEFAULT_TRAINING_KEYS = ['song_bpm', 'song_len', 'duration', 'target']
+
+
 log = logging.getLogger('beets.goingrunning')
 
 
@@ -26,35 +37,24 @@ def get_beets_global_config():
     return beets_global_config.flatten()
 
 
-# Classes ###
+def get_human_readable_seconds(seconds):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    return "%d:%02d:%02d" % (h, m, s)
 
 
+# Classes
 class GoingRunningPlugin(BeetsPlugin):
-
     def __init__(self):
         super(GoingRunningPlugin, self).__init__()
         self.config.add({
             'dry-run': False,
-            'trainings': {
-                'slow': {
-                    'bpm_min': 120,
-                    'bpm_max': 145,
-                    'length_min': 120,
-                    'length_max': 300
-                },
-                'medium': {
-                    'bpm_min': 145,
-                    'bpm_max': 165,
-                    'length_min': 120,
-                    'length_max': 300
-                },
-                'fast': {
-                    'bpm_min': 165,
-                    'bpm_max': 220,
-                    'length_min': 120,
-                    'length_max': 300
-                },
-            }
+            'targets': [],
+            'target': False,
+            'clean_target': False,
+            'song_bpm': [90, 150],
+            'song_len': [90, 150],
+            'duration': 60
         })
 
     def commands(self):
@@ -62,7 +62,7 @@ class GoingRunningPlugin(BeetsPlugin):
 
 
 class GoingRunningCommand(Subcommand):
-    config = None
+    config: Subview = None
     lib = None
     query = None
     parser = None
@@ -71,7 +71,7 @@ class GoingRunningCommand(Subcommand):
     count_only = False
 
     def __init__(self, cfg):
-        self.config = cfg.flatten()
+        self.config = cfg
         # self.threads = config['threads'].get(int)
         # self.check_integrity = config['integrity'].get(bool)
 
@@ -120,66 +120,128 @@ class GoingRunningCommand(Subcommand):
         else:
             self.handle_training()
 
-    # @todo: explain keys
-    # @todo: order keys
-    def list_trainings(self):
-        self._say("List trainings:")
-        training_names = list(self.config["trainings"].keys())
-        for training_name in training_names:
-            self.list_training_attributes(training_name)
-
-    def list_training_attributes(self, training_name):
-        self._say("{0} ::: {1}".format("=" * 40, training_name))
-        training = self.config["trainings"].get(training_name)
-        tkeys = training.keys()
-        for tkey in tkeys:
-            tval = training.get(tkey)
-            self._say("{0} : {1}".format(tkey, tval))
-
     def handle_training(self):
         training_name = self.query.pop(0)
 
-        training = self.config["trainings"].get(training_name)
+        training: Subview = self.config["trainings"][training_name]
         if not training:
-            log.warning("There is no training registered with this name!")
+            self._say("There is no training registered with this name!")
+            return
+
+        # Get the library items
+        lib_items: Results = self._retrieve_library_items(training)
+
+        # Show count only
+        if self.count_only:
+            self._say("Number of songs: {}".format(len(lib_items)))
+            return
+
+        # Verify target
+        target_path = self._get_target_path(training)
+        if not os.path.isdir(target_path):
+            target_name = self._get_config_value_bubble_up(training, "target")
+            self._say("The path for the target[{0}] does not exist! Path: {1}".format(target_name, target_path))
             return
 
         self._say("Handling training: {}".format(training_name))
-        self.list_training_attributes(training_name)
 
-        # Get the library items
-        items = self._retrieve_library_items(training)
-        if self.count_only:
-            self._say("Number of songs: {}".format(len(items)))
-            return
+        # Get randomized items
+        duration = self._get_config_value_bubble_up(training, "duration")
+        rnd_items = self._get_randomized_items(lib_items, duration)
 
+        # Show some info
+        total_time = self._get_duration_of_items(rnd_items)
+        self._say("Total song time: {}".format(get_human_readable_seconds(total_time)))
+        self._say("Number of songs: {}".format(len(rnd_items)))
+
+
+
+        # self._copy_items_to_target(rnd_items)
+        # tval = self._get_config_value_bubble_up(target, tkey)
+
+
+    @staticmethod
+    def _get_duration_of_items(items):
+        """
+        Calculate the total duration of the items
+        :param items: list
+        :return: int
+        """
+        total_time = 0
         for item in items:
-            print(item)
+            total_time += int(item.get("length"))
 
-    def _retrieve_library_items(self, training):
+        return total_time
+
+    def _copy_items_to_target(self, rnd_items):
+        target_path = self._get_target_path()
+
+        target_filelist = glob(os.path.join(target_path, "*.*"))
+        for f in target_filelist:
+            self._say("DEL: {}".format(f))
+            os.remove(f)
+
+        cnt = 0
+        for item in rnd_items:
+            src = os.path.realpath(item.get("path").decode("utf-8"))
+            fn, ext = os.path.splitext(src)
+
+            dst = "{0}/{1}{2}".format(target_path, str(cnt).zfill(6), ext)
+
+            self._say("SRC: {}".format(src))
+            self._say("DST: {}".format(dst))
+
+            copyfile(src, dst)
+            cnt += 1
+
+    def _get_target_path(self, training: Subview):
+        target_path = ""
+        target_name = self._get_config_value_bubble_up(training, "target")
+        targets = self.config["targets"].get()
+        log.debug("Selected target name: {0}".format(target_name))
+        if target_name in targets:
+            target_path = os.path.realpath(targets.get(target_name))
+            log.debug("Selected target path: {0}".format(target_path))
+
+        return target_path
+
+    @staticmethod
+    def _get_randomized_items(items, duration_min):
+        """ This randomization and limiting to duration_min is very basic
+        @todo: after randomization select songs to be as cose as possible to the duration_min (+-5seconds)
+        """
+        r_limit = 1
+        r_time_minutes = duration_min
+        r_equal_chance = True
+        rnd_items = random_objs(list(items), False, r_limit, r_time_minutes, r_equal_chance)
+
+        return rnd_items
+
+    def _retrieve_library_items(self, training: Subview):
         query = []
 
         # Filter command line queries
-        nono_fields = ["bpm", "length"]
+        reserved_fields = ["bpm", "length"]
         while self.query:
             el = self.query.pop(0)
-            # filter here
             el_ok = True
-            for nono_field in nono_fields:
-                nono_field = nono_field + ":"
-                if nono_field == el[:len(nono_field)]:
+            for reserved_field in reserved_fields:
+                reserved_field = reserved_field + ":"
+                if reserved_field == el[:len(reserved_field)]:
                     el_ok = False
             if el_ok:
                 query.append(el)
             else:
-                log.debug("bad filter: {}".format(el))
+                log.debug("removing reserved filter: {}".format(el))
 
         # Add BPM query
-        query_element = "bpm:{0}..{1}".format(training.get("bpm_min"), training.get("bpm_max"))
+        song_bpm = self._get_config_value_bubble_up(training, "song_bpm")
+        query_element = "bpm:{0}..{1}".format(song_bpm[0], song_bpm[1])
         query.append(query_element)
 
         # Add Length query
-        query_element = "length:{0}..{1}".format(training.get("length_min"), training.get("length_max"))
+        song_len = self._get_config_value_bubble_up(training, "song_len")
+        query_element = "length:{0}..{1}".format(song_len[0], song_len[1])
         query.append(query_element)
 
         log.debug("final song selection query: {}".format(query))
@@ -187,6 +249,61 @@ class GoingRunningCommand(Subcommand):
         items = self.lib.items(query)
 
         return items
+
+    def list_trainings(self):
+        """
+        # @todo: order keys
+        :return: void
+        """
+        if "trainings" not in self.config:
+            self._say("You have not created any trainings yet.")
+            return
+
+        self._say("Available trainings:")
+        training_names = list(self.config["trainings"].keys())
+        for training_name in training_names:
+            self.list_training_attributes(training_name)
+
+    def list_training_attributes(self, training_name: str):
+        """
+        @todo: Explain keys
+        @todo: target is a special case and the value from targets should also be shown
+        :param training_name:
+        :return: void
+        """
+        target: Subview = self.config["trainings"][training_name]
+        try:
+            training_keys = target.keys()
+            self._say("{0} ::: {1}".format("=" * 40, training_name))
+            training_keys = list(set(DEFAULT_TRAINING_KEYS) | set(training_keys))
+            training_keys.sort()
+            for tkey in training_keys:
+                tval = self._get_config_value_bubble_up(target, tkey)
+                self._say("{0} : {1}".format(tkey, tval))
+        except ConfigTypeError:
+            pass
+
+    @staticmethod
+    def _get_config_value_bubble_up(target: Subview, attrib: str):
+        """
+        Method that will bubble up in the configuration hierarchy to find the attribute
+        """
+        value = None
+        found = False
+
+        while not found:
+            odict: OrderedDict = target.flatten()
+            if attrib in odict:
+                value = odict.get(attrib)
+                found = True
+            else:
+                if target.root() != target.parent:
+                    target: Subview = target.parent
+                else:
+                    # self._say("No more levels!")
+                    found = True
+
+        return value
 
     def _say(self, msg):
         if not self.quiet:
