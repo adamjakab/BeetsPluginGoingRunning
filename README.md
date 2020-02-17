@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning.svg?branch=master)](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning)
+
 # Going Running (beets plugin)
 
 *** !!! NOT YET USABLE !!! ***

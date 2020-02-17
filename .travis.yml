@@ -5,7 +5,7 @@ language: python
 
 matrix:
   include:
-    - env: TOX_ENV=py37-beets_master
+    - env: TOX_ENV=py37-beets_master COVERAGE=1
       python: 3.7
     - env: TOX_ENV=py37-beets_1.4.3
       python: 3.7
