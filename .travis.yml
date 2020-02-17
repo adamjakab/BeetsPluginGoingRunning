@@ -1,0 +1,22 @@
+notifications:
+  email: false
+
+language: python
+
+matrix:
+  include:
+    - env: TOX_ENV=py37-beets_master
+      python: 3.7
+    - env: TOX_ENV=py37-beets_1.4.3
+      python: 3.7
+
+install:
+  - "sudo apt-get install flac mp3val oggz-tools"
+  - "pip install tox"
+  - "[ ! -z $COVERAGE ] && pip install coveralls || true"
+
+script: "tox -e $TOX_ENV"
+
+after_success:
+  - "[ ! -z $COVERAGE ] && coveralls || true"
+
