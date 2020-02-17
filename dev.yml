@@ -1,24 +1,30 @@
-directory: /Volumes/Data/_TmpMusic_
-library: ~/.config/beets/test_library.db
+# DEVELOPMENT CONFIGURATION OVERLAY
+# USAGE: beet -c dev.yml config -p
+
+pluginpath:
+    - ~/Documents/Projects/Python/BeetsPluginGoingRunning/beetsplug/
 
 format_item: "[bpm:$bpm][length:$length][genre:$genre]$artist - $album - $title"
-format_album: $albumartist - $album
-
 
 plugins:
-  - info
-  - inline
-  - the
-  - goingrunning
-  - bpmanalyser
+- the
+- inline
+- info
+- fromfilename
+- duplicates
+- convert
+- zero
+- bpmanalyser
+- acousticbrainz
+- goingrunning
 
-goingrunning:
-  dry-run: yes
-  quiet: true
-  trainings:
-    long-20K:
-      bpm_min: 120
-      bpm_max: 155
-      length_min: 120
-      length_max: 480
+#goingrunning:
+#  dry-run: yes
+#  quiet: true
+#  trainings:
+#    long-20K:
+#      bpm_min: 120
+#      bpm_max: 155
+#      length_min: 120
+#      length_max: 480
 
