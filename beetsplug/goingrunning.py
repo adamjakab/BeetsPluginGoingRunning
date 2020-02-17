@@ -10,6 +10,7 @@ import string
 import logging
 from collections import OrderedDict
 from optparse import OptionParser
+from pathlib import Path
 
 from shutil import copyfile
 from glob import glob
@@ -36,7 +37,7 @@ def get_beets_global_config():
     return beets_global_config.flatten()
 
 
-def get_human_readable_seconds(seconds):
+def get_human_readable_time(seconds):
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     return "%d:%02d:%02d" % (h, m, s)
@@ -151,7 +152,7 @@ class GoingRunningCommand(Subcommand):
 
         # Show some info
         total_time = self._get_duration_of_items(rnd_items)
-        self._say("Total song time: {}".format(get_human_readable_seconds(total_time)))
+        self._say("Total song time: {}".format(get_human_readable_time(total_time)))
         self._say("Number of songs: {}".format(len(rnd_items)))
 
         self._clean_target_path(training)
@@ -197,7 +198,7 @@ class GoingRunningCommand(Subcommand):
         targets = self.config["targets"].get()
         log.debug("Selected target name: {0}".format(target_name))
         if target_name in targets:
-            target_path = os.path.realpath(targets.get(target_name))
+            target_path = os.path.realpath(Path(targets.get(target_name)).expanduser())
             log.debug("Selected target path: {0}".format(target_path))
 
         return target_path

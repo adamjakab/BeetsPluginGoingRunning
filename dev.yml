@@ -6,19 +6,18 @@ pluginpath:
 
 format_item: "[bpm:$bpm][length:$length][genre:$genre]$artist - $album - $title"
 
-id3v23: yes
 
-plugins:
-- the
-- inline
-- info
-- fromfilename
-- duplicates
-- convert
-- zero
-- bpmanalyser
-- acousticbrainz
-- goingrunning
+#plugins:
+#  - the
+#  - inline
+#  - info
+#  - fromfilename
+#  - duplicates
+#  - convert
+#  - zero
+#  - bpmanalyser
+#  - acousticbrainz
+#  - goingrunning
 
 goingrunning:
   song_bpm: [111, 222]
@@ -26,7 +25,7 @@ goingrunning:
   duration: 120
   target: test
   targets:
-    test: /Users/jackisback/Documents/Projects/Python/BeetsPluginGoingRunning/tmp/songs/
+    test: ~/Documents/Projects/Python/BeetsPluginGoingRunning/tmp/songs/
     SONY: /Volumes/WALKMAN/MUSIC/AUTO/
   clean_target: true
   trainings:
@@ -41,6 +40,7 @@ goingrunning:
       song_bpm: [155, 175]
       song_len: [120, 300]
       duration: 50
+      target: SONY
     strides-1k:
       # Segments will be implemented in some future version
       segments:
@@ -51,34 +51,3 @@ goingrunning:
           song_len: [120, 240]
           duration: 3
       repeat_segments: 5
-
-
-goingrunning_futute:
-  dry-run: yes
-  targets:
-    test: /Users/jackisback/Documents/Projects/Python/BeetsPluginGoingRunning/tmp/songs/
-    SONY: /Volumes/WALKMAN/MUSIC/AUTO/
-  target: test
-  clean_target: yes
-  song_bpm: [90, 150]
-  song_len: [120, 240]
-  duration: 60
-  trainings:
-    halfmarathon:
-      song_bpm: [90, 150]
-      song_len: [120, 240]
-      duration: 120
-    strides-1k:
-      # Segments will be implemented in some future version
-      segments:
-        -
-          song_bpm: [160, 180]
-          song_len: [120, 240]
-          duration: 5
-        -
-          song_bpm: [130, 150]
-          song_len: [120, 240]
-          duration: 3
-      repeat_segments: 5
-
-
