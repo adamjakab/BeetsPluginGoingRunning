@@ -9,6 +9,8 @@ import os
 import shutil
 from unittest import TestCase
 
+# from beetsplug import goingrunning
+
 # import beets.ui
 # import beets.library
 # from beets.library import Item
