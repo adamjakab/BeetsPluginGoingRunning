@@ -5,16 +5,9 @@
 #  License: See LICENSE.txt
 #
 
-import os
-import shutil
 from unittest import TestCase
 
-# from beetsplug import goingrunning
-
-# import beets.ui
-# import beets.library
-# from beets.library import Item
-# from beets.ui import UserError
+from beetsplug import goingrunning
 
 
 class TestBase(TestCase):
@@ -22,7 +15,9 @@ class TestBase(TestCase):
     def test_something(self):
         self.assertEqual(True, True)
 
-    def test_something_else(self):
-        self.assertTrue(True)
+    def test_human_readable_time(self):
+        s = goingrunning.get_human_readable_time(0)
+        self.assertEqual(s, "0:00:00", "Bad Time!")
+
 
 
