@@ -33,7 +33,6 @@ from beets.util import (
 )
 
 from beetsplug import goingrunning
-from beetsplug import convert
 
 
 logging.getLogger('beets').propagate = True

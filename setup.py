@@ -36,6 +36,10 @@ setup(
         'beets>=1.4.3',
     ],
 
+    tests_require=[
+        'mock', 'six'
+    ],
+
     classifiers=[
         'Topic :: Multimedia :: Sound/Audio',
         'License :: OSI Approved :: MIT License',
