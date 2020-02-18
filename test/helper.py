@@ -223,14 +223,13 @@ class TestHelper(TestCase, Assertions, MediaFileAssertions):
         ``convert`` plugin, it will not attempt to write tags to the output
         files. Thus, the 'converted' files need not be valid audio files.
         """
-        if mock_worker:
-            patcher = patch('beetsplug.alternatives.Worker', new=MockedWorker)
-            patcher.start()
-            self.addCleanup(patcher.stop)
+        # if mock_worker:
+        #     patcher = patch('beetsplug.alternatives.Worker', new=MockedWorker)
+        #     patcher.start()
+        #     self.addCleanup(patcher.stop)
 
         self._tempdirs = []
-        plugins._classes = set([alternatives.AlternativesPlugin,
-                                convert.ConvertPlugin])
+        plugins._classes = set([goingrunning.GoingRunningPlugin])
         self.setup_beets()
 
     def tearDown(self):
@@ -357,28 +356,29 @@ class TestHelper(TestCase, Assertions, MediaFileAssertions):
         album.load()
         return album
 
-    def get_path(self, item, path_key='alt.myexternal'):
-        return alternatives.External._get_path(item, path_key)
+    # def get_path(self, item, path_key='alt.myexternal'):
+    #     return goingrunning.External._get_path(item, path_key)
 
 
-class MockedWorker(alternatives.Worker):
-
-    def __init__(self, fn, max_workers=None):
-        self._tasks = set()
-        self._fn = fn
-
-    def submit(self, *args, **kwargs):
-        fut = futures.Future()
-        res = self._fn(*args, **kwargs)
-        fut.set_result(res)
-        # try:
-        #     res = fn(*args, **kwargs)
-        # except Exception as e:
-        #     fut.set_exception(e)
-        # else:
-        #     fut.set_result(res)
-        self._tasks.add(fut)
-        return fut
-
-    def shutdown(wait=True):
-        pass
+#
+# class MockedWorker(goingrunning.Worker):
+#
+#     def __init__(self, fn, max_workers=None):
+#         self._tasks = set()
+#         self._fn = fn
+#
+#     def submit(self, *args, **kwargs):
+#         fut = futures.Future()
+#         res = self._fn(*args, **kwargs)
+#         fut.set_result(res)
+#         # try:
+#         #     res = fn(*args, **kwargs)
+#         # except Exception as e:
+#         #     fut.set_exception(e)
+#         # else:
+#         #     fut.set_result(res)
+#         self._tasks.add(fut)
+#         return fut
+#
+#     def shutdown(wait=True):
+#         pass

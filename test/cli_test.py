@@ -7,9 +7,20 @@
 
 from unittest import TestCase
 
+from test.helper import TestHelper
+
 from beets import config as beets_global_config
 
 from beetsplug import goingrunning
+
+
+class CompletionTest(TestHelper):
+    """Test invocation of ``beet goingrunning`` with this plugin.
+    Only ensures that command does not fail.
+    """
+
+    def test_completion(self):
+        self.runcli('goingrunning')
 
 
 class TestBase(TestCase):
