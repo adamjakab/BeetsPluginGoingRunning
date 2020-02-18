@@ -15,7 +15,7 @@ matrix:
       python: 3.8
 
 install:
-  - "sudo apt install flac mp3val oggz-tools"
+  - "sudo apt-get install flac mp3val oggz-tools"
   - "pip install tox"
   - "[ ! -z $COVERAGE ] && pip install coveralls || true"
 
