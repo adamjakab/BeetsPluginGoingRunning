@@ -34,7 +34,7 @@ log = logging.getLogger('beets.goingrunning')
 
 
 def get_beets_global_config():
-    return beets_global_config.flatten()
+    return beets_global_config
 
 
 def get_human_readable_time(seconds):

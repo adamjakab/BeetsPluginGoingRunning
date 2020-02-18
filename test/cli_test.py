@@ -7,6 +7,8 @@
 
 from unittest import TestCase
 
+from beets import config as beets_global_config
+
 from beetsplug import goingrunning
 
 
@@ -19,5 +21,9 @@ class TestBase(TestCase):
         s = goingrunning.get_human_readable_time(0)
         self.assertEqual(s, "0:00:00", "Bad Time!")
 
+    def test_get_beets_global_config(self):
+        beets_cfg = beets_global_config
+        plg_cfg = goingrunning.get_beets_global_config()
+        self.assertEqual(beets_cfg, plg_cfg)
 
 
