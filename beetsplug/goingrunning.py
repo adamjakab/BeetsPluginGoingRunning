@@ -20,14 +20,14 @@ from beets.library import Library as BeatsLibrary, Item
 from beets.plugins import BeetsPlugin
 from beets.random import random_objs
 from beets.ui import Subcommand, decargs
-from beets.library import ReadError
-from beets.util import cpu_count, displayable_path, syspath
+# from beets.library import ReadError
+# from beets.util import displayable_path, syspath
 
 # Module methods
 from beets.util.confit import ConfigView, Subview, ConfigTypeError
 
 
-DEFAULT_TRAINING_KEYS = ['song_bpm', 'song_len', 'duration', 'target']
+MUST_HAVE_TRAINING_KEYS = ['song_bpm', 'song_len', 'duration', 'target']
 
 
 log = logging.getLogger('beets.goingrunning')
@@ -286,7 +286,7 @@ class GoingRunningCommand(Subcommand):
         try:
             training_keys = target.keys()
             self._say("{0} ::: {1}".format("=" * 40, training_name))
-            training_keys = list(set(DEFAULT_TRAINING_KEYS) | set(training_keys))
+            training_keys = list(set(MUST_HAVE_TRAINING_KEYS) | set(training_keys))
             training_keys.sort()
             for tkey in training_keys:
                 tval = self._get_config_value_bubble_up(target, tkey)
