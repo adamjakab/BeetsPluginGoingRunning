@@ -33,7 +33,7 @@ setup(
     packages=['beetsplug'],
 
     install_requires=[
-        'beets>=1.4.3',
+        'beets>=1.4.9',
     ],
 
     tests_require=[
