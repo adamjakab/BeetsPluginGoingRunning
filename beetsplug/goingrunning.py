@@ -317,7 +317,6 @@ class GoingRunningCommand(Subcommand):
         return value
 
     def _say(self, msg):
+        log.debug(msg)
         if not self.quiet:
-            log.info(msg)
-        else:
-            log.debug(msg)
+            print(msg)

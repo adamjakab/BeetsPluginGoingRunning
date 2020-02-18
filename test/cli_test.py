@@ -11,6 +11,7 @@ from beets import config as beets_global_config
 from beetsplug import goingrunning
 
 _PLUGIN_NAME_ = 'goingrunning'
+_PLUGIN_SHORT_DESCRIPTION_ = 'bring some music with you that matches your training'
 
 
 class CompletionTest(TestHelper):
@@ -19,13 +20,17 @@ class CompletionTest(TestHelper):
     """
 
     def test_application(self):
-        self.runcli('')
+        with capture_stdout() as out:
+            self.runcli()
+
+        self.assertIn(_PLUGIN_NAME_, out.getvalue())
+        self.assertIn(_PLUGIN_SHORT_DESCRIPTION_, out.getvalue())
 
     def test_plugin(self):
         self.runcli(_PLUGIN_NAME_)
 
 
-class ModuleTest(TestCase):
+class ModuleTest(TestHelper):
 
     def test_must_have_training_keys(self):
         must_have_keys = ['song_bpm', 'song_len', 'duration', 'target']
@@ -42,16 +47,34 @@ class ModuleTest(TestCase):
 
         self.assertIn('{0}: {1}'.format(_PLUGIN_NAME_, msg), '\n'.join(logs))
 
-
-
     def test_get_beets_global_config(self):
         beets_cfg = beets_global_config
         plg_cfg = goingrunning.get_beets_global_config()
         self.assertEqual(beets_cfg, plg_cfg)
 
     def test_human_readable_time(self):
-        s = goingrunning.get_human_readable_time(0)
-        self.assertEqual(s, "0:00:00", "Bad Time!")
+        self.assertEqual(goingrunning.get_human_readable_time(0), "0:00:00", "Bad Time!")
+        self.assertEqual(goingrunning.get_human_readable_time(30), "0:00:30", "Bad Time!")
+        self.assertEqual(goingrunning.get_human_readable_time(90), "0:01:30", "Bad Time!")
+        self.assertEqual(goingrunning.get_human_readable_time(600), "0:10:00", "Bad Time!")
+
+
+class ConfigurationTest(TestHelper):
+
+    def test_training_listing_long(self):
+        with capture_stdout() as out:
+            self.runcli(_PLUGIN_NAME_, "--list")
+
+        self.assertIn("You have not created any trainings yet.", out.getvalue())
+
+    def test_training_listing_short(self):
+        with capture_stdout() as out:
+            self.runcli(_PLUGIN_NAME_, "-l")
+
+        self.assertIn("You have not created any trainings yet.", out.getvalue())
+
+
+
 
 
 

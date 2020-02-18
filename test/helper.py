@@ -59,7 +59,7 @@ def capture_log(logger='beets', suppress_output=True):
 
 
 @contextmanager
-def capture_stdout():
+def capture_stdout(suppress_output=True):
     """Save stdout in a StringIO.
     >>> with capture_stdout() as output:
     ...     print('spam')
@@ -73,6 +73,7 @@ def capture_stdout():
         yield sys.stdout
     finally:
         sys.stdout = org
+        #if not suppress_output:
         print(capture.getvalue())
 
 
