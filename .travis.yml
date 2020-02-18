@@ -5,13 +5,9 @@ language: python
 
 matrix:
   include:
-    - env: TOX_ENV=py35-beets_1.4.9
-      python: 3.5
     - env: TOX_ENV=py36-beets_1.4.9
       python: 3.6
-    - env: TOX_ENV=py37-beets_master COVERAGE=1
-      python: 3.7
-    - env: TOX_ENV=py37-beets_1.4.9
+    - env: TOX_ENV=py37-beets_1.4.9 COVERAGE=1
       python: 3.7
     - env: TOX_ENV=py38-beets_master
       python: 3.8

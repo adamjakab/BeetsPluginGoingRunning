@@ -32,7 +32,7 @@ setup(
 
     packages=['beetsplug'],
 
-    python_requires='>=3.5',
+    python_requires='>=3.6',
 
     install_requires=[
         'beets>=1.4.9',
