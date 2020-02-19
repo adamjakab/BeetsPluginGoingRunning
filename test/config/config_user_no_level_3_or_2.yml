@@ -1,0 +1,18 @@
+# This configuration file is used to test that the configuration values propagate from root down.
+# That is to say, if a certain leaf does not have a configuration value it should inherit it from its parent.
+# In this configuration file values on "training-1" are missing (only alias is given as a placeholder) and also
+# values from "trainings" level are missing. So "root" level values should be applied.
+
+goingrunning:
+  song_bpm: [0, 999]
+  song_len: [0, 999]
+  duration: 120
+  target: drive_1
+  targets:
+    drive_1: ~/Music/
+    drive_2: /mnt/UsbDrive
+    drive_3: /media/Storage
+  clean_target: true
+  trainings:
+    training-1:
+      alias: "Born to run"

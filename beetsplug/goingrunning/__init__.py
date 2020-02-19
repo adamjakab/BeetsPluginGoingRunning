@@ -14,6 +14,7 @@ from beetsplug.goingrunning.command import GoingRunningCommand
 class GoingRunningPlugin(BeetsPlugin):
     def __init__(self):
         super(GoingRunningPlugin, self).__init__()
+        # self.add(ConfigSource(load_yaml(filename) or {}, filename)) - from confit
         self.config.add({
             'targets': [],
             'target': False,

@@ -8,8 +8,6 @@
 import random
 import os
 import string
-import logging
-from collections import OrderedDict
 from optparse import OptionParser
 from pathlib import Path
 
@@ -109,14 +107,14 @@ class GoingRunningCommand(Subcommand):
         # Verify target
         target_path = self._get_target_path(training)
         if not os.path.isdir(target_path):
-            target_name = self._get_config_value_bubble_up(training, "target")
+            target_name = GRC.get_config_value_bubble_up(training, "target")
             self._say("The path for the target[{0}] does not exist! Path: {1}".format(target_name, target_path))
             return
 
         self._say("Handling training: {}".format(training_name))
 
         # Get randomized items
-        duration = self._get_config_value_bubble_up(training, "duration")
+        duration = GRC.get_config_value_bubble_up(training, "duration")
         rnd_items = self._get_randomized_items(lib_items, duration)
 
         # Show some info
@@ -163,7 +161,7 @@ class GoingRunningCommand(Subcommand):
 
     def _get_target_path(self, training: Subview):
         target_path = ""
-        target_name = self._get_config_value_bubble_up(training, "target")
+        target_name = GRC.get_config_value_bubble_up(training, "target")
         targets = self.config["targets"].get()
         self.log.debug("Selected target name: {0}".format(target_name))
         if target_name in targets:
@@ -202,12 +200,12 @@ class GoingRunningCommand(Subcommand):
                 self.log.debug("removing reserved filter: {}".format(el))
 
         # Add BPM query
-        song_bpm = self._get_config_value_bubble_up(training, "song_bpm")
+        song_bpm = GRC.get_config_value_bubble_up(training, "song_bpm")
         query_element = "bpm:{0}..{1}".format(song_bpm[0], song_bpm[1])
         query.append(query_element)
 
         # Add Length query
-        song_len = self._get_config_value_bubble_up(training, "song_len")
+        song_len = GRC.get_config_value_bubble_up(training, "song_len")
         query_element = "length:{0}..{1}".format(song_len[0], song_len[1])
         query.append(query_element)
 
@@ -258,32 +256,10 @@ class GoingRunningCommand(Subcommand):
             training_keys = list(set(GRC.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
             training_keys.sort()
             for tkey in training_keys:
-                tval = self._get_config_value_bubble_up(target, tkey)
+                tval = GRC.get_config_value_bubble_up(target, tkey)
                 self._say("{0}: {1}".format(tkey, tval))
         else:
             self._say("Training[{0}] does not exist.".format(training_name))
-
-    @staticmethod
-    def _get_config_value_bubble_up(target: Subview, attrib: str):
-        """
-        Method that will bubble up in the configuration hierarchy to find the attribute
-        """
-        value = None
-        found = False
-
-        while not found:
-            odict: OrderedDict = target.flatten()
-            if attrib in odict:
-                value = odict.get(attrib)
-                found = True
-            else:
-                if target.root() != target.parent:
-                    target: Subview = target.parent
-                else:
-                    # self._say("No more levels!")
-                    found = True
-
-        return value
 
     def _say(self, msg):
         self.log.debug(msg)

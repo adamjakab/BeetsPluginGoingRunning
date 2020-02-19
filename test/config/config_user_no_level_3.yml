@@ -1,6 +1,7 @@
 # This configuration file is used to test that the configuration values propagate from root down.
 # That is to say, if a certain leaf does not have a configuration value it should inherit it from its parent.
-# In this configuration file the values should be present at all levels and they should all be different.
+# In this configuration file values on "training-1" are missing (only alias is given as a placeholder) so
+# values from "trainings" should be applied.
 
 goingrunning:
   song_bpm: [0, 999]
@@ -19,13 +20,3 @@ goingrunning:
     target: drive_2
     training-1:
       alias: "Born to run"
-      song_bpm: [150, 180]
-      song_len: [120, 240]
-      duration: 55
-      target: drive_3
-    training-2:
-      alias: "Born to run"
-      song_bpm: [170, 180]
-      song_len: [90, 180]
-      duration: 25
-      target: drive_3

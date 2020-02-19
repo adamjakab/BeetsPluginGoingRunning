@@ -16,6 +16,7 @@ from unittest import TestCase
 
 import beets
 import six
+import yaml
 from beets import logging
 from beets import plugins
 from beets import ui
@@ -27,7 +28,7 @@ from beets.util import (
     bytestring_path,
     displayable_path,
 )
-from beets.util.confit import Subview
+from beets.util.confit import Subview, Dumper
 from six import StringIO
 
 from beetsplug import goingrunning
@@ -214,5 +215,8 @@ class TestHelper(TestCase, Assertions):
 
     @staticmethod
     def _dump_config(cfg: Subview):
-        print(json.dumps(cfg.get(), indent=4, sort_keys=False))
+        # print(json.dumps(cfg.get(), indent=4, sort_keys=False))
+        flat = cfg.flatten()
+        print(yaml.dump(flat, Dumper=Dumper, default_flow_style=None, indent=2, width=1000))
+
 
