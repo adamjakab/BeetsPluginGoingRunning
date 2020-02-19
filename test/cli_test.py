@@ -13,6 +13,7 @@ from test.helper import TestHelper, capture_log, capture_stdout
 from beets import config as beets_global_config
 from beets import plugins
 from beetsplug import goingrunning as GR
+from beetsplug.goingrunning import common as GRC
 
 _PLUGIN_NAME_ = 'goingrunning'
 _PLUGIN_SHORT_DESCRIPTION_ = 'bring some music with you that matches your training'
@@ -40,16 +41,16 @@ class CompletionTest(TestHelper):
         self.runcli(_PLUGIN_NAME_)
 
 
-class ModuleTest(TestHelper):
+class CommonModuleTest(TestHelper):
 
     def test_must_have_training_keys(self):
         must_have_keys = ['song_bpm', 'song_len', 'duration', 'target']
         for key in must_have_keys:
-            self.assertIn(key, GR.MUST_HAVE_TRAINING_KEYS,
+            self.assertIn(key, GRC.MUST_HAVE_TRAINING_KEYS,
                           msg=u'Missing default training key: {0}'.format(key))
 
     def test_log_interface(self):
-        log = GR.get_beets_logger()
+        log = GRC.get_beets_logger()
         self.assertIsInstance(log, Logger)
 
         msg = "Anything goes tonight!"
@@ -60,14 +61,14 @@ class ModuleTest(TestHelper):
 
     def test_get_beets_global_config(self):
         beets_cfg = beets_global_config
-        plg_cfg = GR.get_beets_global_config()
+        plg_cfg = GRC.get_beets_global_config()
         self.assertEqual(beets_cfg, plg_cfg)
 
     def test_human_readable_time(self):
-        self.assertEqual(GR.get_human_readable_time(0), "0:00:00", "Bad Time!")
-        self.assertEqual(GR.get_human_readable_time(30), "0:00:30", "Bad Time!")
-        self.assertEqual(GR.get_human_readable_time(90), "0:01:30", "Bad Time!")
-        self.assertEqual(GR.get_human_readable_time(600), "0:10:00", "Bad Time!")
+        self.assertEqual(GRC.get_human_readable_time(0), "0:00:00", "Bad Time!")
+        self.assertEqual(GRC.get_human_readable_time(30), "0:00:30", "Bad Time!")
+        self.assertEqual(GRC.get_human_readable_time(90), "0:01:30", "Bad Time!")
+        self.assertEqual(GRC.get_human_readable_time(600), "0:10:00", "Bad Time!")
 
 
 class ConfigurationTest(TestHelper):

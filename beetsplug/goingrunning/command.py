@@ -25,7 +25,7 @@ from beets.ui import Subcommand, decargs
 # from beets.util import displayable_path, syspath
 from beets.util.confit import ConfigView, Subview, ConfigTypeError
 
-import beetsplug.goingrunning as GR
+import beetsplug.goingrunning.common as GRC
 
 
 class GoingRunningCommand(Subcommand):
@@ -40,7 +40,7 @@ class GoingRunningCommand(Subcommand):
 
     def __init__(self, cfg):
         self.config = cfg
-        self.log = GR.get_beets_logger()
+        self.log = GRC.get_beets_logger()
 
         self.parser = OptionParser(usage='%prog training_name [options] [ADDITIONAL_QUERY...]')
 
@@ -120,7 +120,7 @@ class GoingRunningCommand(Subcommand):
 
         # Show some info
         total_time = self._get_duration_of_items(rnd_items)
-        self._say("Total song time: {}".format(GR.get_human_readable_time(total_time)))
+        self._say("Total song time: {}".format(GRC.get_human_readable_time(total_time)))
         self._say("Number of songs: {}".format(len(rnd_items)))
 
         self._clean_target_path(training)
@@ -254,7 +254,7 @@ class GoingRunningCommand(Subcommand):
         try:
             training_keys = target.keys()
             self._say("{0} ::: {1}".format("=" * 40, training_name))
-            training_keys = list(set(GR.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
+            training_keys = list(set(GRC.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
             training_keys.sort()
             for tkey in training_keys:
                 tval = self._get_config_value_bubble_up(target, tkey)
