@@ -48,3 +48,23 @@ def get_config_value_bubble_up(target: Subview, attrib: str):
 
     return value
 
+
+def get_duration_of_items(items):
+    """
+    Calculate the total duration of the media items using the "length" attribute
+    :param items: list
+    :return: int
+    """
+    total_time = 0
+
+    if isinstance(items, list):
+        for item in items:
+            try:
+                total_time += int(item.get("length"))
+            except TypeError:
+                pass
+            except ValueError:
+                pass
+
+    return total_time
+

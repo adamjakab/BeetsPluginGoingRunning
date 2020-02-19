@@ -13,17 +13,12 @@ from pathlib import Path
 
 from shutil import copyfile
 from glob import glob
-from beets import config as beets_global_config
 from beets.dbcore.db import Results
 from beets.library import Library as BeatsLibrary, Item
-from beets.plugins import BeetsPlugin
 from beets.random import random_objs
 from beets.ui import Subcommand, decargs
-# from beets.library import ReadError
-# from beets.util import displayable_path, syspath
-from beets.util.confit import ConfigView, Subview, ConfigTypeError
+from beets.util.confit import Subview
 
-# import beetsplug.goingrunning.common as GRC
 from beetsplug.goingrunning import common as GRC
 
 
@@ -118,7 +113,7 @@ class GoingRunningCommand(Subcommand):
         rnd_items = self._get_randomized_items(lib_items, duration)
 
         # Show some info
-        total_time = self._get_duration_of_items(rnd_items)
+        total_time = GRC.get_duration_of_items(rnd_items)
         self._say("Total song time: {}".format(GRC.get_human_readable_time(total_time)))
         self._say("Number of songs: {}".format(len(rnd_items)))
 
@@ -214,19 +209,6 @@ class GoingRunningCommand(Subcommand):
         items = self.lib.items(query)
 
         return items
-
-    @staticmethod
-    def _get_duration_of_items(items):
-        """
-        Calculate the total duration of the items
-        :param items: list
-        :return: int
-        """
-        total_time = 0
-        for item in items:
-            total_time += int(item.get("length"))
-
-        return total_time
 
     def list_trainings(self):
         """

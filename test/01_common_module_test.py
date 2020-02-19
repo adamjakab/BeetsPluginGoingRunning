@@ -6,6 +6,7 @@
 #
 
 from logging import Logger
+from random import randint
 
 from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_log
 
@@ -37,8 +38,31 @@ class CommonModuleTest(TestHelper, Assertions):
         self.assertEqual(beets_cfg, plg_cfg)
 
     def test_human_readable_time(self):
-        self.assertEqual(GRC.get_human_readable_time(0), "0:00:00", "Bad Time!")
-        self.assertEqual(GRC.get_human_readable_time(30), "0:00:30", "Bad Time!")
-        self.assertEqual(GRC.get_human_readable_time(90), "0:01:30", "Bad Time!")
-        self.assertEqual(GRC.get_human_readable_time(600), "0:10:00", "Bad Time!")
+        self.assertEqual("0:00:00", GRC.get_human_readable_time(0), "Bad time format!")
+        self.assertEqual("0:00:30", GRC.get_human_readable_time(30), "Bad time format!")
+        self.assertEqual("0:01:30", GRC.get_human_readable_time(90), "Bad time format!")
+        self.assertEqual("0:10:00", GRC.get_human_readable_time(600), "Bad time format!")
+
+    def test_duration_of_items(self):
+        items = None
+        self.assertEqual(0, GRC.get_duration_of_items(items))
+
+        items = {}
+        self.assertEqual(0, GRC.get_duration_of_items(items))
+
+        items = []
+        self.assertEqual(0, GRC.get_duration_of_items(items))
+
+        items = []
+        total = 0
+        for i in range(100):
+            length = randint(1, 300)
+            total += length
+            items.append({"length": length})
+        self.assertEqual(total, GRC.get_duration_of_items(items))
+
+        items = [{"length": 1}, {"length": {}}, {"length": "abc"}, {"length": None}]
+        self.assertEqual(1, GRC.get_duration_of_items(items))
+
+
 
