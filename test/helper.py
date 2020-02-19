@@ -93,16 +93,11 @@ def control_stdin(input=None):
 
 
 def _convert_args(args):
-    """Convert args to bytestrings for Python 2 and
-    convert them to strings on Python 3.
+    """Convert args to strings
     """
     for i, elem in enumerate(args):
-        if six.PY2:
-            if isinstance(elem, six.text_type):
-                args[i] = elem.encode(util.arg_encoding())
-        else:
-            if isinstance(elem, bytes):
-                args[i] = elem.decode(util.arg_encoding())
+        if isinstance(elem, bytes):
+            args[i] = elem.decode(util.arg_encoding())
 
     return args
 
@@ -163,6 +158,10 @@ class TestHelper(TestCase, Assertions):
         self.IMAGE_FIXTURE2 = os.path.join(self.fixture_dir,
                                            b'image_black.png')
 
+        # This will initialize (create instance) of the plugins
+        plugins.find_plugins()
+
+
     def teardown_beets(self):
         del self.lib._connections
         if 'BEETSDIR' in os.environ:
@@ -198,37 +197,3 @@ class TestHelper(TestCase, Assertions):
         assert (fmt in 'mp3 m4a ogg'.split())
         return os.path.join(self.fixture_dir,
                             bytestring_path('min.' + fmt.lower()))
-
-    def add_album(self, **kwargs):
-        values = {
-            'title': 'track 1',
-            'artist': 'artist 1',
-            'album': 'album 1',
-            'format': 'mp3',
-        }
-        values.update(kwargs)
-        item = Item.from_path(self.item_fixture_path(values.pop('format')))
-        item.add(self.lib)
-        item.update(values)
-        item.move(MoveOperation.COPY)
-        item.write()
-        album = self.lib.add_album([item])
-        album.albumartist = item.artist
-        album.store()
-        return album
-
-    def add_track(self, **kwargs):
-        values = {
-            'title': 'track 1',
-            'artist': 'artist 1',
-            'album': 'album 1',
-            'format': 'mp3',
-        }
-        values.update(kwargs)
-
-        item = Item.from_path(self.item_fixture_path(values.pop('format')))
-        item.add(self.lib)
-        item.update(values)
-        item.move(MoveOperation.COPY)
-        item.write()
-        return item

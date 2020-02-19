@@ -52,7 +52,7 @@ class GoingRunningPlugin(BeetsPlugin):
             'target': False,
             'clean_target': False,
             'song_bpm': [90, 150],
-            'song_len': [90, 150],
+            'song_len': [90, 240],
             'duration': 60
         })
 
@@ -290,7 +290,7 @@ class GoingRunningCommand(Subcommand):
             training_keys.sort()
             for tkey in training_keys:
                 tval = self._get_config_value_bubble_up(target, tkey)
-                self._say("{0} : {1}".format(tkey, tval))
+                self._say("{0}: {1}".format(tkey, tval))
         except ConfigTypeError:
             pass
 
