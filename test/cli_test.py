@@ -80,6 +80,8 @@ class ConfigurationTest(TestHelper):
         def_keys = ['duration', 'targets', 'target', 'clean_target', 'song_bpm', 'song_len']
         self.assertEqual(cfg_keys.sort(), def_keys.sort())
 
+        print(cfg)
+
     def test_training_listing_long(self):
         with capture_stdout() as out:
             self.runcli(_PLUGIN_NAME_, "--list")

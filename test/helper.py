@@ -21,7 +21,6 @@ from beets import util
 from beets.library import Item
 # from beets.mediafile import MediaFile
 from beets.util import (
-    MoveOperation,
     syspath,
     bytestring_path,
     displayable_path,
@@ -73,19 +72,19 @@ def capture_stdout(suppress_output=True):
         yield sys.stdout
     finally:
         sys.stdout = org
-        #if not suppress_output:
+        # if not suppress_output:
         print(capture.getvalue())
 
 
 @contextmanager
-def control_stdin(input=None):
+def control_stdin(userinput=None):
     """Sends ``input`` to stdin.
     >>> with control_stdin('yes'):
     ...     input()
     'yes'
     """
     org = sys.stdin
-    sys.stdin = StringIO(input)
+    sys.stdin = StringIO(userinput)
     try:
         yield sys.stdin
     finally:
@@ -109,6 +108,7 @@ class Assertions(object):
 
 
 class TestHelper(TestCase, Assertions):
+    _user_config_file_ = "empty.yml"
 
     def setUp(self):
         """Setup required for running test. Must be called before running any tests.
@@ -136,6 +136,12 @@ class TestHelper(TestCase, Assertions):
 
         self.config = beets.config
         self.config.clear()
+
+        # add user configuration
+        # @todo: find a way to load different ones
+        config_file = "test/config/{0}".format(self._user_config_file_)
+        shutil.copyfile(config_file, self.config.user_config_path())
+
         self.config.read()
 
         self.config['plugins'] = []
@@ -161,6 +167,7 @@ class TestHelper(TestCase, Assertions):
         # This will initialize (create instance) of the plugins
         plugins.find_plugins()
 
+        print(self.config["library"].as_str())
 
     def teardown_beets(self):
         del self.lib._connections
@@ -169,8 +176,8 @@ class TestHelper(TestCase, Assertions):
         self.config.clear()
         beets.config.read(user=False, defaults=True)
 
-    def set_paths_config(self, conf):
-        self.lib.path_formats = conf.items()
+    # def set_paths_config(self, conf):
+    #     self.lib.path_formats = conf.items()
 
     @staticmethod
     def unload_plugins():
