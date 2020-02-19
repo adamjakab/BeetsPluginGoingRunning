@@ -82,13 +82,36 @@ class ConfigurationTest(TestHelper, Assertions):
 
     def test_method_list_training_attributes(self):
         """ Generic check to see if plugin related configuration is present coming from user configuration file """
-        #super().reset_beets(config_file=b"config_1.yml")
+        super().reset_beets(config_file=b"config_1.yml")
+        plg = GoingRunningCommand(self.config[PLUGIN_NAME])
 
-        #GoingRunningCommand.list_training_attributes(GoingRunningCommand(self.config), "training-3")
+        name = "training-1"
+        with capture_stdout() as out:
+            plg.list_training_attributes(name)
+        self.assertIn(name, out.getvalue())
+        self.assertIn("alias: Born to run", out.getvalue())
+        self.assertIn("duration: 55", out.getvalue())
+        self.assertIn("song_bpm: [150, 180]", out.getvalue())
+        self.assertIn("song_len: [120, 240]", out.getvalue())
+        self.assertIn("target: drive_3", out.getvalue())
 
+        name = "training-2"
+        with capture_stdout() as out:
+            plg.list_training_attributes(name)
+        self.assertIn(name, out.getvalue())
+        self.assertIn("alias: Born to run", out.getvalue())
+        self.assertIn("duration: 25", out.getvalue())
+        self.assertIn("song_bpm: [170, 180]", out.getvalue())
+        self.assertIn("song_len: [90, 180]", out.getvalue())
+        self.assertIn("target: drive_3", out.getvalue())
+
+        name = "training-3"
+        with capture_stdout() as out:
+            plg.list_training_attributes(name)
+            self.assertIn("Training[{0}] does not exist.".format(name), out.getvalue())
 
         # self._dump_config(cfg)
-        pass
+
 
 
 

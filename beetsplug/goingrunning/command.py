@@ -252,7 +252,7 @@ class GoingRunningCommand(Subcommand):
         :return: void
         """
         target: Subview = self.config["trainings"][training_name]
-        try:
+        if target.exists():
             training_keys = target.keys()
             self._say("{0} ::: {1}".format("=" * 40, training_name))
             training_keys = list(set(GRC.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
@@ -260,8 +260,8 @@ class GoingRunningCommand(Subcommand):
             for tkey in training_keys:
                 tval = self._get_config_value_bubble_up(target, tkey)
                 self._say("{0}: {1}".format(tkey, tval))
-        except ConfigTypeError:
-            pass
+        else:
+            self._say("Training[{0}] does not exist.".format(training_name))
 
     @staticmethod
     def _get_config_value_bubble_up(target: Subview, attrib: str):
