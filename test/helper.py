@@ -4,7 +4,7 @@
 #  Created: 2/18/20, 12:31 AM
 #  License: See LICENSE.txt
 #
-
+import json
 import os
 import shutil
 import sys
@@ -25,6 +25,7 @@ from beets.util import (
     bytestring_path,
     displayable_path,
 )
+from beets.util.confit import Subview
 from six import StringIO
 
 from beetsplug import goingrunning
@@ -112,29 +113,23 @@ class Assertions(object):
 
 
 class TestHelper(TestCase, Assertions):
-    _user_config_file_ = "empty.yml"
+    _test_config_dir_ = os.path.join(bytestring_path(os.path.dirname(__file__)), b'config')
+    _test_fixture_dir = os.path.join(bytestring_path(os.path.dirname(__file__)), b'fixtures')
 
     def setUp(self):
         """Setup required for running test. Must be called before running any tests.
         """
-
-        self._tempdirs = []
-        plugins._classes = {goingrunning.GoingRunningPlugin}
-        self.setup_beets()
+        self.reset_beets(config_file=b"empty.yml")
 
     def tearDown(self):
-        self.unload_plugins()
-        for tempdir in self._tempdirs:
-            shutil.rmtree(syspath(tempdir))
+        self.teardown_beets()
 
-    def mkdtemp(self):
-        # This return a str path, i.e. Unicode on Python 3. We need this in
-        # order to put paths into the configuration.
-        path = tempfile.mkdtemp()
-        self._tempdirs.append(path)
-        return path
+    def reset_beets(self, config_file: bytes):
+        self.teardown_beets()
+        plugins._classes = {goingrunning.GoingRunningPlugin}
+        self._setup_beets(config_file)
 
-    def setup_beets(self):
+    def _setup_beets(self, config_file: bytes):
         self.addCleanup(self.teardown_beets)
         os.environ['BEETSDIR'] = self.mkdtemp()
 
@@ -142,10 +137,8 @@ class TestHelper(TestCase, Assertions):
         self.config.clear()
 
         # add user configuration
-        # @todo: find a way to load different ones
-        config_file = "test/config/{0}".format(self._user_config_file_)
+        config_file = format(os.path.join(self._test_config_dir_, config_file).decode())
         shutil.copyfile(config_file, self.config.user_config_path())
-
         self.config.read()
 
         self.config['plugins'] = []
@@ -159,29 +152,37 @@ class TestHelper(TestCase, Assertions):
         self.libdir = bytestring_path(libdir)
 
         self.lib = beets.library.Library(':memory:', self.libdir)
-        self.fixture_dir = os.path.join(
-            bytestring_path(os.path.dirname(__file__)),
-            b'fixtures')
-
-        self.IMAGE_FIXTURE1 = os.path.join(self.fixture_dir,
-                                           b'image.png')
-        self.IMAGE_FIXTURE2 = os.path.join(self.fixture_dir,
-                                           b'image_black.png')
 
         # This will initialize (create instance) of the plugins
         plugins.find_plugins()
 
-        print(self.config["library"].as_str())
-
     def teardown_beets(self):
-        del self.lib._connections
+        self.unload_plugins()
+
+        if hasattr(self, '_tempdirs'):
+            for tempdir in self._tempdirs:
+                if os.path.exists(tempdir):
+                    shutil.rmtree(syspath(tempdir), ignore_errors=True)
+        self._tempdirs = []
+
+        if hasattr(self, 'lib'):
+            if hasattr(self.lib, '_connections'):
+                del self.lib._connections
+
         if 'BEETSDIR' in os.environ:
             del os.environ['BEETSDIR']
-        self.config.clear()
-        beets.config.read(user=False, defaults=True)
 
-    # def set_paths_config(self, conf):
-    #     self.lib.path_formats = conf.items()
+        if hasattr(self, 'config'):
+            self.config.clear()
+
+        # beets.config.read(user=False, defaults=True)
+
+    def mkdtemp(self):
+        # This return a str path, i.e. Unicode on Python 3. We need this in
+        # order to put paths into the configuration.
+        path = tempfile.mkdtemp()
+        self._tempdirs.append(path)
+        return path
 
     @staticmethod
     def unload_plugins():
@@ -204,7 +205,12 @@ class TestHelper(TestCase, Assertions):
         return os.path.join(self.libdir,
                             path.replace(b'/', bytestring_path(os.sep)))
 
-    def item_fixture_path(self, fmt):
-        assert (fmt in 'mp3 m4a ogg'.split())
-        return os.path.join(self.fixture_dir,
-                            bytestring_path('min.' + fmt.lower()))
+    # def item_fixture_path(self, fmt):
+    #     assert (fmt in 'mp3 m4a ogg'.split())
+    #     return os.path.join(self.fixture_dir,
+    #                         bytestring_path('min.' + fmt.lower()))
+
+    @staticmethod
+    def _dump_config(cfg: Subview):
+        print(json.dumps(cfg.get(), indent=4, sort_keys=False))
+

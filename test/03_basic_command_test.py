@@ -1,7 +1,7 @@
 #  Copyright: Copyright (c) 2020., Adam Jakab
 #
 #  Author: Adam Jakab <adam at jakab dot pro>
-#  Created: 2/17/20, 10:53 PM
+#  Created: 2/19/20, 5:44 PM
 #  License: See LICENSE.txt
 #
 
@@ -10,18 +10,10 @@ from beets.util.confit import Subview
 from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout
 
 
-class ConfigurationTest(TestHelper, Assertions):
+class BasicCommandTest(TestHelper, Assertions):
 
-    def test_has_plugin_default_config(self):
-        self.assertIsInstance(self.config[PLUGIN_NAME], Subview)
-
-    def test_plugin_default_config_keys(self):
-        cfg: Subview = self.config[PLUGIN_NAME]
-        cfg_keys = cfg.keys()
-        def_keys = ['duration', 'targets', 'target', 'clean_target', 'song_bpm', 'song_len']
-        self.assertEqual(cfg_keys.sort(), def_keys.sort())
-
-        print(cfg)
+    # def setUp(self):
+    #     super().reset_beets(config_file=b"config_1.yml")
 
     def test_training_listing_long(self):
         with capture_stdout() as out:
@@ -82,12 +74,4 @@ class ConfigurationTest(TestHelper, Assertions):
         self.assertIn("song_bpm: {0}".format(marathon_cfg["song_bpm"]), output)
         self.assertIn("song_len: {0}".format(marathon_cfg["song_len"]), output)
         self.assertIn("target: {0}".format(marathon_cfg["target"]), output)
-
-
-
-
-
-
-
-
 

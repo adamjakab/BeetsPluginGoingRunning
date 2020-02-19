@@ -1,3 +1,30 @@
-library: beets_library.db
+library: beets_library_config_1.db
 
 
+goingrunning:
+  song_bpm: [0, 999]
+  song_len: [0, 999]
+  duration: 120
+  target: drive_1
+  targets:
+    drive_1: ~/Music/
+    drive_2: /mnt/UsbDrive
+    drive_3: /media/Storage
+  clean_target: true
+  trainings:
+    song_bpm: [50, 200]
+    song_len: [30, 600]
+    duration: 60
+    target: drive_2
+    10K:
+      alias: "Born to run"
+      song_bpm: [150, 180]
+      song_len: [120, 240]
+      duration: 55
+      target: drive_3
+    5K:
+      alias: "Born to run"
+      song_bpm: [170, 180]
+      song_len: [90, 180]
+      duration: 25
+      target: drive_3
