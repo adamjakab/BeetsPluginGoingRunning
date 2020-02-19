@@ -1,8 +1,9 @@
-# Copyright: Copyright (c) 2020., Adam Jakab
+#  Copyright: Copyright (c) 2020., Adam Jakab
 #
 #  Author: Adam Jakab <adam at jakab dot pro>
-#  Created: 2/15/20, 11:19 AM
+#  Created: 2/19/20, 11:32 AM
 #  License: See LICENSE.txt
+#
 
 import random
 import os
@@ -22,45 +23,13 @@ from beets.random import random_objs
 from beets.ui import Subcommand, decargs
 # from beets.library import ReadError
 # from beets.util import displayable_path, syspath
-
-# Module methods
 from beets.util.confit import ConfigView, Subview, ConfigTypeError
 
-
-MUST_HAVE_TRAINING_KEYS = ['song_bpm', 'song_len', 'duration', 'target']
-
-
-log = logging.getLogger('beets.goingrunning')
-
-
-def get_beets_global_config():
-    return beets_global_config
-
-
-def get_human_readable_time(seconds):
-    m, s = divmod(seconds, 60)
-    h, m = divmod(m, 60)
-    return "%d:%02d:%02d" % (h, m, s)
-
-
-# Classes
-class GoingRunningPlugin(BeetsPlugin):
-    def __init__(self):
-        super(GoingRunningPlugin, self).__init__()
-        self.config.add({
-            'targets': [],
-            'target': False,
-            'clean_target': False,
-            'song_bpm': [90, 150],
-            'song_len': [90, 240],
-            'duration': 60
-        })
-
-    def commands(self):
-        return [GoingRunningCommand(self.config)]
+import beetsplug.goingrunning as GR
 
 
 class GoingRunningCommand(Subcommand):
+    log = None
     config: Subview = None
     lib = None
     query = None
@@ -71,8 +40,7 @@ class GoingRunningCommand(Subcommand):
 
     def __init__(self, cfg):
         self.config = cfg
-        # self.threads = config['threads'].get(int)
-        # self.check_integrity = config['integrity'].get(bool)
+        self.log = GR.get_beets_logger()
 
         self.parser = OptionParser(usage='%prog training_name [options] [ADDITIONAL_QUERY...]')
 
@@ -112,7 +80,7 @@ class GoingRunningCommand(Subcommand):
 
         # You must either pass a training name or request listing
         if len(self.query) < 1 and not options.list:
-            log.warning("You can either pass the name of a training or request a listing (--list)!")
+            self.log.warning("You can either pass the name of a training or request a listing (--list)!")
             self.parser.print_help()
             return
 
@@ -152,7 +120,7 @@ class GoingRunningCommand(Subcommand):
 
         # Show some info
         total_time = self._get_duration_of_items(rnd_items)
-        self._say("Total song time: {}".format(get_human_readable_time(total_time)))
+        self._say("Total song time: {}".format(GR.get_human_readable_time(total_time)))
         self._say("Number of songs: {}".format(len(rnd_items)))
 
         self._clean_target_path(training)
@@ -171,7 +139,7 @@ class GoingRunningCommand(Subcommand):
                 target_file_list += glob(os.path.join(target_path, "*.{}".format(ext)))
 
             for f in target_file_list:
-                log.debug("DEL: {}".format(f))
+                self.log.debug("DEL: {}".format(f))
                 os.remove(f)
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
@@ -188,7 +156,7 @@ class GoingRunningCommand(Subcommand):
             fn, ext = os.path.splitext(src)
             gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6), random_string(), ext)
             dst = "{0}/{1}".format(target_path, gen_filename)
-            log.debug("Copying[{1}]: {0}".format(src, gen_filename))
+            self.log.debug("Copying[{1}]: {0}".format(src, gen_filename))
             copyfile(src, dst)
             cnt += 1
 
@@ -196,10 +164,10 @@ class GoingRunningCommand(Subcommand):
         target_path = ""
         target_name = self._get_config_value_bubble_up(training, "target")
         targets = self.config["targets"].get()
-        log.debug("Selected target name: {0}".format(target_name))
+        self.log.debug("Selected target name: {0}".format(target_name))
         if target_name in targets:
             target_path = os.path.realpath(Path(targets.get(target_name)).expanduser())
-            log.debug("Selected target path: {0}".format(target_path))
+            self.log.debug("Selected target path: {0}".format(target_path))
 
         return target_path
 
@@ -230,7 +198,7 @@ class GoingRunningCommand(Subcommand):
             if el_ok:
                 query.append(el)
             else:
-                log.debug("removing reserved filter: {}".format(el))
+                self.log.debug("removing reserved filter: {}".format(el))
 
         # Add BPM query
         song_bpm = self._get_config_value_bubble_up(training, "song_bpm")
@@ -242,7 +210,7 @@ class GoingRunningCommand(Subcommand):
         query_element = "length:{0}..{1}".format(song_len[0], song_len[1])
         query.append(query_element)
 
-        log.debug("final song selection query: {}".format(query))
+        self.log.debug("final song selection query: {}".format(query))
 
         items = self.lib.items(query)
 
@@ -286,7 +254,7 @@ class GoingRunningCommand(Subcommand):
         try:
             training_keys = target.keys()
             self._say("{0} ::: {1}".format("=" * 40, training_name))
-            training_keys = list(set(MUST_HAVE_TRAINING_KEYS) | set(training_keys))
+            training_keys = list(set(GR.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
             training_keys.sort()
             for tkey in training_keys:
                 tval = self._get_config_value_bubble_up(target, tkey)
@@ -317,6 +285,6 @@ class GoingRunningCommand(Subcommand):
         return value
 
     def _say(self, msg):
-        log.debug(msg)
+        self.log.debug(msg)
         if not self.quiet:
             print(msg)
