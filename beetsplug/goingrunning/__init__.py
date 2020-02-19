@@ -4,25 +4,24 @@
 #  Created: 2/19/20, 11:30 AM
 #  License: See LICENSE.txt
 #
+import os
 
 from beets.plugins import BeetsPlugin
 
-# from beetsplug.goingrunning import command
+from beets.util import bytestring_path
+from beets.util.confit import ConfigSource, load_yaml
+
 from beetsplug.goingrunning.command import GoingRunningCommand
 
 
 class GoingRunningPlugin(BeetsPlugin):
+    _default_plugin_config_file_name_ = 'config_default.yml'
+
     def __init__(self):
         super(GoingRunningPlugin, self).__init__()
-        # self.add(ConfigSource(load_yaml(filename) or {}, filename)) - from confit
-        self.config.add({
-            'targets': [],
-            'target': False,
-            'clean_target': False,
-            'song_bpm': [90, 150],
-            'song_len': [90, 240],
-            'duration': 60
-        })
+        config_file_path = os.path.join(os.path.dirname(__file__), self._default_plugin_config_file_name_)
+        source = ConfigSource(load_yaml(config_file_path) or {}, config_file_path)
+        self.config.add(source)
 
     def commands(self):
         return [GoingRunningCommand(self.config)]
