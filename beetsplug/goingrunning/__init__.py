@@ -14,7 +14,7 @@
 import logging
 from beets import config as beets_global_config
 from beets.plugins import BeetsPlugin
-from goingrunning.goingrunning_command import GoingRunningCommand
+from beetsplug.goingrunning.goingrunning_command import GoingRunningCommand
 
 
 MUST_HAVE_TRAINING_KEYS = ['song_bpm', 'song_len', 'duration', 'target']
