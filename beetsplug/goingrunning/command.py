@@ -25,7 +25,8 @@ from beets.ui import Subcommand, decargs
 # from beets.util import displayable_path, syspath
 from beets.util.confit import ConfigView, Subview, ConfigTypeError
 
-import beetsplug.goingrunning.common as GRC
+# import beetsplug.goingrunning.common as GRC
+from beetsplug.goingrunning import common as GRC
 
 
 class GoingRunningCommand(Subcommand):

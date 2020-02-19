@@ -31,6 +31,10 @@ from beetsplug import goingrunning
 
 logging.getLogger('beets').propagate = True
 
+# Values
+PLUGIN_NAME = 'goingrunning'
+PLUGIN_SHORT_DESCRIPTION = 'bring some music with you that matches your training'
+
 
 class LogCapture(logging.Handler):
 

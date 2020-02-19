@@ -6,6 +6,8 @@
 #
 
 from beets.plugins import BeetsPlugin
+
+# from beetsplug.goingrunning import command
 from beetsplug.goingrunning.command import GoingRunningCommand
 
 

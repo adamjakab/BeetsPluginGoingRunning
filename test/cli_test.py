@@ -4,80 +4,19 @@
 #  Created: 2/17/20, 10:53 PM
 #  License: See LICENSE.txt
 #
-from logging import Logger
-from unittest import TestCase
 
 from beets.util.confit import Subview
 
-from test.helper import TestHelper, capture_log, capture_stdout
-from beets import config as beets_global_config
-from beets import plugins
-from beetsplug import goingrunning as GR
-from beetsplug.goingrunning import common as GRC
-
-_PLUGIN_NAME_ = 'goingrunning'
-_PLUGIN_SHORT_DESCRIPTION_ = 'bring some music with you that matches your training'
+from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout
 
 
-class CompletionTest(TestHelper):
-    """Test invocation of ``beet goingrunning`` with this plugin.
-    Only ensures that command does not fail.
-    """
-
-    def test_application(self):
-        with capture_stdout() as out:
-            self.runcli()
-
-        self.assertIn(_PLUGIN_NAME_, out.getvalue())
-        self.assertIn(_PLUGIN_SHORT_DESCRIPTION_, out.getvalue())
-
-    def test_application_plugin_list(self):
-        with capture_stdout() as out:
-            self.runcli("version")
-
-        self.assertIn("plugins: {0}".format(_PLUGIN_NAME_), out.getvalue())
-
-    def test_plugin(self):
-        self.runcli(_PLUGIN_NAME_)
-
-
-class CommonModuleTest(TestHelper):
-
-    def test_must_have_training_keys(self):
-        must_have_keys = ['song_bpm', 'song_len', 'duration', 'target']
-        for key in must_have_keys:
-            self.assertIn(key, GRC.MUST_HAVE_TRAINING_KEYS,
-                          msg=u'Missing default training key: {0}'.format(key))
-
-    def test_log_interface(self):
-        log = GRC.get_beets_logger()
-        self.assertIsInstance(log, Logger)
-
-        msg = "Anything goes tonight!"
-        with capture_log() as logs:
-            log.info(msg)
-
-        self.assertIn('{0}: {1}'.format(_PLUGIN_NAME_, msg), '\n'.join(logs))
-
-    def test_get_beets_global_config(self):
-        beets_cfg = beets_global_config
-        plg_cfg = GRC.get_beets_global_config()
-        self.assertEqual(beets_cfg, plg_cfg)
-
-    def test_human_readable_time(self):
-        self.assertEqual(GRC.get_human_readable_time(0), "0:00:00", "Bad Time!")
-        self.assertEqual(GRC.get_human_readable_time(30), "0:00:30", "Bad Time!")
-        self.assertEqual(GRC.get_human_readable_time(90), "0:01:30", "Bad Time!")
-        self.assertEqual(GRC.get_human_readable_time(600), "0:10:00", "Bad Time!")
-
-
-class ConfigurationTest(TestHelper):
+class ConfigurationTest(TestHelper, Assertions):
 
     def test_has_plugin_default_config(self):
-        self.assertIsInstance(self.config[_PLUGIN_NAME_], Subview)
+        self.assertIsInstance(self.config[PLUGIN_NAME], Subview)
 
     def test_plugin_default_config_keys(self):
-        cfg: Subview = self.config[_PLUGIN_NAME_]
+        cfg: Subview = self.config[PLUGIN_NAME]
         cfg_keys = cfg.keys()
         def_keys = ['duration', 'targets', 'target', 'clean_target', 'song_bpm', 'song_len']
         self.assertEqual(cfg_keys.sort(), def_keys.sort())
@@ -86,13 +25,13 @@ class ConfigurationTest(TestHelper):
 
     def test_training_listing_long(self):
         with capture_stdout() as out:
-            self.runcli(_PLUGIN_NAME_, "--list")
+            self.runcli(PLUGIN_NAME, "--list")
 
         self.assertIn("You have not created any trainings yet.", out.getvalue())
 
     def test_training_listing_short(self):
         with capture_stdout() as out:
-            self.runcli(_PLUGIN_NAME_, "-l")
+            self.runcli(PLUGIN_NAME, "-l")
 
         self.assertIn("You have not created any trainings yet.", out.getvalue())
 
@@ -102,13 +41,13 @@ class ConfigurationTest(TestHelper):
         through method: _get_config_value_bubble_up
         :return:
         """
-        cfg: Subview = self.config[_PLUGIN_NAME_]
+        cfg: Subview = self.config[PLUGIN_NAME]
         cfg.add({'trainings': {
             'marathon': {}
         }})
 
         with capture_stdout() as out:
-            self.runcli(_PLUGIN_NAME_, "-l")
+            self.runcli(PLUGIN_NAME, "-l")
 
         output = out.getvalue()
         self.assertIn("::: marathon", output)
@@ -123,7 +62,7 @@ class ConfigurationTest(TestHelper):
         through method: _get_config_value_bubble_up
         :return:
         """
-        cfg: Subview = self.config[_PLUGIN_NAME_]
+        cfg: Subview = self.config[PLUGIN_NAME]
         marathon_cfg = {
             'song_bpm': [110, 130],
             'song_len': [120, 300],
@@ -135,7 +74,7 @@ class ConfigurationTest(TestHelper):
         }})
 
         with capture_stdout() as out:
-            self.runcli(_PLUGIN_NAME_, "-l")
+            self.runcli(PLUGIN_NAME, "-l")
 
         output = out.getvalue()
         self.assertIn("::: marathon", output)
