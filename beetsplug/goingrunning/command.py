@@ -15,7 +15,6 @@ from shutil import copyfile
 from glob import glob
 from beets.dbcore.db import Results
 from beets.library import Library as BeatsLibrary, Item
-from beets.random import random_objs
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview
 
@@ -110,7 +109,7 @@ class GoingRunningCommand(Subcommand):
 
         # Get randomized items
         duration = GRC.get_config_value_bubble_up(training, "duration")
-        rnd_items = self._get_randomized_items(lib_items, duration)
+        rnd_items = GRC.get_randomized_items(lib_items, duration)
 
         # Show some info
         total_time = GRC.get_duration_of_items(rnd_items)
@@ -164,18 +163,6 @@ class GoingRunningCommand(Subcommand):
             self.log.debug("Selected target path: {0}".format(target_path))
 
         return target_path
-
-    @staticmethod
-    def _get_randomized_items(items, duration_min):
-        """ This randomization and limiting to duration_min is very basic
-        @todo: after randomization select songs to be as cose as possible to the duration_min (+-5seconds)
-        """
-        r_limit = 1
-        r_time_minutes = duration_min
-        r_equal_chance = True
-        rnd_items = random_objs(list(items), False, r_limit, r_time_minutes, r_equal_chance)
-
-        return rnd_items
 
     def _retrieve_library_items(self, training: Subview):
         query = []

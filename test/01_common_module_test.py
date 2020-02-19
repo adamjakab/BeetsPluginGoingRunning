@@ -8,6 +8,8 @@
 from logging import Logger
 from random import randint
 
+from beets.library import Item
+
 from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_log
 
 from beets import config as beets_global_config
@@ -63,6 +65,35 @@ class CommonModuleTest(TestHelper, Assertions):
 
         items = [{"length": 1}, {"length": {}}, {"length": "abc"}, {"length": None}]
         self.assertEqual(1, GRC.get_duration_of_items(items))
+
+    def test_item_randomizer(self):
+        items = None
+        duration = 5
+        with self.assertRaises(TypeError):
+            GRC.get_randomized_items(items, duration)
+
+        items = []
+        duration = 0
+        self.assertEqual([], GRC.get_randomized_items(items, duration))
+
+        items = []
+        duration = 5
+        self.assertEqual([], GRC.get_randomized_items(items, duration))
+
+        items = []
+        items_duration = 0
+        for i in range(100):
+            length = randint(60, 300)
+            items_duration += length
+            item = Item()
+            item.update({"title": "Song-{}".format(length), "length": length})
+            items.append(item)
+
+        max_duration_min = 90
+        rnd_items = GRC.get_randomized_items(items, max_duration_min)
+        self.assertNotEqual(items, rnd_items)
+        rnd_items_duration = GRC.get_duration_of_items(rnd_items)
+        self.assertLess(rnd_items_duration, max_duration_min * 60)
 
 
 
