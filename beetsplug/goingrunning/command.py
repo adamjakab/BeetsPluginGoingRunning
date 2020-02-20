@@ -219,7 +219,7 @@ class GoingRunningCommand(Subcommand):
         :return: void
         """
         target: Subview = self.config["trainings"][training_name]
-        if target.exists():
+        if target.exists() and isinstance(target.get(), dict):
             training_keys = target.keys()
             self._say("{0} ::: {1}".format("=" * 40, training_name))
             training_keys = list(set(GRC.MUST_HAVE_TRAINING_KEYS) | set(training_keys))

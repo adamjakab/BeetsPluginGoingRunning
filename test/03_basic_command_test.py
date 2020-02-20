@@ -12,9 +12,6 @@ from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout
 
 class BasicCommandTest(TestHelper, Assertions):
 
-    # def setUp(self):
-    #     super().reset_beets(config_file=b"config_1.yml")
-
     def test_training_listing_long(self):
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, "--list")
@@ -27,51 +24,22 @@ class BasicCommandTest(TestHelper, Assertions):
 
         self.assertIn("You have not created any trainings yet.", out.getvalue())
 
-    def test_training_listing_root_level_config(self):
-        """
-        These values come from the default configuration values at root level
-        through method: _get_config_value_bubble_up
-        :return:
-        """
-        cfg: Subview = self.config[PLUGIN_NAME]
-        cfg.add({'trainings': {
-            'marathon': {}
-        }})
+    def test_training_listing(self):
+        self.reset_beets(config_file=b"config_user.yml")
 
         with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, "-l")
+            self.runcli(PLUGIN_NAME, "--list")
 
         output = out.getvalue()
+        self.assertIn("::: training-1", output)
+        self.assertIn("::: training-2", output)
         self.assertIn("::: marathon", output)
-        self.assertIn("duration: {0}".format(cfg["duration"].get()), output)
-        self.assertIn("song_bpm: {0}".format(cfg["song_bpm"].get()), output)
-        self.assertIn("song_len: {0}".format(cfg["song_len"].get()), output)
-        self.assertIn("target: {0}".format(cfg["target"].get()), output)
 
-    def test_training_listing_training_level_config(self):
-        """
-        These values come from the default configuration values at root level
-        through method: _get_config_value_bubble_up
-        :return:
-        """
-        cfg: Subview = self.config[PLUGIN_NAME]
-        marathon_cfg = {
-            'song_bpm': [110, 130],
-            'song_len': [120, 300],
-            'duration': 119,
-            'target': False
-        }
-        cfg.add({'trainings': {
-            'marathon': marathon_cfg
-        }})
+
+    def test_training_handling(self):
+        self.reset_beets(config_file=b"config_user.yml")
 
         with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, "-l")
+            self.runcli(PLUGIN_NAME, "marathon")
 
-        output = out.getvalue()
-        self.assertIn("::: marathon", output)
-        self.assertIn("duration: {0}".format(marathon_cfg["duration"]), output)
-        self.assertIn("song_bpm: {0}".format(marathon_cfg["song_bpm"]), output)
-        self.assertIn("song_len: {0}".format(marathon_cfg["song_len"]), output)
-        self.assertIn("target: {0}".format(marathon_cfg["target"]), output)
-
+        self.assertTrue(True)

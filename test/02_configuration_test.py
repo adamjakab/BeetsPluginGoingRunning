@@ -4,20 +4,15 @@
 #  Created: 2/17/20, 10:53 PM
 #  License: See LICENSE.txt
 #
-import json
-from collections import OrderedDict
 
-import yaml
-from beets.util.confit import Subview, Dumper
+from beets.util.confit import Subview
 
 from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout
 from beetsplug.goingrunning.command import GoingRunningCommand
 from beetsplug.goingrunning import common as GoingRunningCommon
 
-class ConfigurationTest(TestHelper, Assertions):
 
-    # def setUp(self):
-    #     super().reset_beets(config_file=b"config_1.yml")
+class ConfigurationTest(TestHelper, Assertions):
 
     def test_has_plugin_default_config(self):
         self.assertTrue(self.config.exists())
@@ -36,7 +31,7 @@ class ConfigurationTest(TestHelper, Assertions):
 
     def test_loading_user_configuration(self):
         """ Generic check to see if plugin related configuration is present coming from user configuration file """
-        super().reset_beets(config_file=b"config_user.yml")
+        self.reset_beets(config_file=b"config_user.yml")
 
         cfg: Subview = self.config[PLUGIN_NAME]
 
@@ -85,7 +80,7 @@ class ConfigurationTest(TestHelper, Assertions):
 
     def test_method_list_training_attributes(self):
         """ Generic check to see if plugin related configuration is present coming from user configuration file """
-        super().reset_beets(config_file=b"config_user.yml")
+        self.reset_beets(config_file=b"config_user.yml")
         plg = GoingRunningCommand(self.config[PLUGIN_NAME])
 
         name = "training-1"
@@ -115,7 +110,7 @@ class ConfigurationTest(TestHelper, Assertions):
 
     def test_bubble_up(self):
         """ Check values when each level has its own  """
-        super().reset_beets(config_file=b"config_user.yml")
+        self.reset_beets(config_file=b"config_user.yml")
 
         cfg_l1: Subview = self.config[PLUGIN_NAME]
         cfg_l2: Subview = cfg_l1["trainings"]
@@ -130,14 +125,14 @@ class ConfigurationTest(TestHelper, Assertions):
 
     def test_bubble_up_inexistent_key(self):
         """ Check values when each level has its own  """
-        super().reset_beets(config_file=b"config_user.yml")
+        self.reset_beets(config_file=b"config_user.yml")
         cfg: Subview = self.config[PLUGIN_NAME]["trainings"]["training-1"]
         inexistent_key = "you_will_never_find_me"
         self.assertEqual(None, GoingRunningCommon.get_config_value_bubble_up(cfg, inexistent_key))
 
     def test_bubble_up_no_level_3(self):
         """ Check that values are taken from level 2 if they are not present on level 3 """
-        super().reset_beets(config_file=b"config_user_no_level_3.yml")
+        self.reset_beets(config_file=b"config_user_no_level_3.yml")
 
         cfg_l1: Subview = self.config[PLUGIN_NAME]
         cfg_l2: Subview = cfg_l1["trainings"]
@@ -148,7 +143,7 @@ class ConfigurationTest(TestHelper, Assertions):
 
     def test_bubble_up_no_level_3_or_2(self):
         """ Check that values are taken from level 1 if they are not present on level 3 or 2 """
-        super().reset_beets(config_file=b"config_user_no_level_3_or_2.yml")
+        self.reset_beets(config_file=b"config_user_no_level_3_or_2.yml")
 
         cfg_l1: Subview = self.config[PLUGIN_NAME]
         cfg_l2: Subview = cfg_l1["trainings"]
@@ -158,7 +153,3 @@ class ConfigurationTest(TestHelper, Assertions):
             self.assertEqual(cfg_l1[attrib].get(), GoingRunningCommon.get_config_value_bubble_up(cfg_l3, attrib))
 
         self._dump_config(self.config)
-
-
-
-

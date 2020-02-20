@@ -93,7 +93,7 @@ class CommonModuleTest(TestHelper, Assertions):
         rnd_items = GRC.get_randomized_items(items, max_duration_min)
         self.assertNotEqual(items, rnd_items)
         rnd_items_duration = GRC.get_duration_of_items(rnd_items)
-        self.assertLess(rnd_items_duration, max_duration_min * 60)
+        self.assertLessEqual(rnd_items_duration, max_duration_min * 60)
 
 
 

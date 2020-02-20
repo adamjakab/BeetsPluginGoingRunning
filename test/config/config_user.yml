@@ -27,3 +27,10 @@ goingrunning:
       song_len: [90, 180]
       duration: 25
       target: drive_3
+    marathon:
+      alias: "Born to run"
+      song_bpm: [145, 160]
+      song_len: [120, 600]
+      duration: 300
+      target: drive_1
+
