@@ -30,7 +30,7 @@ setup(
 
     test_suite='test',
 
-    packages=['beetsplug'],
+    packages=['beetsplug', 'beetsplug.goingrunning'],
 
     python_requires='>=3.6',
 
