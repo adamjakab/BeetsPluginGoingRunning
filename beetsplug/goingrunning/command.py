@@ -16,7 +16,7 @@ from glob import glob
 from beets.dbcore.db import Results
 from beets.library import Library as BeatsLibrary, Item
 from beets.ui import Subcommand, decargs
-from beets.util.confit import Subview
+from beets.util.confit import Subview, NotFoundError
 
 from beetsplug.goingrunning import common as GRC
 
@@ -86,8 +86,8 @@ class GoingRunningCommand(Subcommand):
         training_name = self.query.pop(0)
 
         training: Subview = self.config["trainings"][training_name]
-        if not training:
-            self._say("There is no training registered with this name!")
+        if not training.exists():
+            self._say("There is no training[{0}] registered with this name!".format(training_name))
             return
 
         # Get the library items
@@ -98,46 +98,51 @@ class GoingRunningCommand(Subcommand):
             self._say("Number of songs: {}".format(len(lib_items)))
             return
 
-        # Verify target
-        target_path = self._get_target_path(training)
-        if not os.path.isdir(target_path):
-            target_name = GRC.get_config_value_bubble_up(training, "target")
-            self._say("The path for the target[{0}] does not exist! Path: {1}".format(target_name, target_path))
-            return
+        self._say("Handling training: {0}".format(training_name))
 
-        self._say("Handling training: {}".format(training_name))
+        # Check count
+        if len(lib_items) < 1:
+            self._say("There are no songs in your library that match this training!")
+            return
 
         # Get randomized items
         duration = GRC.get_config_value_bubble_up(training, "duration")
         rnd_items = GRC.get_randomized_items(lib_items, duration)
+        total_time = GRC.get_duration_of_items(rnd_items)
+        # @todo: check if total time is close to duration - (config might be too restrictive or too few songs)
+
+        # Verify target path
+        target_path = self._get_target_path(training)
+        if not target_path:
+            return
 
         # Show some info
-        total_time = GRC.get_duration_of_items(rnd_items)
-        self._say("Total song time: {}".format(GRC.get_human_readable_time(total_time)))
-        self._say("Number of songs: {}".format(len(rnd_items)))
+        self._say("Training duration: {0}".format(GRC.get_human_readable_time(duration * 60)))
+        self._say("Total song duration: {}".format(GRC.get_human_readable_time(total_time)))
+        self._say("Number of songs available: {}".format(len(lib_items)))
+        self._say("Number of songs selected: {}".format(len(rnd_items)))
 
         self._clean_target_path(training)
         self._copy_items_to_target(training, rnd_items)
-        # done.?
+        self._say("Run!")
 
     def _clean_target_path(self, training: Subview):
-        if self.config["clean_target"].get():
+        if GRC.get_config_value_bubble_up(training, "clean_target"):
             target_path = self._get_target_path(training)
-            self._say("Cleaning target: {}".format(target_path))
+            self._say("Cleaning target[{0}]: {1}".format(training["target"].get(), target_path))
 
-            # @todo: Should only clean song files
             song_extensions = ["mp3", "mp4", "flac", "wav"]
             target_file_list = []
             for ext in song_extensions:
                 target_file_list += glob(os.path.join(target_path, "*.{}".format(ext)))
 
             for f in target_file_list:
-                self.log.debug("DEL: {}".format(f))
+                self.log.debug("Deleting: {}".format(f))
                 os.remove(f)
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
         target_path = self._get_target_path(training)
-        self._say("Copying to target path: {}".format(target_path))
+        self._say("Copying to target[{0}] path: {1}".format(training["target"].get(), target_path))
 
         def random_string(length=6):
             letters = string.ascii_letters + string.digits
@@ -154,13 +159,20 @@ class GoingRunningCommand(Subcommand):
             cnt += 1
 
     def _get_target_path(self, training: Subview):
-        target_path = ""
         target_name = GRC.get_config_value_bubble_up(training, "target")
         targets = self.config["targets"].get()
-        self.log.debug("Selected target name: {0}".format(target_name))
-        if target_name in targets:
-            target_path = os.path.realpath(Path(targets.get(target_name)).expanduser())
-            self.log.debug("Selected target path: {0}".format(target_path))
+        self.log.debug("Checking target name: {0}".format(target_name))
+
+        if target_name not in targets.keys():
+            self._say("The target name[{0}] is not defined!".format(target_name))
+            return
+
+        target_path = os.path.realpath(Path(targets.get(target_name)).expanduser())
+        self.log.debug("Found target path: {0}".format(target_path))
+
+        if not os.path.isdir(target_path):
+            self._say("The target[{0}] path does not exist: {1}".format(target_name, target_path))
+            return
 
         return target_path
 

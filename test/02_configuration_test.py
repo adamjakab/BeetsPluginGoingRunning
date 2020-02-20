@@ -48,9 +48,13 @@ class ConfigurationTest(TestHelper, Assertions):
         self.assertEqual(120, cfg["duration"].get())
         self.assertEqual("drive_1", cfg["target"].get())
         targets = cfg["targets"].get()
-        self.assertEqual(["drive_1", "drive_2", "drive_3"], list(targets.keys()))
-        self.assertEqual(["~/Music/", "/mnt/UsbDrive", "/media/Storage"], list(targets.values()))
-        self.assertTrue(cfg["clean_target"].get())
+        self.assertEqual(["drive_1", "drive_2", "drive_3", "drive_not_connected"], list(targets.keys()))
+        self.assertEqual(["/tmp/beets-goingrunning-test-drive",
+                          "/mnt/UsbDrive",
+                          "~/Music/",
+                          "/media/this/probably/does/not/exist"],
+                         list(targets.values()))
+        self.assertFalse(cfg["clean_target"].get())
 
         # Check values at Trainings level
         trainings = cfg["trainings"]

@@ -12,6 +12,7 @@ import shutil
 import sys
 import tempfile
 from contextlib import contextmanager
+from random import randint
 from unittest import TestCase
 
 import beets
@@ -24,6 +25,7 @@ from beets import util
 from beets.library import Item
 # from beets.mediafile import MediaFile
 from beets.util import (
+    MoveOperation,
     syspath,
     bytestring_path,
     displayable_path,
@@ -118,6 +120,7 @@ class Assertions(object):
 class TestHelper(TestCase, Assertions):
     _test_config_dir_ = os.path.join(bytestring_path(os.path.dirname(__file__)), b'config')
     _test_fixture_dir = os.path.join(bytestring_path(os.path.dirname(__file__)), b'fixtures')
+    _test_target_dir = bytestring_path("/tmp/beets-goingrunning-test-drive")
 
     def setUp(self):
         """Setup required for running test. Must be called before running any tests.
@@ -150,6 +153,8 @@ class TestHelper(TestCase, Assertions):
         self.config['threaded'] = False
         self.config['import']['copy'] = False
 
+        os.makedirs(self._test_target_dir, exist_ok=True)
+
         libdir = self.mkdtemp()
         self.config['directory'] = libdir
         self.libdir = bytestring_path(libdir)
@@ -161,6 +166,8 @@ class TestHelper(TestCase, Assertions):
 
     def teardown_beets(self):
         self.unload_plugins()
+
+        shutil.rmtree(self._test_target_dir, ignore_errors=True)
 
         if hasattr(self, '_tempdirs'):
             for tempdir in self._tempdirs:
@@ -205,18 +212,44 @@ class TestHelper(TestCase, Assertions):
         return out.getvalue()
 
     def lib_path(self, path):
-        return os.path.join(self.libdir,
-                            path.replace(b'/', bytestring_path(os.sep)))
-
-    # def item_fixture_path(self, fmt):
-    #     assert (fmt in 'mp3 m4a ogg'.split())
-    #     return os.path.join(self.fixture_dir,
-    #                         bytestring_path('min.' + fmt.lower()))
+        return os.path.join(self.libdir, path.replace(b'/', bytestring_path(os.sep)))
 
     @staticmethod
     def _dump_config(cfg: Subview):
         # print(json.dumps(cfg.get(), indent=4, sort_keys=False))
         flat = cfg.flatten()
         print(yaml.dump(flat, Dumper=Dumper, default_flow_style=None, indent=2, width=1000))
+
+    def get_fixture_item_path(self, ext):
+        assert (ext in 'mp3 m4a ogg'.split())
+        return os.path.join(self._test_fixture_dir, bytestring_path('song.' + ext.lower()))
+
+    def add_multiple_items_to_library(self, count=10, song_bpm=None, song_length=None, **kwargs):
+        if song_bpm is None:
+            song_bpm = [60, 220]
+        if song_length is None:
+            song_length = [15, 300]
+        for i in range(count):
+            bpm = randint(song_bpm[0], song_bpm[1])
+            length = randint(song_length[0], song_length[1])
+            self.add_single_item_to_library(bpm=bpm, length=length, **kwargs)
+
+    def add_single_item_to_library(self, **kwargs):
+        values = {
+            'title': 'track 1',
+            'artist': 'artist 1',
+            'album': 'album 1',
+            'bpm': randint(120, 180),
+            'length': randint(90, 720),
+            'format': 'mp3',
+        }
+        values.update(kwargs)
+        item = Item.from_path(self.get_fixture_item_path(values.pop('format')))
+        # item = Item()
+        item.update(values)
+        item.add(self.lib)
+        item.move(MoveOperation.COPY)
+        item.write()
+        return item
 
 
