@@ -120,7 +120,7 @@ class Assertions(object):
 class TestHelper(TestCase, Assertions):
     _test_config_dir_ = os.path.join(bytestring_path(os.path.dirname(__file__)), b'config')
     _test_fixture_dir = os.path.join(bytestring_path(os.path.dirname(__file__)), b'fixtures')
-    _test_target_dir = bytestring_path("/tmp/beets-goingrunning-test-drive")
+    _test_target_dir = bytestring_path("/private/tmp/beets-goingrunning-test-drive")
 
     def setUp(self):
         """Setup required for running test. Must be called before running any tests.
