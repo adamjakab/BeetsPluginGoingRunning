@@ -3,11 +3,10 @@
 
 # Going Running (beets plugin)
 
-*** !!! NOT YET USABLE !!! ***
-
 *A [beets](https://github.com/beetbox/beets) plugin for insane obsessive-compulsive music geeks.*
 
-The *beets-goingrunning* plugin is for runners. It lets you to configure different training activities based on speed and duration and attempts to create you a list of songs for that training.
+The *beets-goingrunning* plugin is for runners. It lets you configure different training activities by filtering 
+songs based on their speed(bpm) and duration and attempts to create a list of songs for that training.
 
 
 ## Installation

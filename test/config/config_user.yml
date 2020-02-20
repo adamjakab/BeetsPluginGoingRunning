@@ -8,7 +8,7 @@ goingrunning:
   duration: 120
   target: drive_1
   targets:
-    drive_1: /private/tmp/beets-goingrunning-test-drive
+    drive_1: /tmp/beets-goingrunning-test-drive
     drive_2: /mnt/UsbDrive
     drive_3: ~/Music/
     drive_not_connected: /media/this/probably/does/not/exist

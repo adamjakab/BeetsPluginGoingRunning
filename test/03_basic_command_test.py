@@ -4,9 +4,8 @@
 #  Created: 2/19/20, 5:44 PM
 #  License: See LICENSE.txt
 #
-from random import randint
 
-from beets.util.confit import Subview
+import platform
 
 from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout, capture_log
 
@@ -114,8 +113,13 @@ class BasicCommandTest(TestHelper, Assertions):
             self.runcli(PLUGIN_NAME, training_name)
 
         self.assertIn("Handling training: {0}".format(training_name), out.getvalue())
+        # This is bad!
+        if platform.system() == "Darwin":
+            tmp_path = "/private/tmp"
+        else:
+            tmp_path = "/tmp"
         self.assertIn("Cleaning target[{0}]: {1}"
-                      .format("drive_1", "/private/tmp/beets-goingrunning-test-drive"), out.getvalue())
+                      .format("drive_1", "{0}/beets-goingrunning-test-drive".format(tmp_path)), out.getvalue())
 
     def test_training_reserved_filter_clearing(self):
         self.reset_beets(config_file=b"config_user.yml")
