@@ -142,7 +142,7 @@ class GoingRunningCommand(Subcommand):
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
         target_path = self._get_target_path(training)
-        self._say("Copying to target[{0}] path: {1}".format(training["target"].get(), target_path))
+        self._say("Copying to target[{0}]: {1}".format(training["target"].get(), target_path))
 
         def random_string(length=6):
             letters = string.ascii_letters + string.digits

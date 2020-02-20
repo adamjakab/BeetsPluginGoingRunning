@@ -8,7 +8,7 @@ from random import randint
 
 from beets.util.confit import Subview
 
-from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout
+from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout, capture_log
 
 
 class BasicCommandTest(TestHelper, Assertions):
@@ -92,7 +92,6 @@ class BasicCommandTest(TestHelper, Assertions):
         self.reset_beets(config_file=b"config_user.yml")
 
         self.add_multiple_items_to_library(count=30, song_bpm=[150, 180], song_length=[120, 240])
-        #self.runcli("ls")
 
         training_name = "one-hour-run"
         with capture_stdout() as out:
@@ -102,10 +101,53 @@ class BasicCommandTest(TestHelper, Assertions):
         self.assertIn("Number of songs selected:", out.getvalue())
         self.assertIn("Run!", out.getvalue())
 
+    def test_training_clear_path(self):
+        self.reset_beets(config_file=b"config_user.yml")
 
+        self.add_multiple_items_to_library(count=10, song_bpm=[150, 180], song_length=[120, 150])
 
+        # First we execute it to have some songs in the target dir to clear for the next step
+        training_name = "quick-run"
+        self.runcli(PLUGIN_NAME, training_name)
 
+        with capture_stdout() as out:
+            self.runcli(PLUGIN_NAME, training_name)
 
+        self.assertIn("Handling training: {0}".format(training_name), out.getvalue())
+        self.assertIn("Cleaning target[{0}]: {1}"
+                      .format("drive_1", "/private/tmp/beets-goingrunning-test-drive"), out.getvalue())
 
+    def test_training_reserved_filter_clearing(self):
+        self.reset_beets(config_file=b"config_user.yml")
 
+        self.add_multiple_items_to_library(count=10, song_bpm=[150, 180], song_length=[120, 150])
 
+        training_name = "quick-run"
+
+        # Bpm(bpm)
+        reserved_filter_1 = 'bpm:100..200'
+        with capture_log() as logs:
+            self.runcli(PLUGIN_NAME, training_name, reserved_filter_1)
+        self.assertIn('goingrunning: removing reserved filter: {0}'.format(reserved_filter_1), '\n'.join(logs))
+        self.assertIn("goingrunning: final song selection query: ['bpm:150..180', 'length:120..240']", '\n'.join(logs))
+
+        # Length(length)
+        reserved_filter_2 = 'length:30..60'
+        with capture_log() as logs:
+            self.runcli(PLUGIN_NAME, training_name, reserved_filter_2)
+        self.assertIn('goingrunning: removing reserved filter: {0}'.format(reserved_filter_2), '\n'.join(logs))
+        self.assertIn("goingrunning: final song selection query: ['bpm:150..180', 'length:120..240']", '\n'.join(logs))
+
+        # Combined
+        with capture_log() as logs:
+            self.runcli(PLUGIN_NAME, training_name, reserved_filter_1, reserved_filter_2)
+        self.assertIn('goingrunning: removing reserved filter: {0}'.format(reserved_filter_1), '\n'.join(logs))
+        self.assertIn('goingrunning: removing reserved filter: {0}'.format(reserved_filter_2), '\n'.join(logs))
+        self.assertIn("goingrunning: final song selection query: ['bpm:150..180', 'length:120..240']", '\n'.join(logs))
+
+        # Allowed filter
+        allowed_filter = 'genre:Rock'
+        with capture_log() as logs:
+            self.runcli(PLUGIN_NAME, training_name, allowed_filter)
+        self.assertIn("goingrunning: final song selection query: ['{0}', 'bpm:150..180', 'length:120..240']"
+                      .format(allowed_filter), '\n'.join(logs))
