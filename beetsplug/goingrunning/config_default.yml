@@ -1,6 +1,7 @@
-targets: []
-target: no
-clean_target: no
 song_bpm: [90, 150]
 song_len: [90, 240]
 duration: 60
+targets: {}
+target: no
+clean_target: no
+
