@@ -128,9 +128,9 @@ class GoingRunningCommand(Subcommand):
 
     def _clean_target_path(self, training: Subview):
         if GRC.get_config_value_bubble_up(training, "clean_target"):
+            target_name = GRC.get_config_value_bubble_up(training, "target")
             target_path = self._get_target_path(training)
-            self._say("Cleaning target[{0}]: {1}".format(training["target"].get(), target_path))
-
+            self._say("Cleaning target[{0}]: {1}".format(target_name, target_path))
             song_extensions = ["mp3", "mp4", "flac", "wav"]
             target_file_list = []
             for ext in song_extensions:
@@ -141,8 +141,9 @@ class GoingRunningCommand(Subcommand):
                 os.remove(f)
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
+        target_name = GRC.get_config_value_bubble_up(training, "target")
         target_path = self._get_target_path(training)
-        self._say("Copying to target[{0}]: {1}".format(training["target"].get(), target_path))
+        self._say("Copying to target[{0}]: {1}".format(target_name, target_path))
 
         def random_string(length=6):
             letters = string.ascii_letters + string.digits
@@ -226,7 +227,7 @@ class GoingRunningCommand(Subcommand):
     def list_training_attributes(self, training_name: str):
         """
         @todo: Explain keys
-        @todo: target is a special case and the value from targets should also be shown
+        @todo: "target" is a special case and the value from targets (paths) should also be shown
         :param training_name:
         :return: void
         """
@@ -239,8 +240,8 @@ class GoingRunningCommand(Subcommand):
             for tkey in training_keys:
                 tval = GRC.get_config_value_bubble_up(target, tkey)
                 self._say("{0}: {1}".format(tkey, tval))
-        else:
-            self._say("Training[{0}] does not exist.".format(training_name))
+        # else:
+        #     self.log.debug("Training[{0}] does not exist.".format(training_name))
 
     def _say(self, msg):
         self.log.debug(msg)
