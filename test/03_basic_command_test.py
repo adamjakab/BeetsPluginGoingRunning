@@ -90,7 +90,7 @@ class BasicCommandTest(TestHelper, Assertions):
     def test_training_with_songs_multiple_config(self):
         self.add_multiple_items_to_library(count=30, song_bpm=[150, 180], song_length=[120, 240])
 
-        training_name = "training-1"
+        training_name = "one-hour-run"
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, training_name)
 
