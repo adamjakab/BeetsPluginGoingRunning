@@ -4,7 +4,7 @@
 #  Created: 2/19/20, 5:44 PM
 #  License: See LICENSE.txt
 #
-
+import os
 import platform
 
 from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout, capture_log
@@ -12,21 +12,29 @@ from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout, cap
 
 class BasicCommandTest(TestHelper, Assertions):
 
-    def test_training_listing_long(self):
+    def setUp(self):
+        """All test here will be running with a main config file using include on a secondary configuration file
+        """
+        beet_files = [
+            os.path.join(self._test_config_dir_, b'config_inc_sub.yml')
+        ]
+        self.reset_beets(config_file=b"config_inc_main.yml", beet_files=beet_files)
+
+    def test_training_listing_long_format_empty(self):
+        self.reset_beets(config_file=b"empty.yml")
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, "--list")
 
         self.assertIn("You have not created any trainings yet.", out.getvalue())
 
-    def test_training_listing_short(self):
+    def test_training_listing_short_format_empty(self):
+        self.reset_beets(config_file=b"empty.yml")
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, "-l")
 
         self.assertIn("You have not created any trainings yet.", out.getvalue())
 
     def test_training_listing(self):
-        self.reset_beets(config_file=b"config_user.yml")
-
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, "--list")
 
@@ -36,8 +44,6 @@ class BasicCommandTest(TestHelper, Assertions):
         self.assertIn("::: marathon", output)
 
     def test_training_handling_inexistent(self):
-        self.reset_beets(config_file=b"config_user.yml")
-
         training_name = "sitting_on_the_sofa"
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, training_name)
@@ -45,8 +51,6 @@ class BasicCommandTest(TestHelper, Assertions):
         self.assertIn("There is no training[{0}] registered with this name!".format(training_name), out.getvalue())
 
     def test_training_training_song_count(self):
-        self.reset_beets(config_file=b"config_user.yml")
-
         training_name = "marathon"
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, training_name, "--count")
@@ -55,8 +59,6 @@ class BasicCommandTest(TestHelper, Assertions):
         self.assertIn("Number of songs: {}".format(count), out.getvalue())
 
     def test_training_no_songs(self):
-        self.reset_beets(config_file=b"config_user.yml")
-
         training_name = "marathon"
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, training_name)
@@ -65,7 +67,6 @@ class BasicCommandTest(TestHelper, Assertions):
         self.assertIn("There are no songs in your library that match this training!", out.getvalue())
 
     def test_training_bad_target_1(self):
-        self.reset_beets(config_file=b"config_user.yml")
         self.add_multiple_items_to_library(count=1, song_bpm=[145, 145], song_length=[120, 120])
 
         training_name = "bad-target-1"
@@ -76,7 +77,6 @@ class BasicCommandTest(TestHelper, Assertions):
         self.assertIn("The target name[{0}] is not defined!".format(target_name), out.getvalue())
 
     def test_training_bad_target_2(self):
-        self.reset_beets(config_file=b"config_user.yml")
         self.add_multiple_items_to_library(count=1, song_bpm=[145, 145], song_length=[120, 120])
 
         training_name = "bad-target-2"
@@ -87,12 +87,10 @@ class BasicCommandTest(TestHelper, Assertions):
         target_path = "/media/this/probably/does/not/exist"
         self.assertIn("The target[{0}] path does not exist: {1}".format(target_name, target_path), out.getvalue())
 
-    def test_training_with_songs(self):
-        self.reset_beets(config_file=b"config_user.yml")
-
+    def test_training_with_songs_multiple_config(self):
         self.add_multiple_items_to_library(count=30, song_bpm=[150, 180], song_length=[120, 240])
 
-        training_name = "one-hour-run"
+        training_name = "training-1"
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, training_name)
 
@@ -101,8 +99,6 @@ class BasicCommandTest(TestHelper, Assertions):
         self.assertIn("Run!", out.getvalue())
 
     def test_training_clear_path(self):
-        self.reset_beets(config_file=b"config_user.yml")
-
         self.add_multiple_items_to_library(count=10, song_bpm=[150, 180], song_length=[120, 150])
 
         # First we execute it to have some songs in the target dir to clear for the next step
@@ -122,8 +118,6 @@ class BasicCommandTest(TestHelper, Assertions):
                       .format("drive_1", "{0}/beets-goingrunning-test-drive".format(tmp_path)), out.getvalue())
 
     def test_training_reserved_filter_clearing(self):
-        self.reset_beets(config_file=b"config_user.yml")
-
         self.add_multiple_items_to_library(count=10, song_bpm=[150, 180], song_length=[120, 150])
 
         training_name = "quick-run"

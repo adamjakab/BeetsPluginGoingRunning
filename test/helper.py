@@ -35,8 +35,6 @@ from six import StringIO
 
 from beetsplug import goingrunning
 
-logging.getLogger('beets').propagate = True
-
 # Values
 PLUGIN_NAME = 'goingrunning'
 PLUGIN_SHORT_DESCRIPTION = 'bring some music with you that matches your training'
@@ -54,6 +52,11 @@ class LogCapture(logging.Handler):
 
 @contextmanager
 def capture_log(logger='beets', suppress_output=True):
+    """Capture Logger output
+        with capture_log() as logs:
+            log.info(msg)
+        full_log = '\n'.join(logs)
+    """
     capture = LogCapture()
     log = logging.getLogger(logger)
     log.propagate = True
@@ -76,12 +79,12 @@ def capture_stdout(suppress_output=True):
     >>> output.getvalue()
     'spam'
     """
-    org = sys.stdout
+    orig = sys.stdout
     sys.stdout = capture = StringIO()
     try:
         yield sys.stdout
     finally:
-        sys.stdout = org
+        sys.stdout = orig
         # if not suppress_output:
         print(capture.getvalue())
 
@@ -123,28 +126,34 @@ class TestHelper(TestCase, Assertions):
     _test_target_dir = bytestring_path("/tmp/beets-goingrunning-test-drive")
 
     def setUp(self):
-        """Setup required for running test. Must be called before running any tests.
+        """Setup before running any tests.
         """
         self.reset_beets(config_file=b"empty.yml")
 
     def tearDown(self):
         self.teardown_beets()
 
-    def reset_beets(self, config_file: bytes):
+    def reset_beets(self, config_file: bytes, beet_files: list = None):
         self.teardown_beets()
         plugins._classes = {goingrunning.GoingRunningPlugin}
-        self._setup_beets(config_file)
+        self._setup_beets(config_file, beet_files)
 
-    def _setup_beets(self, config_file: bytes):
+    def _setup_beets(self, config_file: bytes, beet_files: list = None):
         self.addCleanup(self.teardown_beets)
-        os.environ['BEETSDIR'] = self.mkdtemp()
+        self.beetsdir = bytestring_path(self.mkdtemp())
+        os.environ['BEETSDIR'] = self.beetsdir.decode()
 
         self.config = beets.config
         self.config.clear()
 
-        # add user configuration
-        config_file = format(os.path.join(self._test_config_dir_, config_file).decode())
-        shutil.copyfile(config_file, self.config.user_config_path())
+        # copy additional files to beets dir (
+        self._copy_files_to_beetsdir(beet_files)
+
+        # copy configuration file to beets dir
+        config_file = os.path.join(self._test_config_dir_, config_file).decode()
+        file_list = [{'file_name': 'config.yaml', 'file_path': config_file}]
+        self._copy_files_to_beetsdir(file_list)
+
         self.config.read()
 
         self.config['plugins'] = []
@@ -155,14 +164,33 @@ class TestHelper(TestCase, Assertions):
 
         os.makedirs(self._test_target_dir, exist_ok=True)
 
-        libdir = self.mkdtemp()
-        self.config['directory'] = libdir
-        self.libdir = bytestring_path(libdir)
+        self.config['directory'] = self.beetsdir.decode()
 
-        self.lib = beets.library.Library(':memory:', self.libdir)
+        self.lib = beets.library.Library(':memory:', self.beetsdir.decode())
 
         # This will initialize (create instance) of the plugins
         plugins.find_plugins()
+
+    def _copy_files_to_beetsdir(self, file_list: list):
+        if file_list:
+            for file in file_list:
+                if isinstance(file, dict) and 'file_name' in file and 'file_path' in file:
+                    src = file['file_path']
+                    file_name = file['file_name']
+                else:
+                    src = file
+                    file_name = os.path.basename(src)
+
+                if isinstance(src, bytes):
+                    src = src.decode()
+
+                if isinstance(file_name, bytes):
+                    file_name = file_name.decode()
+
+                dst = os.path.join(self.beetsdir.decode(), file_name)
+                print("Copy to beetsdir: {}".format(file_name))
+
+                shutil.copyfile(src, dst)
 
     def teardown_beets(self):
         self.unload_plugins()
@@ -188,8 +216,6 @@ class TestHelper(TestCase, Assertions):
         # beets.config.read(user=False, defaults=True)
 
     def mkdtemp(self):
-        # This return a str path, i.e. Unicode on Python 3. We need this in
-        # order to put paths into the configuration.
         path = tempfile.mkdtemp()
         self._tempdirs.append(path)
         return path
@@ -212,7 +238,7 @@ class TestHelper(TestCase, Assertions):
         return out.getvalue()
 
     def lib_path(self, path):
-        return os.path.join(self.libdir, path.replace(b'/', bytestring_path(os.sep)))
+        return os.path.join(self.beetsdir, path.replace(b'/', bytestring_path(os.sep)))
 
     @staticmethod
     def _dump_config(cfg: Subview):
@@ -245,7 +271,6 @@ class TestHelper(TestCase, Assertions):
         }
         values.update(kwargs)
         item = Item.from_path(self.get_fixture_item_path(values.pop('format')))
-        # item = Item()
         item.update(values)
         item.add(self.lib)
         item.move(MoveOperation.COPY)

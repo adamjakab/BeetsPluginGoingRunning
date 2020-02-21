@@ -1,0 +1,62 @@
+# This configuration file is used to configuration file inclusion - SUB
+
+format_item: "[bpm:$bpm][length:$length][genre:$genre]: $artist - $album - $title ::: $path"
+
+
+goingrunning:
+  song_bpm: [0, 999]
+  song_len: [0, 999]
+  duration: 120
+  target: drive_1
+  targets:
+    drive_1: /tmp/beets-goingrunning-test-drive
+    drive_2: /mnt/UsbDrive
+    drive_3: ~/Music/
+    drive_not_connected: /media/this/probably/does/not/exist
+  clean_target: false
+  trainings:
+    song_bpm: [50, 200]
+    song_len: [30, 600]
+    duration: 60
+    target: drive_2
+    training-1:
+      alias: "Born to run"
+      song_bpm: [150, 180]
+      song_len: [120, 240]
+      duration: 55
+      target: drive_3
+    training-2:
+      alias: "Born to run"
+      song_bpm: [170, 180]
+      song_len: [90, 180]
+      duration: 25
+      target: drive_3
+    bad-target-1:
+      song_bpm: [145, 160]
+      song_len: [120, 600]
+      duration: 300
+      target: inexistent_target
+    bad-target-2:
+      song_bpm: [145, 160]
+      song_len: [120, 600]
+      duration: 300
+      target: drive_not_connected
+    marathon:
+      alias: "Born to run"
+      song_bpm: [145, 160]
+      song_len: [120, 600]
+      duration: 300
+      target: drive_1
+    one-hour-run:
+      alias: "Born to run"
+      song_bpm: [150, 180]
+      song_len: [120, 240]
+      duration: 60
+      target: drive_1
+    quick-run:
+      song_bpm: [150, 180]
+      song_len: [120, 240]
+      duration: 10
+      target: drive_1
+      clean_target: true
+

@@ -4,10 +4,11 @@
 #  Created: 2/17/20, 10:53 PM
 #  License: See LICENSE.txt
 #
+import os
 
 from beets.util.confit import Subview
 
-from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout
+from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout, capture_log
 from beetsplug.goingrunning.command import GoingRunningCommand
 from beetsplug.goingrunning import common as GoingRunningCommon
 
@@ -106,11 +107,6 @@ class ConfigurationTest(TestHelper, Assertions):
         self.assertIn("song_bpm: [170, 180]", out.getvalue())
         self.assertIn("song_len: [90, 180]", out.getvalue())
         self.assertIn("target: drive_3", out.getvalue())
-
-        name = "training-3"
-        with capture_stdout() as out:
-            plg.list_training_attributes(name)
-            self.assertIn("Training[{0}] does not exist.".format(name), out.getvalue())
 
     def test_bubble_up(self):
         """ Check values when each level has its own  """
