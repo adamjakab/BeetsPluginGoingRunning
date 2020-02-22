@@ -9,9 +9,9 @@ goingrunning:
   duration: 120
   target: drive_1
   targets:
-    drive_1: ~/Music/
-    drive_2: /mnt/UsbDrive
-    drive_3: /media/Storage
+    - {name: drive_1, device_path: ~/Music/}
+    - {name: drive_2, device_path: /mnt/UsbDrive}
+    - {name: drive_1, device_path: /media/Storage}
   clean_target: true
   trainings:
     song_bpm: [50, 200]

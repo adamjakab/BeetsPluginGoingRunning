@@ -5,25 +5,23 @@ This is a list of things that will be implemented at some point.
 
 - stats - show statistics about the library - such as number of songs without bpm information
 - training info: show total listening time for a specific training
-- targets - target difinition should include multiple information not only path - things such as `clean_target`, extra files to remove, create subfolder for training, .... generally, the `targets` key should be restructured like this:
+- targets - target definition should include some extra info - just some ideas:
 ```yaml
 goingrunning:
     # [...]
     targets:
         -
-            name: my_player_1
-            device_path: /mnt/player_1
-        -
-            name: my_other_player
+            name: SONY-1
             device_path: /media/player_2
             subfolder: MUSIC/AUTO
             create_training_folder: yes
             clean_destination: yes
-            create_playlst: yes
+            create_playlist: yes
+            delete_extra_files:
+              - STDBDATA.DAT
     # [...]
 ```
-this way future development and implementation of future keys are ensured.
-- playlist
+- generate playlist
 
 
 ## Long term implementations 

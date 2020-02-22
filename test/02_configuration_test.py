@@ -30,10 +30,9 @@ class ConfigurationTest(TestHelper, Assertions):
         def_keys.sort()
         self.assertEqual(def_keys, cfg_keys)
 
-    def test_loading_user_configuration(self):
-        """ Generic check to see if plugin related configuration is present coming from user configuration file """
+    def test_user_config_main(self):
+        """ Root level values check """
         self.reset_beets(config_file=b"config_user.yml")
-
         cfg: Subview = self.config[PLUGIN_NAME]
 
         # Check keys
@@ -48,14 +47,30 @@ class ConfigurationTest(TestHelper, Assertions):
         self.assertEqual([0, 999], cfg["song_len"].get())
         self.assertEqual(120, cfg["duration"].get())
         self.assertEqual("drive_1", cfg["target"].get())
+
+    def test_user_config_targets(self):
+        """ Check Targets"""
+        self.reset_beets(config_file=b"config_user.yml")
+        cfg: Subview = self.config[PLUGIN_NAME]
         targets = cfg["targets"].get()
-        self.assertEqual(["drive_1", "drive_2", "drive_3", "drive_not_connected"], list(targets.keys()))
-        self.assertEqual(["/tmp/beets-goingrunning-test-drive",
-                          "/mnt/UsbDrive",
-                          "~/Music/",
-                          "/media/this/probably/does/not/exist"],
-                         list(targets.values()))
-        self.assertFalse(cfg["clean_target"].get())
+
+        self.assertIsInstance(targets, list)
+        self.assertEquals(4, len(targets))
+
+        # Test the first target
+        target = targets.pop(0)
+        self.assertIsInstance(target, dict)
+        self.assertIn("name", target)
+        self.assertIn("device_path", target)
+        self.assertIn("clean_target", target)
+        self.assertEqual("drive_1", target["name"])
+        self.assertEqual("/tmp/beets-goingrunning-test-drive", target["device_path"])
+        self.assertTrue(target["clean_target"])
+
+    def test_user_config_trainings(self):
+        """ Root level values check """
+        self.reset_beets(config_file=b"config_user.yml")
+        cfg: Subview = self.config[PLUGIN_NAME]
 
         # Check values at Trainings level
         trainings = cfg["trainings"]

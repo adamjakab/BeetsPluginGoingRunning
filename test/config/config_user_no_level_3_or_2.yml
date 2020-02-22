@@ -8,11 +8,11 @@ goingrunning:
   song_len: [0, 999]
   duration: 120
   target: drive_1
-  targets:
-    drive_1: ~/Music/
-    drive_2: /mnt/UsbDrive
-    drive_3: /media/Storage
   clean_target: true
+  targets:
+    - {name: drive_1, device_path: ~/Music/}
+    - {name: drive_2, device_path: /mnt/UsbDrive}
+    - {name: drive_1, device_path: /media/Storage}
   trainings:
     training-1:
       alias: "Born to run"

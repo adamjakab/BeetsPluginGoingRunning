@@ -159,23 +159,39 @@ class GoingRunningCommand(Subcommand):
             copyfile(src, dst)
             cnt += 1
 
-    def _get_target_path(self, training: Subview):
+    def _get_target_for_training(self,  training: Subview):
         target_name = GRC.get_config_value_bubble_up(training, "target")
         targets = self.config["targets"].get()
         self.log.debug("Checking target name: {0}".format(target_name))
 
-        if target_name not in targets.keys():
+        target = None
+        for t in targets:
+            if isinstance(t, dict) and "name" in t and t["name"] == target_name:
+                target = t
+
+        if not target:
             self._say("The target name[{0}] is not defined!".format(target_name))
             return
 
-        target_path = os.path.realpath(Path(targets.get(target_name)).expanduser())
-        self.log.debug("Found target path: {0}".format(target_path))
+        return target
 
-        if not os.path.isdir(target_path):
-            self._say("The target[{0}] path does not exist: {1}".format(target_name, target_path))
+    # should become _get_target_attribute_for_training
+    def _get_target_path(self, training: Subview):
+        target = self._get_target_for_training(training)
+        if not target:
             return
 
-        return target_path
+        target_name = target["name"]
+        device_path = target["device_path"]
+        device_path = os.path.realpath(Path(device_path).expanduser())
+
+        if not os.path.isdir(device_path):
+            self._say("The target[{0}] path does not exist: {1}".format(target_name, device_path))
+            return
+
+        self.log.debug("Found target[{0}] path: {0}".format(target_name, device_path))
+
+        return device_path
 
     def _retrieve_library_items(self, training: Subview):
         query = []

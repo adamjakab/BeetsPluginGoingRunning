@@ -25,8 +25,8 @@ goingrunning:
   duration: 120
   target: test
   targets:
-    test: ~/Documents/Projects/Python/BeetsPluginGoingRunning/tmp/songs/
-    SONY: /Volumes/WALKMAN/MUSIC/AUTO/
+    - { name: test, device_path: ~/Music/tmp/ }
+    - { name: SONY, device_path: /Volumes/WALKMAN/MUSIC/AUTO/ }
   clean_target: true
   trainings:
     song_bpm: [11, 22]

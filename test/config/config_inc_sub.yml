@@ -9,10 +9,10 @@ goingrunning:
   duration: 120
   target: drive_1
   targets:
-    drive_1: /tmp/beets-goingrunning-test-drive
-    drive_2: /mnt/UsbDrive
-    drive_3: ~/Music/
-    drive_not_connected: /media/this/probably/does/not/exist
+    - {name: drive_1, device_path: /tmp/beets-goingrunning-test-drive}
+    - {name: drive_2, device_path: /mnt/UsbDrive}
+    - {name: drive_3, device_path: ~/Music/}
+    - {name: drive_not_connected, device_path: /media/this/probably/does/not/exist}
   clean_target: false
   trainings:
     song_bpm: [50, 200]
@@ -31,11 +31,11 @@ goingrunning:
       song_len: [90, 180]
       duration: 25
       target: drive_3
-    bad-target-1:
+    undefined-target:
       song_bpm: [145, 160]
       song_len: [120, 600]
       duration: 300
-      target: inexistent_target
+      target: i_am_not_defined
     bad-target-2:
       song_bpm: [145, 160]
       song_len: [120, 600]

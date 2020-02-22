@@ -66,14 +66,14 @@ class BasicCommandTest(TestHelper, Assertions):
         self.assertIn("Handling training: {0}".format(training_name), out.getvalue())
         self.assertIn("There are no songs in your library that match this training!", out.getvalue())
 
-    def test_training_bad_target_1(self):
+    def test_training_undefined_target(self):
         self.add_multiple_items_to_library(count=1, song_bpm=[145, 145], song_length=[120, 120])
 
-        training_name = "bad-target-1"
+        training_name = "undefined-target"
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, training_name)
 
-        target_name = "inexistent_target"
+        target_name = "i_am_not_defined"
         self.assertIn("The target name[{0}] is not defined!".format(target_name), out.getvalue())
 
     def test_training_bad_target_2(self):

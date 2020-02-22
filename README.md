@@ -21,7 +21,7 @@ the bpm information for your songs. It does a lot for well know songs but my lib
 the tempo (bpm) value for them. If you have a big collection it might take a while, but you can potentially end up with 
 100% coverage.
 
-The following explains how to use the *beets-goingrunning* plugin. If something is not clear please use the Issue tracker. Also, if there is a feature not present, please check the [ROADMAP](./ROADMAP.md) document to check if it is planned. If not, create a feature request in the Issue tracker. 
+The following explains how to use the *beets-goingrunning* plugin. If something is not clear please use the Issue tracker. Also, if there is a feature not present, please check the [roadmap](./ROADMAP.md) document to check if it is planned. If not, create a feature request in the Issue tracker. 
 
 
 ## Installation
@@ -65,7 +65,7 @@ goingrunning:
     song_bpm: [90, 150]
     song_len: [90, 240]
     duration: 60
-    targets: {}
+    targets: []
     target: no
     clean_target: no
 ```
@@ -78,8 +78,8 @@ There are two concepts you need to know to configure the plugin: targets and tra
 goingrunning:
     # [...]
     targets:
-        my_player_1: /mnt/player_1
-        my_other_player: /media/player_2
+        - { name: my_player_1, device_path: /mnt/player_1/ }
+        - { name: my_other_player, device_path: /media/player_2 }
     target: my_player_1
     # [...]
 ```
@@ -94,8 +94,8 @@ goingrunning:
     # [...]
     clean_target: no
     targets:
-        my_player_1: /mnt/player_1
-        my_other_player: /media/player_2
+        - { name: my_player_1, device_path: /mnt/player_1/ }
+        - { name: my_other_player, device_path: /media/player_2 }
     target: my_player_1
     trainings:
         longrun: 
