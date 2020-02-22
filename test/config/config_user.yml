@@ -7,12 +7,26 @@ goingrunning:
   song_len: [0, 999]
   duration: 120
   target: drive_1
-  targets:
-    drive_1: /tmp/beets-goingrunning-test-drive
-    drive_2: /mnt/UsbDrive
-    drive_3: ~/Music/
-    drive_not_connected: /media/this/probably/does/not/exist
   clean_target: false
+  tagets:
+    -
+      name: drive_1
+      device_path: /tmp/beets-goingrunning-test-drive
+      clean_target: yes
+    -
+      name: drive_2
+      device_path: /mnt/UsbDrive
+    -
+      name: drive_3
+      device_path: ~/Music/
+    -
+      name: drive_not_connected
+      device_path: /media/this/probably/does/not/exist
+#  targets_old_remove_me:
+#    drive_1: /tmp/beets-goingrunning-test-drive
+#    drive_2: /mnt/UsbDrive
+#    drive_3: ~/Music/
+#    drive_not_connected: /media/this/probably/does/not/exist
   trainings:
     song_bpm: [50, 200]
     song_len: [30, 600]

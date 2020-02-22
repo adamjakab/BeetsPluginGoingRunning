@@ -18,7 +18,7 @@ goingrunning:
             device_path: /media/player_2
             subfolder: MUSIC/AUTO
             create_training_folder: yes
-            clean_training_folder: yes
+            clean_destination: yes
             create_playlst: yes
     # [...]
 ```

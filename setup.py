@@ -39,6 +39,7 @@ setup(
     ],
 
     tests_require=[
+        'pytest', 'nose', 'coverage',
         'mock', 'six'
     ],
 
