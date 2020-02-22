@@ -11,7 +11,19 @@ songs based on their speed(bpm) and duration and attempts to create a list of so
 
 ## Introduction
 
-I in advance apologize for the following guide. I promise I will explain things a bit better at some point. Until then if something is not clear please use the Issue tracker.
+To use this plugin at its best and to benefit the most from your library, you will need to make sure that you have
+bpm information on all of your songs. Since this plugin uses the bpm information to select songs, the songs with bpm = 0
+will be ignored (check with `beet ls bpm:0`). If you have many you should update them. There are two ways:
+
+1) use the built-in [acousticbrainz plugin](https://beets.readthedocs.io/en/stable/plugins/acousticbrainz.html) to fetch
+the bpm information for your songs. It does a lot for well know songs but my library was still 30% uncovered after a full scan
+
+2) Use the [bpmanalyser plugin](https://github.com/adamjakab/BeetsPluginBpmAnalyser). This will scan your songs and calculate
+the tempo (bpm) value for them. If you have a big collection it might take a while, but you can potentially end up with 
+100% coverage.
+
+The following explains how to use the *beets-goingrunning* plugin. If something is not clear please use the Issue tracker.
+
 
 ## Installation
 The plugin can be installed via:
