@@ -7,20 +7,15 @@ goingrunning:
   song_len: [0, 999]
   duration: 120
   target: drive_1
-  clean_target: false
+  clean_target: no
   targets:
-    -
-      name: drive_1
+    drive_1:
       device_path: /tmp/beets-goingrunning-test-drive
-      clean_target: yes
-    -
-      name: drive_2
+    drive_2:
       device_path: /mnt/UsbDrive
-    -
-      name: drive_3
+    drive_3:
       device_path: ~/Music/
-    -
-      name: drive_not_connected
+    drive_not_connected:
       device_path: /media/this/probably/does/not/exist
   trainings:
     song_bpm: [50, 200]
@@ -66,5 +61,3 @@ goingrunning:
       song_len: [120, 240]
       duration: 10
       target: drive_1
-      clean_target: true
-

@@ -101,7 +101,7 @@ class BasicCommandTest(TestHelper, Assertions):
     def test_training_clear_path(self):
         self.add_multiple_items_to_library(count=10, song_bpm=[150, 180], song_length=[120, 150])
 
-        # First we execute it to have some songs in the target dir to clear for the next step
+        # First we run the plugin it to have some songs in the target dir to clear for the next step
         training_name = "quick-run"
         self.runcli(PLUGIN_NAME, training_name)
 
@@ -109,7 +109,8 @@ class BasicCommandTest(TestHelper, Assertions):
             self.runcli(PLUGIN_NAME, training_name)
 
         self.assertIn("Handling training: {0}".format(training_name), out.getvalue())
-        # This is bad!
+
+        # This is bad! Very bad!
         if platform.system() == "Darwin":
             tmp_path = "/private/tmp"
         else:

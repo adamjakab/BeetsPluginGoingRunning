@@ -1,6 +1,7 @@
 song_bpm: [90, 150]
 song_len: [90, 240]
 duration: 60
-targets: []
+targets: {}
+trainings: {}
 target: no
 clean_target: no

@@ -111,9 +111,8 @@ class GoingRunningCommand(Subcommand):
         total_time = GRC.get_duration_of_items(rnd_items)
         # @todo: check if total time is close to duration - (config might be too restrictive or too few songs)
 
-        # Verify target path
-        target_path = self._get_target_path(training)
-        if not target_path:
+        # Verify target device path path
+        if not self._get_device_path_for_training(training):
             return
 
         # Show some info
@@ -127,14 +126,16 @@ class GoingRunningCommand(Subcommand):
         self._say("Run!")
 
     def _clean_target_path(self, training: Subview):
-        if GRC.get_config_value_bubble_up(training, "clean_target"):
+        if self._get_target_attribute_for_training(training, "clean_target"):
+
             target_name = GRC.get_config_value_bubble_up(training, "target")
-            target_path = self._get_target_path(training)
-            self._say("Cleaning target[{0}]: {1}".format(target_name, target_path))
+            device_path = self._get_device_path_for_training(training)
+
+            self._say("Cleaning target[{0}]: {1}".format(target_name, device_path))
             song_extensions = ["mp3", "mp4", "flac", "wav"]
             target_file_list = []
             for ext in song_extensions:
-                target_file_list += glob(os.path.join(target_path, "*.{}".format(ext)))
+                target_file_list += glob(os.path.join(device_path, "*.{}".format(ext)))
 
             for f in target_file_list:
                 self.log.debug("Deleting: {}".format(f))
@@ -142,8 +143,8 @@ class GoingRunningCommand(Subcommand):
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
         target_name = GRC.get_config_value_bubble_up(training, "target")
-        target_path = self._get_target_path(training)
-        self._say("Copying to target[{0}]: {1}".format(target_name, target_path))
+        device_path = self._get_device_path_for_training(training)
+        self._say("Copying to target[{0}]: {1}".format(target_name, device_path))
 
         def random_string(length=6):
             letters = string.ascii_letters + string.digits
@@ -154,35 +155,49 @@ class GoingRunningCommand(Subcommand):
             src = os.path.realpath(item.get("path").decode("utf-8"))
             fn, ext = os.path.splitext(src)
             gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6), random_string(), ext)
-            dst = "{0}/{1}".format(target_path, gen_filename)
+            dst = "{0}/{1}".format(device_path, gen_filename)
             self.log.debug("Copying[{1}]: {0}".format(src, gen_filename))
             copyfile(src, dst)
             cnt += 1
 
     def _get_target_for_training(self,  training: Subview):
         target_name = GRC.get_config_value_bubble_up(training, "target")
-        targets = self.config["targets"].get()
-        self.log.debug("Checking target name: {0}".format(target_name))
+        self.log.debug("Finding target: {0}".format(target_name))
+        target: Subview = self.config["targets"][target_name]
 
-        target = None
-        for t in targets:
-            if isinstance(t, dict) and "name" in t and t["name"] == target_name:
-                target = t
-
-        if not target:
+        if not target.exists():
             self._say("The target name[{0}] is not defined!".format(target_name))
             return
 
         return target
 
-    # should become _get_target_attribute_for_training
-    def _get_target_path(self, training: Subview):
+    def _get_target_attribute_for_training(self, training: Subview, attrib: str = "name"):
+        target_name = GRC.get_config_value_bubble_up(training, "target")
+        self.log.debug("Getting attribute[{0}] for target: {1}".format(attrib, target_name))
         target = self._get_target_for_training(training)
         if not target:
             return
 
-        target_name = target["name"]
-        device_path = target["device_path"]
+        # @todo: Needs checking and NotFound catching
+        if attrib == "name":
+            # this should NOT propagate up
+            attrib_val = target_name
+        if attrib == "device_path":
+            # this should NOT propagate up
+            attrib_val = target["device_path"].get()
+        else:
+            attrib_val = GRC.get_config_value_bubble_up(target, attrib)
+
+        self.log.debug("Found target[{0}] attribute[{1}] path: {2}".format(target_name, attrib, attrib_val))
+
+        return attrib_val
+
+    def _get_device_path_for_training(self, training: Subview):
+        target_name = GRC.get_config_value_bubble_up(training, "target")
+        device_path = self._get_target_attribute_for_training(training, "device_path")
+        if not device_path:
+            return
+
         device_path = os.path.realpath(Path(device_path).expanduser())
 
         if not os.path.isdir(device_path):
@@ -192,6 +207,7 @@ class GoingRunningCommand(Subcommand):
         self.log.debug("Found target[{0}] path: {0}".format(target_name, device_path))
 
         return device_path
+
 
     def _retrieve_library_items(self, training: Subview):
         query = []
@@ -231,7 +247,7 @@ class GoingRunningCommand(Subcommand):
         # @todo: order keys
         :return: void
         """
-        if "trainings" not in self.config:
+        if not self.config["trainings"].exists() or len(self.config["trainings"].keys()) == 0:
             self._say("You have not created any trainings yet.")
             return
 

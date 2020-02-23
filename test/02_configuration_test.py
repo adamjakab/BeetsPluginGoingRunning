@@ -26,7 +26,7 @@ class ConfigurationTest(TestHelper, Assertions):
         cfg: Subview = self.config[PLUGIN_NAME]
         cfg_keys = cfg.keys()
         cfg_keys.sort()
-        def_keys = ['duration', 'targets', 'target', 'clean_target', 'song_bpm', 'song_len']
+        def_keys = ['duration', 'targets', 'trainings', 'target', 'clean_target', 'song_bpm', 'song_len']
         def_keys.sort()
         self.assertEqual(def_keys, cfg_keys)
 
@@ -52,20 +52,36 @@ class ConfigurationTest(TestHelper, Assertions):
         """ Check Targets"""
         self.reset_beets(config_file=b"config_user.yml")
         cfg: Subview = self.config[PLUGIN_NAME]
-        targets = cfg["targets"].get()
+        targets = cfg["targets"]
 
-        self.assertIsInstance(targets, list)
-        self.assertEquals(4, len(targets))
+        self.assertIsInstance(targets, Subview)
+        self.assertEquals(["drive_1", "drive_2", "drive_3", "drive_not_connected"], list(targets.get().keys()))
 
-        # Test the first target
-        target = targets.pop(0)
-        self.assertIsInstance(target, dict)
-        self.assertIn("name", target)
-        self.assertIn("device_path", target)
-        self.assertIn("clean_target", target)
-        self.assertEqual("drive_1", target["name"])
-        self.assertEqual("/tmp/beets-goingrunning-test-drive", target["device_path"])
-        self.assertTrue(target["clean_target"])
+        # Check single target
+        target = targets["drive_1"]
+        self.assertIsInstance(target, Subview)
+        self.assertTrue(target.exists())
+        self.assertEqual("/tmp/beets-goingrunning-test-drive", target["device_path"].get())
+
+        # Check single target
+        target = targets["drive_2"]
+        self.assertIsInstance(target, Subview)
+        self.assertTrue(target.exists())
+        self.assertEqual("/mnt/UsbDrive", target["device_path"].get())
+
+        # Check single target
+        target = targets["drive_3"]
+        self.assertIsInstance(target, Subview)
+        self.assertTrue(target.exists())
+        self.assertEqual("~/Music/", target["device_path"].get())
+
+        # Check single target
+        target = targets["drive_not_connected"]
+        self.assertIsInstance(target, Subview)
+        self.assertTrue(target.exists())
+        self.assertEqual("/media/this/probably/does/not/exist", target["device_path"].get())
+
+
 
     def test_user_config_trainings(self):
         """ Root level values check """

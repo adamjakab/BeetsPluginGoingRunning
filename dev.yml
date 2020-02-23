@@ -24,10 +24,13 @@ goingrunning:
   song_len: [120, 240]
   duration: 120
   target: test
+  clean_target: false
   targets:
-    - { name: test, device_path: ~/Music/tmp/ }
-    - { name: SONY, device_path: /Volumes/WALKMAN/MUSIC/AUTO/ }
-  clean_target: true
+    - name: test
+        device_path: ~/Music/tmp/
+        clean_target: yes
+    - name: SONY
+      device_path: /Volumes/WALKMAN/MUSIC/AUTO/
   trainings:
     song_bpm: [11, 22]
     halfmarathon:

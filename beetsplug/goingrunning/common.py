@@ -29,23 +29,18 @@ def get_human_readable_time(seconds):
     return "%d:%02d:%02d" % (h, m, s)
 
 
-def get_config_value_bubble_up(target: Subview, attrib: str):
+def get_config_value_bubble_up(cfg_view: Subview, attrib: str):
     """
     Method that will ''bubble up'' in the configuration hierarchy to find the value of the requested attribute
     """
     value = None
-    done = False
 
-    while not done:
-        tree: OrderedDict = target.flatten()
-        if attrib in tree:
-            value = tree.get(attrib)
-            done = True
-        else:
-            if target.root() != target.parent:
-                target: Subview = target.parent
-            else:
-                done = True
+    if cfg_view[attrib].exists():
+        value = cfg_view[attrib].get()
+    else:
+        view_name = cfg_view.name
+        if view_name != "root":
+            value = get_config_value_bubble_up(cfg_view.parent, attrib)
 
     return value
 

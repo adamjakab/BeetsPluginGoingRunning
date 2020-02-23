@@ -10,9 +10,12 @@ goingrunning:
   target: drive_1
   clean_target: true
   targets:
-    - {name: drive_1, device_path: ~/Music/}
-    - {name: drive_2, device_path: /mnt/UsbDrive}
-    - {name: drive_1, device_path: /media/Storage}
+    drive_1:
+      device_path: ~/Music/
+    drive_2:
+      device_path: /mnt/UsbDrive
+    drive_3:
+      device_path: /media/Storage
   trainings:
     training-1:
       alias: "Born to run"
