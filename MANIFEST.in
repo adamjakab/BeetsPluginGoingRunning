@@ -1,2 +1,5 @@
 prune test
-include LICENSE.txt README.md
+include LICENSE.txt
+include README.md
+include beetsplug/goingrunning/config_default.yml
+
