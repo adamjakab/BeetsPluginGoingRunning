@@ -78,14 +78,15 @@ There are two concepts you need to know to configure the plugin: targets and tra
 goingrunning:
     # [...]
     targets:
-        - { name: my_player_1, device_path: /mnt/player_1/ }
-        - { name: my_other_player, device_path: /media/player_2 }
+        my_player_1:
+            device_path: /mnt/player_1/
+        my_other_player:
+            device_path: /media/player_2
     target: my_player_1
     # [...]
 ```
 
-- **Trainings** are not much more than named queries into your library. They have two main attributes (`song_bpm` and `song_len`) by which the plugin will decide which songs to chose and a `duration` 
-element (expressed in minutes) used for limiting the number of songs selected. The `song_bpm` and `song_len` attributes have two numbers which indicate the lower and the higher limit of that attribute. A training can optionally declare the `target` and other attributes to override those present at root level (directly under the `goingrunning` key).
+- **Trainings** are not much more than named queries into your library. They have two main attributes (`song_bpm` and `song_len`) by which the plugin will decide which songs to chose and a `duration` element (expressed in minutes) used for limiting the number of songs selected. The `song_bpm` and `song_len` attributes have two numbers which indicate the lower and the higher limit of that attribute. A training can optionally declare the `target` and other attributes to override those present at root level (directly under the `goingrunning` key).
 
 A common configuration section will look something like this:
 
@@ -93,10 +94,13 @@ A common configuration section will look something like this:
 goingrunning:
     # [...]
     clean_target: no
-    targets:
-        - { name: my_player_1, device_path: /mnt/player_1/ }
-        - { name: my_other_player, device_path: /media/player_2 }
     target: my_player_1
+    targets:
+        my_player_1:
+            device_path: /mnt/player_1/
+        my_other_player:
+            device_path: /media/player_2
+            clean_target: yes
     trainings:
         longrun: 
             song_bpm: [120, 150]
@@ -107,7 +111,6 @@ goingrunning:
             song_len: [120, 240]
             duration: 90
             target: my_other_player
-            clean_target: yes
     # [...]
 ```
 
