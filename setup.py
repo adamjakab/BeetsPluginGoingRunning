@@ -17,20 +17,19 @@ README = (HERE / "README.md").read_text()
 # Setup
 setup(
     name='beets-goingrunning',
-    version='1.0.3',
+    version='1.0.4',
     description='A beets plugin for creating and exporting songs matching your running session.',
-    long_description=README,
-    long_description_content_type='text/markdown',
     author='Adam Jakab',
     author_email='adam@jakab.pro',
     url='https://github.com/adamjakab/BeetsPluginGoingRunning',
     license='MIT',
+    long_description=README,
+    long_description_content_type='text/markdown',
     platforms='ALL',
+
     include_package_data=True,
-
     test_suite='test',
-
-    packages=['beetsplug', 'beetsplug.goingrunning'],
+    packages=['beetsplug.goingrunning'],
 
     python_requires='>=3.6',
 
