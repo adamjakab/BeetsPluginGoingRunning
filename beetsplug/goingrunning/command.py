@@ -224,7 +224,7 @@ class GoingRunningCommand(Subcommand):
         path = path or ""
 
         if not root:
-            self._say("The target[{0}] does not declare a device root path.")
+            self._say("The target[{0}] does not declare a device root path.".format(target_name))
             return
 
         root = Path(root).expanduser()
