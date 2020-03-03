@@ -112,7 +112,7 @@ class GoingRunningCommand(Subcommand):
         # @todo: check if total time is close to duration - (config might be too restrictive or too few songs)
 
         # Verify target device path path
-        if not self._get_device_path_for_training(training):
+        if not self._get_destination_path_for_training(training):
             return
 
         # Show some info
@@ -126,25 +126,46 @@ class GoingRunningCommand(Subcommand):
         self._say("Run!")
 
     def _clean_target_path(self, training: Subview):
+        target_name = GRC.get_config_value_bubble_up(training, "target")
+
         if self._get_target_attribute_for_training(training, "clean_target"):
+            dst_path = self._get_destination_path_for_training(training)
 
-            target_name = GRC.get_config_value_bubble_up(training, "target")
-            device_path = self._get_device_path_for_training(training)
-
-            self._say("Cleaning target[{0}]: {1}".format(target_name, device_path))
+            self._say("Cleaning target[{0}]: {1}".format(target_name, dst_path))
             song_extensions = ["mp3", "mp4", "flac", "wav"]
             target_file_list = []
             for ext in song_extensions:
-                target_file_list += glob(os.path.join(device_path, "*.{}".format(ext)))
+                target_file_list += glob(os.path.join(dst_path, "*.{}".format(ext)))
 
             for f in target_file_list:
                 self.log.debug("Deleting: {}".format(f))
                 os.remove(f)
 
+        additional_files = self._get_target_attribute_for_training(training, "delete_from_device")
+        if additional_files and len(additional_files) > 0:
+            root = self._get_target_attribute_for_training(training, "device_root")
+            root = Path(root).expanduser()
+
+            self._say("Deleting additional files: {0}".format(additional_files))
+
+            for path in additional_files:
+                path = Path(str.strip(path, "/"))
+                dst_path = os.path.realpath(root.joinpath(path))
+
+                if not os.path.isfile(dst_path):
+                    self.log.debug(
+                        "The file to delete does not exist: {0}".format(path))
+                    continue
+
+                self.log.debug("Deleting: {}".format(dst_path))
+                os.remove(dst_path)
+
+
+
     def _copy_items_to_target(self, training: Subview, rnd_items):
         target_name = GRC.get_config_value_bubble_up(training, "target")
-        device_path = self._get_device_path_for_training(training)
-        self._say("Copying to target[{0}]: {1}".format(target_name, device_path))
+        dst_path = self._get_destination_path_for_training(training)
+        self._say("Copying to target[{0}]: {1}".format(target_name, dst_path))
 
         def random_string(length=6):
             letters = string.ascii_letters + string.digits
@@ -155,7 +176,7 @@ class GoingRunningCommand(Subcommand):
             src = os.path.realpath(item.get("path").decode("utf-8"))
             fn, ext = os.path.splitext(src)
             gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6), random_string(), ext)
-            dst = "{0}/{1}".format(device_path, gen_filename)
+            dst = "{0}/{1}".format(dst_path, gen_filename)
             self.log.debug("Copying[{1}]: {0}".format(src, gen_filename))
             copyfile(src, dst)
             cnt += 1
@@ -178,35 +199,46 @@ class GoingRunningCommand(Subcommand):
         if not target:
             return
 
-        # @todo: Needs checking and NotFound catching
         if attrib == "name":
-            # this should NOT propagate up
             attrib_val = target_name
-        if attrib == "device_path":
-            # this should NOT propagate up
-            attrib_val = target["device_path"].get()
+        if attrib in ("device_root", "device_path", "delete_from_device"):
+            # these should NOT propagate up
+            # @todo: Needs NotFound catching
+            attrib_val = target[attrib].get()
         else:
             attrib_val = GRC.get_config_value_bubble_up(target, attrib)
 
-        self.log.debug("Found target[{0}] attribute[{1}] path: {2}".format(target_name, attrib, attrib_val))
+        self.log.debug(
+            "Found target[{0}] attribute[{1}] path: {2}".format(target_name,
+                                                                attrib,
+                                                                attrib_val))
 
         return attrib_val
 
-    def _get_device_path_for_training(self, training: Subview):
+    def _get_destination_path_for_training(self, training: Subview):
         target_name = GRC.get_config_value_bubble_up(training, "target")
-        device_path = self._get_target_attribute_for_training(training, "device_path")
-        if not device_path:
+        root = self._get_target_attribute_for_training(training, "device_root")
+        path = self._get_target_attribute_for_training(training, "device_path")
+        path = path or ""
+
+        if not root:
+            self._say("The target[{0}] does not declare a device root path.")
             return
 
-        device_path = os.path.realpath(Path(device_path).expanduser())
+        root = Path(root).expanduser()
+        path = Path(str.strip(path, "/"))
+        dst_path = os.path.realpath(root.joinpath(path))
 
-        if not os.path.isdir(device_path):
-            self._say("The target[{0}] path does not exist: {1}".format(target_name, device_path))
+        if not os.path.isdir(dst_path):
+            self._say(
+                "The target[{0}] path does not exist: {1}".format(target_name,
+                                                                  dst_path))
             return
 
-        self.log.debug("Found target[{0}] path: {0}".format(target_name, device_path))
+        self.log.debug(
+            "Found target[{0}] path: {0}".format(target_name, dst_path))
 
-        return device_path
+        return dst_path
 
 
     def _retrieve_library_items(self, training: Subview):

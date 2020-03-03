@@ -79,9 +79,11 @@ goingrunning:
     # [...]
     targets:
         my_player_1:
-            device_path: /mnt/player_1/
+            device_root: /mnt/player_1
+            device_path: 
         my_other_player:
-            device_path: /media/player_2
+            device_root: /media/player_2
+            device_path: Songs
     target: my_player_1
     # [...]
 ```
@@ -97,10 +99,15 @@ goingrunning:
     target: my_player_1
     targets:
         my_player_1:
-            device_path: /mnt/player_1/
+            device_root: /mnt/player_1
+            device_path: 
         my_other_player:
-            device_path: /media/player_2
+            device_root: /media/player_2
+            device_path: Songs
             clean_target: yes
+            delete_from_device:
+                - STDBDATA.DAT
+                - STDBSTR.DAT
     trainings:
         longrun: 
             song_bpm: [120, 150]
@@ -119,6 +126,10 @@ Once you have configured your targets and created your trainings, connect your d
     $ beet goingrunning longrun
     
 and the songs matching that training will be copied to it.
+
+The path where the songs will be copied is given by the `device_root` + `device_path`. This means that for `my_player_1` the songs will be copied to the `/mnt/player_1/` folder whilst for the `my_player_2` target they will be copied to the `/media/player_2/Songs/` folder.
+The `clean_target` attribute will instruct the plugin to clean these folders before copying the new songs.
+The option `delete_from_device` allows you to list additional files that need to be removed. The files listed here are relative to the `device_root` directive.
 
 For now, within a training the selection of the songs is completely random and no ordering is applied. One of the future plans is to allow you to be more in control of the song selection and song ordering. You can of course use the usual query syntax to fine tune your selection (see examples below) but the ordering will still be casual.
 

@@ -1,8 +1,9 @@
 # Created by .ignore support plugin (hsz.mobi)
 
 # Project
-tmp/
 coverage/
+BEETSDIR/*
+!BEETSDIR/config.yaml
 
 ### Python template
 # Byte-compiled / optimized / DLL files
