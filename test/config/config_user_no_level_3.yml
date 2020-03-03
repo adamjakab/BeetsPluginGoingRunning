@@ -11,11 +11,11 @@ goingrunning:
   clean_target: true
   targets:
     drive_1:
-      device_path: ~/Music/
+      device_root: ~/Music/
     drive_2:
-      device_path: /mnt/UsbDrive
+      device_root: /mnt/UsbDrive
     drive_3:
-      device_path: /media/Storage
+      device_root: /media/Storage
   trainings:
     song_bpm: [50, 200]
     song_len: [30, 600]

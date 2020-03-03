@@ -1,8 +1,9 @@
-"""A namespace package for beets plugins."""
+#  Copyright: Copyright (c) 2020., Adam Jakab
+#
+#  Author: Adam Jakab <adam at jakab dot pro>
+#  Created: 2/16/20, 10:20 AM
+#  License: See LICENSE.txt
 
-from __future__ import division, absolute_import, print_function
-
-# Make this a namespace package.
 from pkgutil import extend_path
 __path__ = extend_path(__path__, __name__)
 

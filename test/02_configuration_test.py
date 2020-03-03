@@ -61,25 +61,25 @@ class ConfigurationTest(TestHelper, Assertions):
         target = targets["drive_1"]
         self.assertIsInstance(target, Subview)
         self.assertTrue(target.exists())
-        self.assertEqual("/tmp/beets-goingrunning-test-drive", target["device_path"].get())
+        self.assertEqual("/tmp/beets-goingrunning-test-drive", target["device_root"].get())
 
         # Check single target
         target = targets["drive_2"]
         self.assertIsInstance(target, Subview)
         self.assertTrue(target.exists())
-        self.assertEqual("/mnt/UsbDrive", target["device_path"].get())
+        self.assertEqual("/mnt/UsbDrive", target["device_root"].get())
 
         # Check single target
         target = targets["drive_3"]
         self.assertIsInstance(target, Subview)
         self.assertTrue(target.exists())
-        self.assertEqual("~/Music/", target["device_path"].get())
+        self.assertEqual("~/Music/", target["device_root"].get())
 
         # Check single target
         target = targets["drive_not_connected"]
         self.assertIsInstance(target, Subview)
         self.assertTrue(target.exists())
-        self.assertEqual("/media/this/probably/does/not/exist", target["device_path"].get())
+        self.assertEqual("/media/this/probably/does/not/exist", target["device_root"].get())
 
 
 

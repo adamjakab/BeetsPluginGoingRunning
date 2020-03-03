@@ -1,0 +1,71 @@
+# DEVELOPMENT CONFIGURATION FILE
+# USAGE: export environment variable BEETSDIR=/path/to/BEETSDIR
+# then: `beets config -p` should list this file
+
+#directory: Music
+#library: library.db
+directory: /Volumes/J/Music/
+library: ~/.config/beets/real_library.db
+asciify_paths: yes
+id3v23: yes
+
+pluginpath:
+    - ~/Documents/Projects/Python/BeetsPluginGoingRunning/beetsplug/
+
+plugins:
+    - info
+    - goingrunning
+
+#format_item: "[format:$format][bpm:$bpm] ::: $path"
+format_item: "[bpm:$bpm][length:$length][genre:$genre]$artist - $album - $title"
+
+import:
+    copy: yes
+    autotag: no
+
+goingrunning:
+  song_bpm: [111, 222]
+  song_len: [120, 240]
+  duration: 120
+  target: test
+  clean_target: no
+  targets:
+    test:
+        device_root: ~/Documents/Projects/Python/BeetsPluginGoingRunning/BEETSDIR/Target1
+        device_path: MUSIC/AUTO
+        clean_target: yes
+        delete_from_device:
+          - xyz.txt
+    SONY:
+      device_root: /Volumes/WALKMAN
+      device_path: MUSIC/AUTO
+      clean_target: yes
+      delete_from_device:
+        - STDBDATA.DAT
+        - STDBSTR.DAT
+  trainings:
+    song_bpm: [11, 22]
+    halfmarathon:
+      alias: "Born to run"
+      song_bpm: [90, 150]
+      song_len: [120, 240]
+      duration: 90
+      target: test
+    10K:
+      alias: "Non mollare mai!"
+      song_bpm: [155, 175]
+      song_len: [120, 300]
+      duration: 50
+      target: SONY
+    strides-1k:
+      # Segments will be implemented in some future version
+      segments:
+        -
+          song_bpm: [160, 180]
+          song_len: [120, 240]
+          duration: 5
+        -
+          song_bpm: [130, 150]
+          song_len: [120, 240]
+          duration: 3
+      repeat_segments: 5
