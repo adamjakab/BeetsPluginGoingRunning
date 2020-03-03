@@ -17,7 +17,7 @@ README = (HERE / "README.md").read_text()
 # Setup
 setup(
     name='beets-goingrunning',
-    version='1.0.4',
+    version='1.0.5',
     description='A beets plugin for creating and exporting songs matching your running session.',
     author='Adam Jakab',
     author_email='adam@jakab.pro',
