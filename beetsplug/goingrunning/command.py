@@ -203,8 +203,10 @@ class GoingRunningCommand(Subcommand):
             attrib_val = target_name
         if attrib in ("device_root", "device_path", "delete_from_device"):
             # these should NOT propagate up
-            # @todo: Needs NotFound catching
-            attrib_val = target[attrib].get()
+            try:
+                attrib_val = target[attrib].get()
+            except NotFoundError:
+                attrib_val = None
         else:
             attrib_val = GRC.get_config_value_bubble_up(target, attrib)
 
