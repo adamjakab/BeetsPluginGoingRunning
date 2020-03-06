@@ -17,6 +17,7 @@ from beets.dbcore.db import Results
 from beets.library import Library as BeatsLibrary, Item
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
+import pandas as pd
 
 from beetsplug.goingrunning import common as GRC
 
@@ -30,6 +31,7 @@ class GoingRunningCommand(Subcommand):
 
     quiet = False
     count_only = False
+    show_only = False
 
     def __init__(self, cfg):
         self.config = cfg
@@ -47,6 +49,12 @@ class GoingRunningCommand(Subcommand):
             '-c', '--count',
             action='store_true', dest='count', default=False,
             help=u'count the number of songs available for a specific training'
+        )
+
+        self.parser.add_option(
+            '-s', '--show',
+            action='store_true', dest='show', default=False,
+            help=u'show the songs selected for a specific training'
         )
 
         # @todo: add dry-run option
@@ -67,6 +75,7 @@ class GoingRunningCommand(Subcommand):
     def func(self, lib: BeatsLibrary, options, arguments):
         self.quiet = options.quiet
         self.count_only = options.count
+        self.show_only = options.show
 
         self.lib = lib
         self.query = decargs(arguments)
@@ -95,7 +104,7 @@ class GoingRunningCommand(Subcommand):
 
         # Show count only
         if self.count_only:
-            self._say("Number of songs: {}".format(len(lib_items)))
+            self._say("Number of songs available: {}".format(len(lib_items)))
             return
 
         self._say("Handling training: {0}".format(training_name))
@@ -105,8 +114,13 @@ class GoingRunningCommand(Subcommand):
             self._say("There are no songs in your library that match this training!")
             return
 
-        # Get randomized items
+        # Get selected items
         duration = GRC.get_config_value_bubble_up(training, "duration")
+        self._score_library_items(training, lib_items)
+        # 1) order items by scoring system (need ordering in config)
+        # 2) select random items n from the ordered list(T=length) - by
+        # chosing n times song from the remaining songs between 1 and m
+        # where m = T/n 
         rnd_items = GRC.get_randomized_items(lib_items, duration)
         total_time = GRC.get_duration_of_items(rnd_items)
         # @todo: check if total time is close to duration - (config might be too restrictive or too few songs)
@@ -120,6 +134,14 @@ class GoingRunningCommand(Subcommand):
         self._say("Total song duration: {}".format(GRC.get_human_readable_time(total_time)))
         self._say("Number of songs available: {}".format(len(lib_items)))
         self._say("Number of songs selected: {}".format(len(rnd_items)))
+
+        # Show the selected songs and exit
+        if self.show_only:
+            # self.display_library_items(lib_items)
+            #self.display_library_items(rnd_items)
+            return
+
+
 
         self._clean_target_path(training)
         self._copy_items_to_target(training, rnd_items)
@@ -242,12 +264,54 @@ class GoingRunningCommand(Subcommand):
 
         return dst_path
 
+    def _score_library_items(self, training: Subview, items):
+        target_name = GRC.get_config_value_bubble_up(training, "target")
+        if not training["ordering"].exists() \
+                and len(training["ordering"].keys()) > 0:
+            return
+
+        ordering = training["ordering"].get()
+        order_fields = list(ordering.keys())
+        order_fields = [field.strip("+-") for field in order_fields]
+        self._say("ORDERING: {0}".format(order_fields))
+
+        order_info = {}
+        for field in order_fields:
+            order_info[field] = {"min": 9999, "max": 0, "delta": 0, "step": 0}
+            for item in items:
+                item: Item
+                if int(item[field]) < order_info[field]["min"]:
+                    order_info[field]["min"] = int(item[field])
+                if int(item[field]) > order_info[field]["max"]:
+                    order_info[field]["max"] = int(item[field])
+
+
+        self._say("ORDER INFO: {0}".format(order_info))
+
+        #df = pd.DataFrame(data=items)
+        #df["bpm"].min()
+        #print(df)
+
+
+        for item in items:
+            item: Item
+            score = {}
+            score["bpm"] = 77
+            score["year"] = 22
+            item["score"] = score
+
 
     def _retrieve_library_items(self, training: Subview):
+        """Return all items that match the query
+
+        :param training: Subview
+        :return: Results
+        """
         query = []
 
         # Filter command line queries
         reserved_fields = ["bpm", "length"]
+        self._say("Q: {}".format(self.query))
         while self.query:
             el = self.query.pop(0)
             el_ok = True
@@ -272,9 +336,18 @@ class GoingRunningCommand(Subcommand):
 
         self.log.debug("final song selection query: {}".format(query))
 
-        items = self.lib.items(query)
+        return self.lib.items(query)
 
-        return items
+    def display_library_items(self, items):
+        for item in items:
+            self._say("[bpm:{0}][length:{1}][year:{2}][score:{3}]"
+                      " {4} ::: {5}".format(
+                int(item.get("bpm")),
+                int(item.get("length")),
+                item.get("year"),
+                item.get("score"),
+                item.get("artist"),
+                item.get("title")))
 
     def list_trainings(self):
         """

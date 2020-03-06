@@ -30,8 +30,8 @@ def get_human_readable_time(seconds):
 
 
 def get_config_value_bubble_up(cfg_view: Subview, attrib: str):
-    """
-    Method that will ''bubble up'' in the configuration hierarchy to find the value of the requested attribute
+    """This method will look for the requested attribute in the provided view
+    all the way up the hierarchy tree until it finds it (or hits the root).
     """
     value = None
 

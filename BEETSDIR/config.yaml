@@ -17,7 +17,7 @@ plugins:
     - goingrunning
 
 #format_item: "[format:$format][bpm:$bpm] ::: $path"
-format_item: "[bpm:$bpm][length:$length][genre:$genre]$artist - $album - $title"
+format_item: "[bpm:$bpm][length:$length][year:$year] $artist ::: $title"
 
 import:
     copy: yes
@@ -47,9 +47,12 @@ goingrunning:
     song_bpm: [11, 22]
     halfmarathon:
       alias: "Born to run"
-      song_bpm: [90, 150]
-      song_len: [120, 240]
-      duration: 90
+      song_bpm: [90, 99]
+      song_len: [120, 150]
+      ordering:
+        bpm+: 50
+        year+: 75
+      duration: 30
       target: test
     10K:
       alias: "Non mollare mai!"
