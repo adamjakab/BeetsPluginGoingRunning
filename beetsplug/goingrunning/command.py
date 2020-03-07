@@ -4,7 +4,8 @@
 #  Created: 2/19/20, 11:32 AM
 #  License: See LICENSE.txt
 #
-
+import json
+import operator
 import random
 import os
 import string
@@ -14,10 +15,11 @@ from pathlib import Path
 from shutil import copyfile
 from glob import glob
 from beets.dbcore.db import Results
+from beets.dbcore.types import Integer, Float
 from beets.library import Library as BeatsLibrary, Item
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
-import pandas as pd
+# import pandas as pd
 
 from beetsplug.goingrunning import common as GRC
 
@@ -31,13 +33,13 @@ class GoingRunningCommand(Subcommand):
 
     quiet = False
     count_only = False
-    show_only = False
+    dry_run = False
 
     def __init__(self, cfg):
         self.config = cfg
         self.log = GRC.get_beets_logger()
 
-        self.parser = OptionParser(usage='%prog training_name [options] [ADDITIONAL_QUERY...]')
+        self.parser = OptionParser(usage='%prog training [options] [QUERY...]')
 
         self.parser.add_option(
             '-l', '--list',
@@ -52,9 +54,9 @@ class GoingRunningCommand(Subcommand):
         )
 
         self.parser.add_option(
-            '-s', '--show',
-            action='store_true', dest='show', default=False,
-            help=u'show the songs selected for a specific training'
+            '-d', '--dry-run',
+            action='store_true', dest='dry_run', default=False,
+            help=u'Do not delete/copy any songs. Just show what would be done'
         )
 
         # @todo: add dry-run option
@@ -75,7 +77,7 @@ class GoingRunningCommand(Subcommand):
     def func(self, lib: BeatsLibrary, options, arguments):
         self.quiet = options.quiet
         self.count_only = options.count
-        self.show_only = options.show
+        self.dry_run = options.dry_run
 
         self.lib = lib
         self.query = decargs(arguments)
@@ -114,15 +116,20 @@ class GoingRunningCommand(Subcommand):
             self._say("There are no songs in your library that match this training!")
             return
 
-        # Get selected items
-        duration = GRC.get_config_value_bubble_up(training, "duration")
-        self._score_library_items(training, lib_items)
         # 1) order items by scoring system (need ordering in config)
-        # 2) select random items n from the ordered list(T=length) - by
+        self._score_library_items(training, lib_items)
+        sorted_lib_items = sorted(lib_items,
+                                  key=operator.attrgetter('ordering_score'))
+
+       # 2) select random items n from the ordered list(T=length) - by
         # chosing n times song from the remaining songs between 1 and m
-        # where m = T/n 
-        rnd_items = GRC.get_randomized_items(lib_items, duration)
-        total_time = GRC.get_duration_of_items(rnd_items)
+        # where m = T/n
+        duration = GRC.get_config_value_bubble_up(training, "duration")
+        #sel_items = GRC.get_randomized_items(lib_items, duration)
+        sel_items = self._get_items_for_duration(sorted_lib_items, duration)
+
+
+        total_time = GRC.get_duration_of_items(sel_items)
         # @todo: check if total time is close to duration - (config might be too restrictive or too few songs)
 
         # Verify target device path path
@@ -131,20 +138,24 @@ class GoingRunningCommand(Subcommand):
 
         # Show some info
         self._say("Training duration: {0}".format(GRC.get_human_readable_time(duration * 60)))
-        self._say("Total song duration: {}".format(GRC.get_human_readable_time(total_time)))
+        self._say("Selected song duration: {}".format(
+            GRC.get_human_readable_time(total_time)))
         self._say("Number of songs available: {}".format(len(lib_items)))
-        self._say("Number of songs selected: {}".format(len(rnd_items)))
+        self._say("Number of songs selected: {}".format(len(sel_items)))
 
         # Show the selected songs and exit
-        if self.show_only:
-            # self.display_library_items(lib_items)
-            #self.display_library_items(rnd_items)
+        flds = ("ordering_score", "bpm", "year", "length", "ordering_info",
+                "artist")
+        # self.display_library_items(sorted_lib_items, flds)
+        # self._say("="*80)
+        self.display_library_items(sel_items, flds)
+
+        # todo: move this inside the nex methods to show what would be done
+        if self.dry_run:
             return
 
-
-
         self._clean_target_path(training)
-        self._copy_items_to_target(training, rnd_items)
+        self._copy_items_to_target(training, sel_items)
         self._say("Run!")
 
     def _clean_target_path(self, training: Subview):
@@ -264,6 +275,58 @@ class GoingRunningCommand(Subcommand):
 
         return dst_path
 
+    def _get_items_for_duration(self, items, duration):
+        selected = []
+        total_time = 0
+        _min, _max, _sum, _avg = self._get_min_max_sum_avg_for_items(items,
+                                                                     "length")
+        est_num_songs = round(duration * 60 / _avg)
+        bin_size = len(items) / est_num_songs
+
+
+        self._say("Estimated number of songs: {}".format(est_num_songs))
+        self._say("Bin Size: {}".format(bin_size))
+
+        for i in range (0, est_num_songs):
+            bin_start = round(i * bin_size)
+            bin_end = round(bin_start + bin_size)
+            song_index = random.randint(bin_start, bin_end)
+            item = items[song_index]
+            selected.append(item)
+
+        return selected
+
+    def _get_min_max_sum_avg_for_items(self, items, field_name):
+        _min = 99999999.9
+        _max = 0
+        _sum = 0
+        _avg = 0
+        for item in items:
+            item: Item
+            try:
+                field_value = round(float(item.get(field_name, None)), 3)
+            except ValueError:
+                field_value = None
+            except TypeError:
+                field_value = None
+
+            # Min
+            if field_value is not None and field_value < _min:
+                _min = field_value
+
+            # Max
+            if field_value is not None and field_value > _max:
+                _max = field_value
+
+            # Sum
+            if field_value is not None:
+                _sum = _sum + field_value
+
+        # Avg
+        _avg = round(_sum / len(items), 3)
+
+        return _min, _max, _sum, _avg
+
     def _score_library_items(self, training: Subview, items):
         target_name = GRC.get_config_value_bubble_up(training, "target")
         if not training["ordering"].exists() \
@@ -271,35 +334,114 @@ class GoingRunningCommand(Subcommand):
             return
 
         ordering = training["ordering"].get()
-        order_fields = list(ordering.keys())
-        order_fields = [field.strip("+-") for field in order_fields]
-        self._say("ORDERING: {0}".format(order_fields))
+        fields = list(ordering.keys())
 
+        default_field_data = {
+            "min": 99999999.9,
+            "max": 0.0,
+            "delta": 0.0,
+            "step": 0.0,
+            "direction": "+",
+            "weight": 100
+        }
+
+        # Build Order Info
         order_info = {}
-        for field in order_fields:
-            order_info[field] = {"min": 9999, "max": 0, "delta": 0, "step": 0}
-            for item in items:
-                item: Item
-                if int(item[field]) < order_info[field]["min"]:
-                    order_info[field]["min"] = int(item[field])
-                if int(item[field]) > order_info[field]["max"]:
-                    order_info[field]["max"] = int(item[field])
+        for field in fields:
+            field_name = field.strip("+-")
+            field_direction = field.strip(field_name)
+            order_info[field_name] = default_field_data.copy()
+            order_info[field_name]["direction"] = field_direction
+            order_info[field_name]["weight"] = ordering[field]
 
+        #self._say("ORDER INFO #1: {0}".format(order_info))
+
+        # Populate Order Info
+        for field_name in order_info.keys():
+            field_data = order_info[field_name]
+            _min, _max, _sum, _avg = self._get_min_max_sum_avg_for_items(items, field_name)
+            field_data["min"] = _min
+            field_data["max"] = _max
+
+        # for item in items:
+        #     item: Item
+        #     for field_name in order_info.keys():
+        #         field_data = order_info[field_name]
+        #         try:
+        #             field_value = round(float(item.get(field_name, None)), 3)
+        #         except ValueError:
+        #             field_value = None
+        #         except TypeError:
+        #             field_value = None
+        #
+        #         # Min
+        #         if field_value is not None and field_value < field_data["min"]:
+        #             field_data["min"] = field_value
+        #
+        #         # Max
+        #         if field_value is not None and field_value > field_data["max"]:
+        #             field_data["max"] = field_value
+
+        #self._say("ORDER INFO #2: {0}".format(order_info))
+
+        # Remove bad items from Order Info
+        # bad_oi = [field for field in order_info if
+        #           order_info[field]["min"] == default_field_data["min"] and
+        #           order_info[field]["max"] == default_field_data["max"]
+        #           ]
+        # for field in bad_oi: del order_info[field]
+
+        #self._say("ORDER INFO #3: {0}".format(order_info))
+
+        # Calculate other values in Order Info
+        for field_name in order_info.keys():
+            field_data = order_info[field_name]
+            field_data["delta"] = field_data["max"] - field_data["min"]
+            field_data["step"] = round(100 / field_data["delta"], 3)
 
         self._say("ORDER INFO: {0}".format(order_info))
+        # {'bpm': {'min': 90.0, 'max': 99.0, 'delta': 9.0, 'step': 11.111,
+        # 'direction': '+', 'weight': 88}, ...
 
-        #df = pd.DataFrame(data=items)
-        #df["bpm"].min()
-        #print(df)
-
-
+        # Score the library items
         for item in items:
             item: Item
-            score = {}
-            score["bpm"] = 77
-            score["year"] = 22
-            item["score"] = score
+            item["ordering_score"] = 0
+            item["ordering_info"] = {}
+            for field_name in order_info.keys():
+                field_data = order_info[field_name]
+                try:
+                    field_value = round(float(item.get(field_name, None)), 3)
+                except ValueError:
+                    field_value = None
+                except TypeError:
+                    field_value = None
 
+                if field_value is None:
+                    # Make up average value
+                    field_value = round(field_data["delta"] / 2, 3)
+
+                distance_from_min = round(field_value - field_data["min"], 3)
+
+                # This is linear (we could some day use different models)
+                # field_score should always be between 0 and 100
+                field_score = round(distance_from_min * field_data["step"], 3)
+                field_score = field_score if field_score > 0 else 0
+                field_score = field_score if field_score < 100 else 100
+
+                weighted_field_score = round(field_data["weight"] * field_score / 100, 3)
+                if field_data["direction"] == "-":
+                    weighted_field_score *= -1
+
+                item["ordering_score"] = round(
+                    item["ordering_score"] + weighted_field_score, 3)
+
+
+                item["ordering_info"][field_name] = {
+                    "dist": distance_from_min,
+                    "fld_score": field_score,
+                    "wfld_score": weighted_field_score
+                }
 
     def _retrieve_library_items(self, training: Subview):
         """Return all items that match the query
@@ -338,16 +480,17 @@ class GoingRunningCommand(Subcommand):
 
         return self.lib.items(query)
 
-    def display_library_items(self, items):
+    def display_library_items(self, items, fields):
+        fmt = ""
+        for field in fields:
+            fmt += "[{0}:{{{0}}}]".format(field)
+
         for item in items:
-            self._say("[bpm:{0}][length:{1}][year:{2}][score:{3}]"
-                      " {4} ::: {5}".format(
-                int(item.get("bpm")),
-                int(item.get("length")),
-                item.get("year"),
-                item.get("score"),
-                item.get("artist"),
-                item.get("title")))
+            kwargs = {}
+            for field in fields:
+                kwargs[field] = item[field]
+
+            self._say(fmt.format(**kwargs))
 
     def list_trainings(self):
         """

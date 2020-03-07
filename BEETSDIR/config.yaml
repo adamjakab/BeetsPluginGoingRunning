@@ -46,14 +46,15 @@ goingrunning:
   trainings:
     song_bpm: [11, 22]
     halfmarathon:
-      alias: "Born to run"
-      song_bpm: [90, 99]
-      song_len: [120, 150]
+      alias: "Born to run----------------------------HALF"
+      song_bpm: [90, 150]
+      song_len: [120, 300]
       ordering:
-        bpm+: 50
         year+: 75
-      duration: 30
-      target: test
+        bpm+: 50
+        mood_aggressive+: 50
+      duration: 60
+      #target: SONY
     10K:
       alias: "Non mollare mai!"
       song_bpm: [155, 175]

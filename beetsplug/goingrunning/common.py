@@ -65,6 +65,7 @@ def get_duration_of_items(items):
     return total_time
 
 
+
 def get_randomized_items(items, duration_min):
     """ This randomization and limiting to duration_min is very basic
     @todo: after randomization select songs to be as close as possible to the duration_min (+-5seconds)
