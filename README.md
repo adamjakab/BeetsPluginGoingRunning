@@ -6,22 +6,22 @@
 
 *A [beets](https://github.com/beetbox/beets) plugin for insane obsessive-compulsive music geeks.*
 
-The *beets-goingrunning* plugin is for runners. It lets you configure different training activities by filtering 
-songs based on their speed(bpm) and duration and attempts to create a list of songs for that training.
+The *beets-goingrunning* plugin is for obsessive-compulsive music geek runners. It lets you configure different training activities by filtering 
+songs based on their speed(bpm) and duration (or any other queries) and attempts to generate a list of songs for that training.
 
 ## Introduction
 
 To use this plugin at its best and to benefit the most from your library, you will need to make sure that you have
 bpm information on all of your songs. Since this plugin uses the bpm information to select songs, the songs with bpm=0 will be ignored (check with `beet ls bpm:0`). If you have many you should update them. There are two ways:
 
-1) use the built-in [acousticbrainz plugin](https://beets.readthedocs.io/en/stable/plugins/acousticbrainz.html) to fetch
-the bpm information for your songs. It does a lot for well know songs but my library was still 30% uncovered after a full scan
+1) Use the built-in [acousticbrainz plugin](https://beets.readthedocs.io/en/stable/plugins/acousticbrainz.html) to fetch
+the bpm information for your songs. It does a lot for well know songs but my library was still 30% uncovered after a full scan.
 
 2) Use the [bpmanalyser plugin](https://github.com/adamjakab/BeetsPluginBpmAnalyser). This will scan your songs and calculate
 the tempo (bpm) value for them. If you have a big collection it might take a while, but you can potentially end up with 
 100% coverage.
 
-The following explains how to use the *beets-goingrunning* plugin. If something is not clear please use the Issue tracker. Also, if there is a feature not present, please check the [roadmap](./ROADMAP.md) document to check if it is planned. If not, create a feature request in the Issue tracker. 
+The following explains how to use the *beets-goingrunning* plugin. If something is not clear please use the Issue tracker. Also, if there is a feature not present, please check in the [roadmap](./docs/ROADMAP.md) if it is planned. If not, create a feature request in the Issue tracker. 
 
 
 ## Installation
@@ -46,13 +46,15 @@ Check if plugin is loaded with `beet version`. It should list 'goingrunning' amo
 
 Invoke the plugin as:
 
-    $ beet goingrunning training_name [-lcq] [QUERY...]
+    $ beet goingrunning training [options] [QUERY...]
     
 The following switches are available:
 
 **--list [-l]**: List all the configured trainings with their attributes. With this switch you do not enter the name of the training, just `beet goingrunning --list`
 
 **--count [-c]**: Count the number of songs available for a specific training. With `beet goingrunning longrun --count` you can see how many of your songs there are in your library that fit your specs.
+
+**--dry-run [-r]**: Only display what would be done without actually making changes to the file system. 
 
 **--quiet [-q]**: Do not display any output from the command.
 
@@ -62,11 +64,15 @@ The following switches are available:
 Your default configuration is:
 ```yaml
 goingrunning:
-    song_bpm: [90, 150]
-    song_len: [90, 240]
+    query:
+      bpm: 90..150
+      length: 90..240
+    ordering:
+      year+: 100
+      bpm+: 100
     duration: 60
     targets: []
-    target: no
+    target: none
     clean_target: no
 ```
 
@@ -88,14 +94,13 @@ goingrunning:
     # [...]
 ```
 
-- **Trainings** are not much more than named queries into your library. They have two main attributes (`song_bpm` and `song_len`) by which the plugin will decide which songs to chose and a `duration` element (expressed in minutes) used for limiting the number of songs selected. The `song_bpm` and `song_len` attributes have two numbers which indicate the lower and the higher limit of that attribute. A training can optionally declare the `target` and other attributes to override those present at root level (directly under the `goingrunning` key).
+- **Trainings** are stored named queries into your library. They have two main attributes (`query` and `ordering`) by which the plugin will decide which songs to chose and in what order to put them. The `duration` attribute (expressed in minutes) is used for limiting the number of songs selected. The keys under `query` and `ordering` are the same as you would use them on the command line. A training can optionally declare the `target` and other attributes to override those present at root level (directly under the `goingrunning` key).
 
 A common configuration section will look something like this:
 
 ```yaml
 goingrunning:
     # [...]
-    clean_target: no
     target: my_player_1
     targets:
         my_player_1:
@@ -110,12 +115,14 @@ goingrunning:
                 - STDBSTR.DAT
     trainings:
         longrun: 
-            song_bpm: [120, 150]
-            song_len: [120, 600]
+            query:
+              bpm: 90..150
+              length: 90..240
             duration: 90
         10K: 
-            song_bpm: [150, 180]
-            song_len: [120, 240]
+            query:
+              bpm: 150..180
+              length: 120..240
             duration: 90
             target: my_other_player
     # [...]
@@ -144,7 +151,11 @@ Show all the configured trainings:
 
     $ beet goingrunning --list
     
-Copy your songs to your target based on the `longrun` training:
+Check what the `longrun` training would do:
+
+    $ beet goingrunning longrun --dry-run
+    
+Now do it! Copy your songs to your target based on the `longrun` training:
 
     $ beet goingrunning longrun
     

@@ -396,7 +396,7 @@ class GoingRunningCommand(Subcommand):
             field_data["delta"] = field_data["max"] - field_data["min"]
             field_data["step"] = round(100 / field_data["delta"], 3)
 
-        self._say("ORDER INFO: {0}".format(order_info))
+        # self._say("ORDER INFO: {0}".format(order_info))
         # {'bpm': {'min': 90.0, 'max': 99.0, 'delta': 9.0, 'step': 11.111,
         # 'direction': '+', 'weight': 88}, ...
 

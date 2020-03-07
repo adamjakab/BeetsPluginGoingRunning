@@ -60,7 +60,6 @@ goingrunning:
         year+: 75
         bpm+: 50
         mood_aggressive+: 50
-        artist+: 50
       duration: 60
       #target: SONY
     10K:
