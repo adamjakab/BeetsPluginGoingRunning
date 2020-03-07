@@ -480,8 +480,10 @@ class GoingRunningCommand(Subcommand):
                     fld_val = item[field]
 
                 kwargs[field] = fld_val
-
-            self._say(fmt.format(**kwargs))
+            try:
+                self._say(fmt.format(**kwargs))
+            except IndexError:
+                pass
 
     def list_trainings(self):
         """
