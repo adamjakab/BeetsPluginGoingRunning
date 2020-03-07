@@ -5,11 +5,9 @@
 #  License: See LICENSE.txt
 #
 
-
 import logging
 from beets import config as beets_global_config
 from beets.util.confit import Subview
-from collections import OrderedDict
 from beets.random import random_objs
 
 MUST_HAVE_TRAINING_KEYS = ['song_bpm', 'song_len', 'duration', 'target']
@@ -65,15 +63,15 @@ def get_duration_of_items(items):
     return total_time
 
 
-
 def get_randomized_items(items, duration_min):
     """ This randomization and limiting to duration_min is very basic
-    @todo: after randomization select songs to be as close as possible to the duration_min (+-5seconds)
+    @todo: after randomization select songs to be as close as possible to the
+    duration_min (+-5seconds)
     """
     r_limit = 1
     r_time_minutes = duration_min
     r_equal_chance = True
-    rnd_items = random_objs(list(items), False, r_limit, r_time_minutes, r_equal_chance)
+    rnd_items = random_objs(list(items), False, r_limit, r_time_minutes,
+                            r_equal_chance)
 
     return rnd_items
-

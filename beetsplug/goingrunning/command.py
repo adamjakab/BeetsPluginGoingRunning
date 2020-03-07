@@ -4,7 +4,7 @@
 #  Created: 2/19/20, 11:32 AM
 #  License: See LICENSE.txt
 #
-import json
+
 import operator
 import random
 import os
@@ -15,10 +15,11 @@ from pathlib import Path
 from shutil import copyfile
 from glob import glob
 from beets.dbcore.db import Results
-from beets.dbcore.types import Integer, Float
 from beets.library import Library as BeatsLibrary, Item
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
+
+# from beets.dbcore.types import Integer, Float
 # import pandas as pd
 
 from beetsplug.goingrunning import common as GRC
@@ -84,7 +85,9 @@ class GoingRunningCommand(Subcommand):
 
         # You must either pass a training name or request listing
         if len(self.query) < 1 and not options.list:
-            self.log.warning("You can either pass the name of a training or request a listing (--list)!")
+            self.log.warning(
+                "You can either pass the name of a training or request a "
+                "listing (--list)!")
             self.parser.print_help()
             return
 
@@ -98,7 +101,9 @@ class GoingRunningCommand(Subcommand):
 
         training: Subview = self.config["trainings"][training_name]
         if not training.exists():
-            self._say("There is no training[{0}] registered with this name!".format(training_name))
+            self._say(
+                "There is no training[{0}] registered with this name!".format(
+                    training_name))
             return
 
         # Get the library items
@@ -113,7 +118,8 @@ class GoingRunningCommand(Subcommand):
 
         # Check count
         if len(lib_items) < 1:
-            self._say("There are no songs in your library that match this training!")
+            self._say(
+                "There are no songs in your library that match this training!")
             return
 
         # 1) order items by scoring system (need ordering in config)
@@ -121,23 +127,24 @@ class GoingRunningCommand(Subcommand):
         sorted_lib_items = sorted(lib_items,
                                   key=operator.attrgetter('ordering_score'))
 
-       # 2) select random items n from the ordered list(T=length) - by
+        # 2) select random items n from the ordered list(T=length) - by
         # chosing n times song from the remaining songs between 1 and m
         # where m = T/n
         duration = GRC.get_config_value_bubble_up(training, "duration")
-        #sel_items = GRC.get_randomized_items(lib_items, duration)
+        # sel_items = GRC.get_randomized_items(lib_items, duration)
         sel_items = self._get_items_for_duration(sorted_lib_items, duration)
 
-
         total_time = GRC.get_duration_of_items(sel_items)
-        # @todo: check if total time is close to duration - (config might be too restrictive or too few songs)
+        # @todo: check if total time is close to duration - (config might be
+        #  too restrictive or too few songs)
 
         # Verify target device path path
         if not self._get_destination_path_for_training(training):
             return
 
         # Show some info
-        self._say("Training duration: {0}".format(GRC.get_human_readable_time(duration * 60)))
+        self._say("Training duration: {0}".format(
+            GRC.get_human_readable_time(duration * 60)))
         self._say("Selected song duration: {}".format(
             GRC.get_human_readable_time(total_time)))
         self._say("Number of songs available: {}".format(len(lib_items)))
@@ -168,15 +175,18 @@ class GoingRunningCommand(Subcommand):
             song_extensions = ["mp3", "mp4", "flac", "wav"]
             target_file_list = []
             for ext in song_extensions:
-                target_file_list += glob(os.path.join(dst_path, "*.{}".format(ext)))
+                target_file_list += glob(
+                    os.path.join(dst_path, "*.{}".format(ext)))
 
             for f in target_file_list:
                 self.log.debug("Deleting: {}".format(f))
                 os.remove(f)
 
-        additional_files = self._get_target_attribute_for_training(training, "delete_from_device")
+        additional_files = self._get_target_attribute_for_training(training,
+                                                                   "delete_from_device")
         if additional_files and len(additional_files) > 0:
-            root = self._get_target_attribute_for_training(training, "device_root")
+            root = self._get_target_attribute_for_training(training,
+                                                           "device_root")
             root = Path(root).expanduser()
 
             self._say("Deleting additional files: {0}".format(additional_files))
@@ -193,8 +203,6 @@ class GoingRunningCommand(Subcommand):
                 self.log.debug("Deleting: {}".format(dst_path))
                 os.remove(dst_path)
 
-
-
     def _copy_items_to_target(self, training: Subview, rnd_items):
         target_name = GRC.get_config_value_bubble_up(training, "target")
         dst_path = self._get_destination_path_for_training(training)
@@ -208,26 +216,30 @@ class GoingRunningCommand(Subcommand):
         for item in rnd_items:
             src = os.path.realpath(item.get("path").decode("utf-8"))
             fn, ext = os.path.splitext(src)
-            gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6), random_string(), ext)
+            gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6),
+                                               random_string(), ext)
             dst = "{0}/{1}".format(dst_path, gen_filename)
             self.log.debug("Copying[{1}]: {0}".format(src, gen_filename))
             copyfile(src, dst)
             cnt += 1
 
-    def _get_target_for_training(self,  training: Subview):
+    def _get_target_for_training(self, training: Subview):
         target_name = GRC.get_config_value_bubble_up(training, "target")
         self.log.debug("Finding target: {0}".format(target_name))
         target: Subview = self.config["targets"][target_name]
 
         if not target.exists():
-            self._say("The target name[{0}] is not defined!".format(target_name))
+            self._say(
+                "The target name[{0}] is not defined!".format(target_name))
             return
 
         return target
 
-    def _get_target_attribute_for_training(self, training: Subview, attrib: str = "name"):
+    def _get_target_attribute_for_training(self, training: Subview,
+                                           attrib: str = "name"):
         target_name = GRC.get_config_value_bubble_up(training, "target")
-        self.log.debug("Getting attribute[{0}] for target: {1}".format(attrib, target_name))
+        self.log.debug("Getting attribute[{0}] for target: {1}".format(attrib,
+                                                                       target_name))
         target = self._get_target_for_training(training)
         if not target:
             return
@@ -257,7 +269,9 @@ class GoingRunningCommand(Subcommand):
         path = path or ""
 
         if not root:
-            self._say("The target[{0}] does not declare a device root path.".format(target_name))
+            self._say(
+                "The target[{0}] does not declare a device root path.".format(
+                    target_name))
             return
 
         root = Path(root).expanduser()
@@ -283,11 +297,10 @@ class GoingRunningCommand(Subcommand):
         est_num_songs = round(duration * 60 / _avg)
         bin_size = len(items) / est_num_songs
 
-
         self._say("Estimated number of songs: {}".format(est_num_songs))
         self._say("Bin Size: {}".format(bin_size))
 
-        for i in range (0, est_num_songs):
+        for i in range(0, est_num_songs):
             bin_start = round(i * bin_size)
             bin_end = round(bin_start + bin_size)
             song_index = random.randint(bin_start, bin_end)
@@ -354,12 +367,13 @@ class GoingRunningCommand(Subcommand):
             order_info[field_name]["direction"] = field_direction
             order_info[field_name]["weight"] = ordering[field]
 
-        #self._say("ORDER INFO #1: {0}".format(order_info))
+        # self._say("ORDER INFO #1: {0}".format(order_info))
 
         # Populate Order Info
         for field_name in order_info.keys():
             field_data = order_info[field_name]
-            _min, _max, _sum, _avg = self._get_min_max_sum_avg_for_items(items, field_name)
+            _min, _max, _sum, _avg = self._get_min_max_sum_avg_for_items(items,
+                                                                         field_name)
             field_data["min"] = _min
             field_data["max"] = _max
 
@@ -375,14 +389,16 @@ class GoingRunningCommand(Subcommand):
         #             field_value = None
         #
         #         # Min
-        #         if field_value is not None and field_value < field_data["min"]:
+        #         if field_value is not None and field_value < field_data[
+        #         "min"]:
         #             field_data["min"] = field_value
         #
         #         # Max
-        #         if field_value is not None and field_value > field_data["max"]:
+        #         if field_value is not None and field_value > field_data[
+        #         "max"]:
         #             field_data["max"] = field_value
 
-        #self._say("ORDER INFO #2: {0}".format(order_info))
+        # self._say("ORDER INFO #2: {0}".format(order_info))
 
         # Remove bad items from Order Info
         # bad_oi = [field for field in order_info if
@@ -391,7 +407,7 @@ class GoingRunningCommand(Subcommand):
         #           ]
         # for field in bad_oi: del order_info[field]
 
-        #self._say("ORDER INFO #3: {0}".format(order_info))
+        # self._say("ORDER INFO #3: {0}".format(order_info))
 
         # Calculate other values in Order Info
         for field_name in order_info.keys():
@@ -429,13 +445,13 @@ class GoingRunningCommand(Subcommand):
                 field_score = field_score if field_score > 0 else 0
                 field_score = field_score if field_score < 100 else 100
 
-                weighted_field_score = round(field_data["weight"] * field_score / 100, 3)
+                weighted_field_score = round(
+                    field_data["weight"] * field_score / 100, 3)
                 if field_data["direction"] == "-":
                     weighted_field_score *= -1
 
                 item["ordering_score"] = round(
                     item["ordering_score"] + weighted_field_score, 3)
-
 
                 item["ordering_info"][field_name] = {
                     "dist": distance_from_min,
@@ -497,7 +513,8 @@ class GoingRunningCommand(Subcommand):
         # @todo: order keys
         :return: void
         """
-        if not self.config["trainings"].exists() or len(self.config["trainings"].keys()) == 0:
+        if not self.config["trainings"].exists() or len(
+                self.config["trainings"].keys()) == 0:
             self._say("You have not created any trainings yet.")
             return
 
@@ -509,7 +526,8 @@ class GoingRunningCommand(Subcommand):
     def list_training_attributes(self, training_name: str):
         """
         @todo: Explain keys
-        @todo: "target" is a special case and the value from targets (paths) should also be shown
+        @todo: "target" is a special case and the value from targets (paths)
+        should also be shown
         :param training_name:
         :return: void
         """
@@ -517,7 +535,8 @@ class GoingRunningCommand(Subcommand):
         if target.exists() and isinstance(target.get(), dict):
             training_keys = target.keys()
             self._say("{0} ::: {1}".format("=" * 40, training_name))
-            training_keys = list(set(GRC.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
+            training_keys = list(
+                set(GRC.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
             training_keys.sort()
             for tkey in training_keys:
                 tval = GRC.get_config_value_bubble_up(target, tkey)

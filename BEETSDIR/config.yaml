@@ -47,13 +47,15 @@ goingrunning:
     song_bpm: [11, 22]
     halfmarathon:
       alias: "Born to run----------------------------HALF"
-      song_bpm: [90, 150]
-      song_len: [120, 300]
+      query:
+        bpm: 90..150
+        length: 120..300
+        year: 1900..1970
       ordering:
         year+: 75
         bpm+: 50
         mood_aggressive+: 50
-      duration: 60
+      duration: 10
       #target: SONY
     10K:
       alias: "Non mollare mai!"
