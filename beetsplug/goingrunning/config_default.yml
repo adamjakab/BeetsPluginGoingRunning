@@ -1,7 +1,10 @@
-song_bpm: [90, 150]
-song_len: [90, 240]
+query:
+  bpm: 90..150
+  length: 90..240
+ordering:
+  year+: 100
+  bpm+: 100
 duration: 60
 targets: {}
 trainings: {}
-target: no
-clean_target: no
+target: none

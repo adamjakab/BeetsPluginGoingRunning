@@ -304,8 +304,10 @@ class GoingRunningCommand(Subcommand):
             bin_start = round(i * bin_size)
             bin_end = round(bin_start + bin_size)
             song_index = random.randint(bin_start, bin_end)
-            item = items[song_index]
-            selected.append(item)
+            try:
+                selected.append(items[song_index])
+            except IndexError:
+                pass
 
         return selected
 
@@ -341,13 +343,12 @@ class GoingRunningCommand(Subcommand):
         return _min, _max, _sum, _avg
 
     def _score_library_items(self, training: Subview, items):
-        target_name = GRC.get_config_value_bubble_up(training, "target")
-        if not training["ordering"].exists() \
-                and len(training["ordering"].keys()) > 0:
-            return
-
-        ordering = training["ordering"].get()
-        fields = list(ordering.keys())
+        ordering = {}
+        fields = []
+        if training["ordering"].exists() and len(
+                training["ordering"].keys()) > 0:
+            ordering = training["ordering"].get()
+            fields = list(ordering.keys())
 
         default_field_data = {
             "min": 99999999.9,
@@ -377,29 +378,9 @@ class GoingRunningCommand(Subcommand):
             field_data["min"] = _min
             field_data["max"] = _max
 
-        # for item in items:
-        #     item: Item
-        #     for field_name in order_info.keys():
-        #         field_data = order_info[field_name]
-        #         try:
-        #             field_value = round(float(item.get(field_name, None)), 3)
-        #         except ValueError:
-        #             field_value = None
-        #         except TypeError:
-        #             field_value = None
-        #
-        #         # Min
-        #         if field_value is not None and field_value < field_data[
-        #         "min"]:
-        #             field_data["min"] = field_value
-        #
-        #         # Max
-        #         if field_value is not None and field_value > field_data[
-        #         "max"]:
-        #             field_data["max"] = field_value
-
         # self._say("ORDER INFO #2: {0}".format(order_info))
 
+        # todo: this will not work anymore - find a better way
         # Remove bad items from Order Info
         # bad_oi = [field for field in order_info if
         #           order_info[field]["min"] == default_field_data["min"] and
@@ -460,39 +441,29 @@ class GoingRunningCommand(Subcommand):
                 }
 
     def _retrieve_library_items(self, training: Subview):
-        """Return all items that match the query
-
-        :param training: Subview
-        :return: Results
+        """Return all items that match the query defined on the training and
+        additionally on the command line
         """
-        query = []
+        query_items = {}
 
-        # Filter command line queries
-        reserved_fields = ["bpm", "length"]
-        self._say("Q: {}".format(self.query))
+        # Query defined by the training
+        # USE: GRC.get_config_value_bubble_up(training, "query")
+        if training["query"].exists() and len(training["query"].keys()) > 0:
+            training_query = training["query"].get()
+            for tq in training_query.keys():
+                query_items[tq] = training_query[tq]
+
+        # Query passed on command line
         while self.query:
-            el = self.query.pop(0)
-            el_ok = True
-            for reserved_field in reserved_fields:
-                reserved_field = reserved_field + ":"
-                if reserved_field == el[:len(reserved_field)]:
-                    el_ok = False
-            if el_ok:
-                query.append(el)
-            else:
-                self.log.debug("removing reserved filter: {}".format(el))
+            qel: str = self.query.pop(0)
+            qk, qv = qel.split(":", maxsplit=1)
+            query_items[qk] = qv
 
-        # Add BPM query
-        song_bpm = GRC.get_config_value_bubble_up(training, "song_bpm")
-        query_element = "bpm:{0}..{1}".format(song_bpm[0], song_bpm[1])
-        query.append(query_element)
+        query = []
+        for tq in query_items:
+            query.append("{0}:{1}".format(tq, query_items[tq]))
 
-        # Add Length query
-        song_len = GRC.get_config_value_bubble_up(training, "song_len")
-        query_element = "length:{0}..{1}".format(song_len[0], song_len[1])
-        query.append(query_element)
-
-        self.log.debug("final song selection query: {}".format(query))
+        self.log.debug("Song selection query: {}".format(query))
 
         return self.lib.items(query)
 
