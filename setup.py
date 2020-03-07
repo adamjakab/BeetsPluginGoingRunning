@@ -7,6 +7,7 @@
 
 import pathlib
 from setuptools import setup
+from distutils.util import convert_path
 
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent
@@ -14,10 +15,15 @@ HERE = pathlib.Path(__file__).parent
 # The text of the README file
 README = (HERE / "README.md").read_text()
 
+main_ns = {}
+ver_path = convert_path('beetsplug/goingrunning/version.py')
+with open(ver_path) as ver_file:
+    exec(ver_file.read(), main_ns)
+
 # Setup
 setup(
     name='beets-goingrunning',
-    version='1.1.0',
+    version=main_ns['__version__'],
     description='A beets plugin for creating and exporting songs matching '
                 'your running session.',
     author='Adam Jakab',
