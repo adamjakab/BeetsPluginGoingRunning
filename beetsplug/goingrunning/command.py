@@ -475,7 +475,11 @@ class GoingRunningCommand(Subcommand):
         for item in items:
             kwargs = {}
             for field in fields:
-                kwargs[field] = item[field]
+                fld_val = None
+                if hasattr(item, field):
+                    fld_val = item[field]
+
+                kwargs[field] = fld_val
 
             self._say(fmt.format(**kwargs))
 
