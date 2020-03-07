@@ -151,8 +151,9 @@ class GoingRunningCommand(Subcommand):
         self._say("Number of songs selected: {}".format(len(sel_items)))
 
         # Show the selected songs and exit
-        flds = ("ordering_score", "bpm", "year", "length", "ordering_info",
-                "artist")
+        # flds = ("ordering_score", "bpm", "year", "length", "ordering_info",
+        # "artist", "title")
+        flds = ("bpm", "year", "length", "artist", "title")
         # self.display_library_items(sorted_lib_items, flds)
         # self._say("="*80)
         self.display_library_items(sel_items, flds)
