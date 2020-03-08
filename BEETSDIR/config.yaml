@@ -62,23 +62,3 @@ goingrunning:
         mood_aggressive+: 50
       duration: 60
       #target: SONY
-    10K:
-      alias: "Non mollare mai!"
-      query:
-        bpm: 155..175
-        length: 120..300
-      duration: 60
-      target: SONY
-    strides-1k:
-      # Segments will be implemented in some future version
-      segments:
-        - duration: 15
-          query:
-            bpm: 160..180
-            length: 120..240
-        - duration: 5
-          query:
-            bpm: 100..140
-            length: 120..300
-      repeat_segments: 5
-
