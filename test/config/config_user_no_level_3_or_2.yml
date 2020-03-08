@@ -4,11 +4,14 @@
 # values from "trainings" level are missing. So "root" level values should be applied.
 
 goingrunning:
-  song_bpm: [0, 999]
-  song_len: [0, 999]
+  query:
+    bpm: 0..999
+    length: 0..999
+  ordering:
+    year+: 100
+    bpm+: 100]
   duration: 120
   target: drive_1
-  clean_target: true
   targets:
     drive_1:
       device_root: ~/Music/

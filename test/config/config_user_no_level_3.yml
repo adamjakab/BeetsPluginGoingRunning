@@ -4,11 +4,14 @@
 # values from "trainings" should be applied.
 
 goingrunning:
-  song_bpm: [0, 999]
-  song_len: [0, 999]
+  query:
+    bpm: 0..999
+    length: 0..999
+  ordering:
+    year+: 100
+    bpm+: 100
   duration: 120
   target: drive_1
-  clean_target: true
   targets:
     drive_1:
       device_root: ~/Music/
@@ -17,8 +20,12 @@ goingrunning:
     drive_3:
       device_root: /media/Storage
   trainings:
-    song_bpm: [50, 200]
-    song_len: [30, 600]
+    query:
+      bpm: 150..200
+      length: 30..600
+    ordering:
+      year+: 100
+      bpm+: 100
     duration: 60
     target: drive_2
     training-1:
