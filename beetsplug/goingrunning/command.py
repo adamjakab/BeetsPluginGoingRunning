@@ -216,6 +216,11 @@ class GoingRunningCommand(Subcommand):
         cnt = 0
         for item in rnd_items:
             src = os.path.realpath(item.get("path").decode("utf-8"))
+            if not os.path.isfile(src):
+                # todo: this is bad enough to interrupt! create option for this
+                self.log.warning("File does not exist: {}".format(src))
+                continue
+
             fn, ext = os.path.splitext(src)
             gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6),
                                                random_string(), ext)
@@ -464,7 +469,7 @@ class GoingRunningCommand(Subcommand):
         for tq in query_items:
             query.append("{0}:{1}".format(tq, query_items[tq]))
 
-        self.log.debug("Song selection query: {}".format(query))
+        self._say("Song selection query: {}".format(query))
 
         return self.lib.items(query)
 
