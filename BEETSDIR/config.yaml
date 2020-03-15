@@ -54,9 +54,8 @@ goingrunning:
         length: 120..300
         year: 1990..2020
       ordering:
-        # todo: get rid of "+" sign in the keys and use -100..100 values for direction
-        year+: 75
-        bpm+: 50
-        mood_aggressive+: 50
+        year: -100
+        #bpm: 50
+        #mood_aggressive: 50
       duration: 60
       #target: SONY

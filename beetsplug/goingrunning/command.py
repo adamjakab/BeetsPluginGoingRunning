@@ -348,8 +348,7 @@ class GoingRunningCommand(Subcommand):
     def _score_library_items(self, training: Subview, items):
         ordering = {}
         fields = []
-        if training["ordering"].exists() and len(
-                training["ordering"].keys()) > 0:
+        if training["ordering"].exists() and len(training["ordering"].keys()) > 0:
             ordering = training["ordering"].get()
             fields = list(ordering.keys())
 
@@ -358,17 +357,14 @@ class GoingRunningCommand(Subcommand):
             "max": 0.0,
             "delta": 0.0,
             "step": 0.0,
-            "direction": "+",
             "weight": 100
         }
 
         # Build Order Info
         order_info = {}
         for field in fields:
-            field_name = field.strip("+-")
-            field_direction = field.strip(field_name)
+            field_name = field.strip()
             order_info[field_name] = default_field_data.copy()
-            order_info[field_name]["direction"] = field_direction
             order_info[field_name]["weight"] = ordering[field]
 
         # self._say("ORDER INFO #1: {0}".format(order_info))
@@ -400,8 +396,6 @@ class GoingRunningCommand(Subcommand):
             field_data["step"] = round(100 / field_data["delta"], 3)
 
         # self._say("ORDER INFO: {0}".format(order_info))
-        # {'bpm': {'min': 90.0, 'max': 99.0, 'delta': 9.0, 'step': 11.111,
-        # 'direction': '+', 'weight': 88}, ...
 
         # Score the library items
         for item in items:
@@ -431,8 +425,6 @@ class GoingRunningCommand(Subcommand):
 
                 weighted_field_score = round(
                     field_data["weight"] * field_score / 100, 3)
-                if field_data["direction"] == "-":
-                    weighted_field_score *= -1
 
                 item["ordering_score"] = round(
                     item["ordering_score"] + weighted_field_score, 3)
