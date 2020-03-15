@@ -19,10 +19,12 @@ from beets.library import Library as BeatsLibrary, Item
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
 
-# from beets.dbcore.types import Integer, Float
-# import pandas as pd
-
 from beetsplug.goingrunning import common as GRC
+
+# The plugin
+__PLUGIN_NAME__ = u'goingrunning'
+__PLUGIN_SHORT_NAME__ = u'gr'
+__PLUGIN_SHORT_DESCRIPTION__ = u'run with the music that matches your training sessions'
 
 
 class GoingRunningCommand(Subcommand):
@@ -60,8 +62,6 @@ class GoingRunningCommand(Subcommand):
             help=u'Do not delete/copy any songs. Just show what would be done'
         )
 
-        # @todo: add dry-run option
-
         self.parser.add_option(
             '-q', '--quiet',
             action='store_true', dest='quiet', default=False,
@@ -71,8 +71,9 @@ class GoingRunningCommand(Subcommand):
         # Keep this at the end
         super(GoingRunningCommand, self).__init__(
             parser=self.parser,
-            name='goingrunning',
-            help=u'bring some music with you that matches your training'
+            name=__PLUGIN_NAME__,
+            help=__PLUGIN_SHORT_DESCRIPTION__,
+            aliases=[__PLUGIN_SHORT_NAME__]
         )
 
     def func(self, lib: BeatsLibrary, options, arguments):
@@ -93,8 +94,9 @@ class GoingRunningCommand(Subcommand):
 
         if options.list:
             self.list_trainings()
-        else:
-            self.handle_training()
+            return
+
+        self.handle_training()
 
     def handle_training(self):
         training_name = self.query.pop(0)
@@ -130,7 +132,7 @@ class GoingRunningCommand(Subcommand):
         # 2) select random items n from the ordered list(T=length) - by
         # chosing n times song from the remaining songs between 1 and m
         # where m = T/n
-        duration = GRC.get_config_value_bubble_up(training, "duration")
+        duration = GRC.get_training_attribute(training, "duration")
         # sel_items = GRC.get_randomized_items(lib_items, duration)
         sel_items = self._get_items_for_duration(sorted_lib_items, duration)
 
@@ -167,7 +169,7 @@ class GoingRunningCommand(Subcommand):
         self._say("Run!")
 
     def _clean_target_path(self, training: Subview):
-        target_name = GRC.get_config_value_bubble_up(training, "target")
+        target_name = GRC.get_training_attribute(training, "target")
 
         if self._get_target_attribute_for_training(training, "clean_target"):
             dst_path = self._get_destination_path_for_training(training)
@@ -205,7 +207,7 @@ class GoingRunningCommand(Subcommand):
                 os.remove(dst_path)
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
-        target_name = GRC.get_config_value_bubble_up(training, "target")
+        target_name = GRC.get_training_attribute(training, "target")
         dst_path = self._get_destination_path_for_training(training)
         self._say("Copying to target[{0}]: {1}".format(target_name, dst_path))
 
@@ -230,20 +232,17 @@ class GoingRunningCommand(Subcommand):
             cnt += 1
 
     def _get_target_for_training(self, training: Subview):
-        target_name = GRC.get_config_value_bubble_up(training, "target")
+        target_name = GRC.get_training_attribute(training, "target")
         self.log.debug("Finding target: {0}".format(target_name))
-        target: Subview = self.config["targets"][target_name]
 
-        if not target.exists():
-            self._say(
-                "The target name[{0}] is not defined!".format(target_name))
+        if not self.config["targets"][target_name].exists():
+            self._say("The target name[{0}] is not defined!".format(target_name))
             return
 
-        return target
+        return self.config["targets"][target_name]
 
-    def _get_target_attribute_for_training(self, training: Subview,
-                                           attrib: str = "name"):
-        target_name = GRC.get_config_value_bubble_up(training, "target")
+    def _get_target_attribute_for_training(self, training: Subview, attrib: str = "name"):
+        target_name = GRC.get_training_attribute(training, "target")
         self.log.debug("Getting attribute[{0}] for target: {1}".format(attrib,
                                                                        target_name))
         target = self._get_target_for_training(training)
@@ -259,17 +258,15 @@ class GoingRunningCommand(Subcommand):
             except NotFoundError:
                 attrib_val = None
         else:
-            attrib_val = GRC.get_config_value_bubble_up(target, attrib)
+            attrib_val = GRC.get_target_attribute(target, attrib)
 
         self.log.debug(
-            "Found target[{0}] attribute[{1}] path: {2}".format(target_name,
-                                                                attrib,
-                                                                attrib_val))
+            "Found target[{0}] attribute[{1}] path: {2}".format(target_name, attrib, attrib_val))
 
         return attrib_val
 
     def _get_destination_path_for_training(self, training: Subview):
-        target_name = GRC.get_config_value_bubble_up(training, "target")
+        target_name = GRC.get_training_attribute(training, "target")
         root = self._get_target_attribute_for_training(training, "device_root")
         path = self._get_target_attribute_for_training(training, "device_path")
         path = path or ""
@@ -453,11 +450,9 @@ class GoingRunningCommand(Subcommand):
         query_items = {}
 
         # Query defined by the training
-        # USE: GRC.get_config_value_bubble_up(training, "query")
-        if training["query"].exists() and len(training["query"].keys()) > 0:
-            training_query = training["query"].get()
-            for tq in training_query.keys():
-                query_items[tq] = training_query[tq]
+        training_query = GRC.get_training_attribute(training, "query")
+        for tq in training_query.keys():
+            query_items[tq] = training_query[tq]
 
         # Query passed on command line
         while self.query:
@@ -496,36 +491,37 @@ class GoingRunningCommand(Subcommand):
         # @todo: order keys
         :return: void
         """
-        if not self.config["trainings"].exists() or len(
-                self.config["trainings"].keys()) == 0:
+        if not self.config["trainings"].exists() or len(self.config["trainings"].keys()) == 0:
             self._say("You have not created any trainings yet.")
             return
 
         self._say("Available trainings:")
-        training_names = list(self.config["trainings"].keys())
+        trainings = list(self.config["trainings"].keys())
+        training_names = [s for s in trainings if s != "fallback"]
         for training_name in training_names:
             self.list_training_attributes(training_name)
 
     def list_training_attributes(self, training_name: str):
-        """
-        @todo: Explain keys
-        @todo: "target" is a special case and the value from targets (paths)
-        should also be shown
-        :param training_name:
-        :return: void
-        """
-        target: Subview = self.config["trainings"][training_name]
-        if target.exists() and isinstance(target.get(), dict):
-            training_keys = target.keys()
-            self._say("{0} ::: {1}".format("=" * 40, training_name))
-            training_keys = list(
-                set(GRC.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
-            training_keys.sort()
-            for tkey in training_keys:
-                tval = GRC.get_config_value_bubble_up(target, tkey)
-                self._say("{0}: {1}".format(tkey, tval))
-        # else:
-        #     self.log.debug("Training[{0}] does not exist.".format(training_name))
+        if not self.config["trainings"].exists() or not self.config["trainings"][training_name].exists():
+            self.log.debug("Training[{0}] does not exist.".format(training_name))
+            return
+
+        training: Subview = self.config["trainings"][training_name]
+        training_keys = training.keys()
+        self._say("{0} ::: {1}".format("=" * 40, training_name))
+
+        training_keys = list(set(GRC.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
+        training_keys.sort()
+
+        for tkey in training_keys:
+            tval = GRC.get_training_attribute(training, tkey)
+            if isinstance(tval, dict):
+                value = []
+                for k in tval:
+                    value.append("{key}({val})".format(key=k, val=tval[k]))
+                tval = ", ".join(value)
+
+            self._say("{0}: {1}".format(tkey, tval))
 
     def _say(self, msg):
         self.log.debug(msg)

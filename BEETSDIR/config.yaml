@@ -17,20 +17,13 @@ plugins:
     - goingrunning
 
 #format_item: "[format:$format][bpm:$bpm] ::: $path"
-format_item: "[bpm:$bpm][length:$length][year:$year] $artist ::: $title"
+format_item: "[bpm:$bpm][gender:$gender][year:$year] $artist ::: $title"
 
 import:
     copy: yes
     autotag: no
 
 goingrunning:
-  query:
-    bpm: 90..160
-  ordering:
-    year+: 100
-    bpm+: 100
-  duration: 120
-  target: test
   # todo: this (clean_target) is dangerous here and should be checked ONLY on the target
   clean_target: no
   targets:
@@ -48,15 +41,20 @@ goingrunning:
         - STDBDATA.DAT
         - STDBSTR.DAT
   trainings:
-    query:
-      bpm: 80..140
+    fallback:
+      alias: FALLBACK
+      query:
+        bpm: 90..140
+      duration: 60
+      target: test
     halfmarathon:
-      alias: "Born to run----------------------------HALF"
+      alias: HM
       query:
         bpm: 130..150
         length: 120..300
         year: 1990..2020
       ordering:
+        # todo: get rid of "+" sign in the keys and use -100..100 values for direction
         year+: 75
         bpm+: 50
         mood_aggressive+: 50

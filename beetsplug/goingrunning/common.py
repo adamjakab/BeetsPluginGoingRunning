@@ -10,7 +10,8 @@ from beets import config as beets_global_config
 from beets.util.confit import Subview
 from beets.random import random_objs
 
-MUST_HAVE_TRAINING_KEYS = ['song_bpm', 'song_len', 'duration', 'target']
+MUST_HAVE_TRAINING_KEYS = ['query', 'duration', 'target']
+MUST_HAVE_TARGET_KEYS = ['device_root', 'device_path']
 
 
 def get_beets_logger():
@@ -27,18 +28,31 @@ def get_human_readable_time(seconds):
     return "%d:%02d:%02d" % (h, m, s)
 
 
+# @deprecated: DO NOT USE THIS NO MORE!
 def get_config_value_bubble_up(cfg_view: Subview, attrib: str):
-    """This method will look for the requested attribute in the provided view
-    all the way up the hierarchy tree until it finds it (or hits the root).
+    return False
+
+
+def get_training_attribute(training: Subview, attrib: str):
+    """Returns the attribute value from "goingrunning.trainings" for the specified training or uses the
+    spacial fallback training configuration.
     """
     value = None
+    if training[attrib].exists():
+        value = training[attrib].get()
+    elif training.name != "goingrunning.trainings.fallback" and training.parent["fallback"].exists():
+        fallback = training.parent["fallback"]
+        value = get_training_attribute(fallback, attrib)
 
-    if cfg_view[attrib].exists():
-        value = cfg_view[attrib].get()
-    else:
-        view_name = cfg_view.name
-        if view_name != "root":
-            value = get_config_value_bubble_up(cfg_view.parent, attrib)
+    return value
+
+
+def get_target_attribute(target: Subview, attrib: str):
+    """Returns the attribute value from "goingrunning.targets" for the specified target.
+    """
+    value = None
+    if target[attrib].exists():
+        value = target[attrib].get()
 
     return value
 
