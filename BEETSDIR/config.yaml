@@ -17,7 +17,7 @@ plugins:
     - goingrunning
 
 #format_item: "[format:$format][bpm:$bpm] ::: $path"
-format_item: "[MA:$mood_aggressive][bpm:$bpm][gender:$gender][year:$year] $artist ::: $title"
+format_item: "[MA:$mood_aggressive][bpm:$bpm][gender:$gender][year:$year][genre:$genre] $artist ::: $title"
 
 import:
     copy: yes
@@ -49,8 +49,8 @@ goingrunning:
       target: test
     test:
       query:
-        artist: "ZZ TOP"
-        mood_aggressive: 0.4..09
+      #artist: "Bob"
+      use_flavours: [chillout, sunshine]
       duration: 30
     halfmarathon:
       alias: HM
@@ -60,7 +60,10 @@ goingrunning:
         mood_aggressive: 0.3..0.7
       ordering:
         year: 100
-        #bpm: 50
-        #mood_aggressive: 50
       duration: 60
-      #target: SONY
+  flavours:
+    sunshine:
+      ^genre: Reggae
+    chillout:
+      bpm: 1..120
+      mood_happy: 0.5..0.99

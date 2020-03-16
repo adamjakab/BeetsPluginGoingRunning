@@ -35,9 +35,28 @@ def get_human_readable_time(seconds):
     return "%d:%02d:%02d" % (h, m, s)
 
 
+def get_beet_query_formatted_string(key, val):
+    quote_val = type(val) == str and " " in val
+    fmt = "{k}:'{v}'" if quote_val else "{k}:{v}"
+    return fmt.format(k=key, v=val)
+
+
 # @deprecated: DO NOT USE THIS NO MORE!
 def get_config_value_bubble_up(cfg_view: Subview, attrib: str):
-    return False
+    raise DeprecationWarning("Deprecated! Use get_training_attribute!")
+
+
+def get_flavour_elements(flavour: Subview):
+    elements = []
+
+    if not flavour.exists():
+        return elements
+
+    for key in flavour.keys():
+        # todo: in future flavours can have "use_flavours" key to make this recursive
+        elements.append(get_beet_query_formatted_string(key, flavour[key].get()))
+
+    return elements
 
 
 def get_training_attribute(training: Subview, attrib: str):

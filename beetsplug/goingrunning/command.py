@@ -437,17 +437,49 @@ class GoingRunningCommand(Subcommand):
                     "wfld_score": weighted_field_score
                 }
 
-    def _retrieve_library_items(self, training: Subview):
-        full_query = self.query
+    def _gather_query_elements(self, training: Subview):
+        """Order(strongest to weakest): command -> training -> flavours
+        """
+        command_query = self.query
+        training_query = []
+        flavour_query = []
 
         # Append the query elements from the configuration
-        training_config_query = GRC.get_training_attribute(training, "query")
-        if training_config_query:
-            for tqk in training_config_query.keys():
-                tqv = training_config_query.get(tqk)
-                quote_val = " " in tqv
-                fmt = "{k}:'{v}'" if quote_val else "{k}:{v}"
-                full_query.append(fmt.format(k=tqk, v=tqv))
+        tconf = GRC.get_training_attribute(training, "query")
+        if tconf:
+            for key in tconf.keys():
+                training_query.append(GRC.get_beet_query_formatted_string(key, tconf.get(key)))
+
+        # Append the query elements from the flavours defined on the training
+        flavours = GRC.get_training_attribute(training, "use_flavours")
+        if flavours:
+            flavours = [flavours] if type(flavours) == str else flavours
+            for flavour_name in flavours:
+                flavour: Subview = self.config["flavours"][flavour_name]
+                flavour_query += GRC.get_flavour_elements(flavour)
+
+        self.log.debug("Command query elements: {}".format(command_query))
+        self.log.debug("Training query elements: {}".format(training_query))
+        self.log.debug("Flavour query elements: {}".format(flavour_query))
+
+        raw_combined_query = command_query + training_query + flavour_query
+        self.log.debug("Raw combined query elements: {}".format(raw_combined_query))
+
+        # Remove duplicate keys
+        combined_query = []
+        used_keys = []
+        for query_part in raw_combined_query:
+            key = parse_query_part(query_part)[0]
+            if key not in used_keys:
+                used_keys.append(key)
+                combined_query.append(query_part)
+
+        self.log.debug("Clean combined query elements: {}".format(combined_query))
+
+        return combined_query
+
+    def _retrieve_library_items(self, training: Subview):
+        full_query = self._gather_query_elements(training)
 
         # Separate numeric flex attribute queries from the rest
         query_classes = {}
