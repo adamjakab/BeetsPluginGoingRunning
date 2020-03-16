@@ -17,7 +17,7 @@ plugins:
     - goingrunning
 
 #format_item: "[format:$format][bpm:$bpm] ::: $path"
-format_item: "[bpm:$bpm][gender:$gender][year:$year] $artist ::: $title"
+format_item: "[MA:$mood_aggressive][bpm:$bpm][gender:$gender][year:$year] $artist ::: $title"
 
 import:
     copy: yes
@@ -47,14 +47,19 @@ goingrunning:
         bpm: 90..140
       duration: 60
       target: test
+    test:
+      query:
+        artist: "ZZ TOP"
+        mood_aggressive: 0.4..09
+      duration: 30
     halfmarathon:
       alias: HM
       query:
-        bpm: 130..150
+        bpm: 90..150
         length: 120..300
-        year: 1990..2020
+        mood_aggressive: 0.3..0.7
       ordering:
-        year: -100
+        year: 100
         #bpm: 50
         #mood_aggressive: 50
       duration: 60

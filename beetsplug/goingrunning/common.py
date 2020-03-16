@@ -13,6 +13,13 @@ from beets.random import random_objs
 MUST_HAVE_TRAINING_KEYS = ['query', 'duration', 'target']
 MUST_HAVE_TARGET_KEYS = ['device_root', 'device_path']
 
+KNOWN_NUMERIC_FLEX_ATTRIBUTES = ["danceable", "mood_acoustic", "mood_aggressive", "mood_electronic", "mood_happy",
+                                 "mood_party", "mood_relaxed", "mood_sad", "tonal", "average_loudness",
+                                 "chords_changes_rate", "chords_number_rate", "key_strength"]
+
+KNOWN_TEXTUAL_FLEX_ATTRIBUTES = ["gender", "genre_rosamerica", "rhythm", "voice_instrumental", "chords_key",
+                                 "chords_scale"]
+
 
 def get_beets_logger():
     return logging.getLogger('beets.goingrunning')

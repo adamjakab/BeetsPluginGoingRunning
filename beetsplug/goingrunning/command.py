@@ -15,7 +15,9 @@ from pathlib import Path
 from shutil import copyfile
 from glob import glob
 from beets.dbcore.db import Results
-from beets.library import Library as BeatsLibrary, Item
+from beets.dbcore import query
+from beets.dbcore.queryparse import parse_query_part
+from beets.library import Library as BeatsLibrary, Item, parse_query_string
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
 
@@ -436,29 +438,46 @@ class GoingRunningCommand(Subcommand):
                 }
 
     def _retrieve_library_items(self, training: Subview):
-        """Return all items that match the query defined on the training and
-        additionally on the command line
-        """
-        query_items = {}
+        full_query = self.query
 
-        # Query defined by the training
-        training_query = GRC.get_training_attribute(training, "query")
-        for tq in training_query.keys():
-            query_items[tq] = training_query[tq]
+        # Append the query elements from the configuration
+        training_config_query = GRC.get_training_attribute(training, "query")
+        if training_config_query:
+            for tqk in training_config_query.keys():
+                tqv = training_config_query.get(tqk)
+                quote_val = " " in tqv
+                fmt = "{k}:'{v}'" if quote_val else "{k}:{v}"
+                full_query.append(fmt.format(k=tqk, v=tqv))
 
-        # Query passed on command line
-        while self.query:
-            qel: str = self.query.pop(0)
-            qk, qv = qel.split(":", maxsplit=1)
-            query_items[qk] = qv
+        # Separate numeric flex attribute queries from the rest
+        query_classes = {}
+        prefixes = {}
+        flex_numeric_query = []
+        other_query = []
+        for query_part in full_query:
+            key = parse_query_part(query_part)[0]
+            if key in GRC.KNOWN_NUMERIC_FLEX_ATTRIBUTES:
+                flex_numeric_query.append(query_part)
+            else:
+                other_query.append(query_part)
 
-        query = []
-        for tq in query_items:
-            query.append("{0}:{1}".format(tq, query_items[tq]))
+        # Generate NumericQuery classes for numeric flex attribute queries
+        flex_query_class_items = []
+        for query_part in flex_numeric_query:
+            key, pattern, query_class, negate = parse_query_part(query_part, query_classes, prefixes,
+                                                                 default_class=query.NumericQuery)
+            # print("(({}))::{}-{}-{}-{}".format(query_part, key, pattern, query_class, negate))
+            flex_query_class_items.append(query_class(key.lower(), pattern, False))
 
-        self._say("Song selection query: {}".format(query))
+        # Let the other queries be parsed normally
+        # There is a bug in parse_query_string: It returnd flex numeric attributes as SubstringQuery!
+        other_query_class_items = parse_query_string(" ".join(other_query), Item)[0]
+        other_query_class_items = other_query_class_items.subqueries
 
-        return self.lib.items(query)
+        combined_query = query.AndQuery(flex_query_class_items + other_query_class_items)
+        self.log.debug("Song selection query: {}".format(combined_query))
+
+        return self.lib.items(combined_query)
 
     def display_library_items(self, items, fields):
         fmt = ""
