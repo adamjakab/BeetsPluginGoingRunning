@@ -177,7 +177,7 @@ class GoingRunningCommand(Subcommand):
             dst_path = self._get_destination_path_for_training(training)
 
             self._say("Cleaning target[{0}]: {1}".format(target_name, dst_path))
-            song_extensions = ["mp3", "mp4", "flac", "wav"]
+            song_extensions = ["mp3", "mp4", "flac", "wav", "ogg", "wma", "m3u"]
             target_file_list = []
             for ext in song_extensions:
                 target_file_list += glob(

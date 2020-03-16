@@ -11,6 +11,7 @@
 
 
 ### Fixes
+- now removing .m3u playlist files from device on cleanup
 - removed confusing "bubble up" concept from config/code
 
 
