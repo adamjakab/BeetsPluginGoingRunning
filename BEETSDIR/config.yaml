@@ -49,7 +49,7 @@ goingrunning:
       target: test
     test:
       query:
-      #artist: "Bob"
+        mood_party: 0.8..
       use_flavours: [chillout, sunshine]
       duration: 30
     halfmarathon:

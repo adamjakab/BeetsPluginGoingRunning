@@ -15,7 +15,6 @@ from pathlib import Path
 from shutil import copyfile
 from glob import glob
 from beets.dbcore.db import Results
-from beets.dbcore import query
 from beets.dbcore.queryparse import parse_query_part
 from beets.library import Library as BeatsLibrary, Item, parse_query_string
 from beets.ui import Subcommand, decargs
@@ -480,36 +479,11 @@ class GoingRunningCommand(Subcommand):
 
     def _retrieve_library_items(self, training: Subview):
         full_query = self._gather_query_elements(training)
+        parsed_query = parse_query_string(" ".join(full_query), Item)[0]
+        self.log.debug("Song selection query: {}".format(parsed_query))
 
-        # Separate numeric flex attribute queries from the rest
-        query_classes = {}
-        prefixes = {}
-        flex_numeric_query = []
-        other_query = []
-        for query_part in full_query:
-            key = parse_query_part(query_part)[0]
-            if key in GRC.KNOWN_NUMERIC_FLEX_ATTRIBUTES:
-                flex_numeric_query.append(query_part)
-            else:
-                other_query.append(query_part)
+        return self.lib.items(parsed_query)
 
-        # Generate NumericQuery classes for numeric flex attribute queries
-        flex_query_class_items = []
-        for query_part in flex_numeric_query:
-            key, pattern, query_class, negate = parse_query_part(query_part, query_classes, prefixes,
-                                                                 default_class=query.NumericQuery)
-            # print("(({}))::{}-{}-{}-{}".format(query_part, key, pattern, query_class, negate))
-            flex_query_class_items.append(query_class(key.lower(), pattern, False))
-
-        # Let the other queries be parsed normally
-        # There is a bug in parse_query_string: It returnd flex numeric attributes as SubstringQuery!
-        other_query_class_items = parse_query_string(" ".join(other_query), Item)[0]
-        other_query_class_items = other_query_class_items.subqueries
-
-        combined_query = query.AndQuery(flex_query_class_items + other_query_class_items)
-        self.log.debug("Song selection query: {}".format(combined_query))
-
-        return self.lib.items(combined_query)
 
     def display_library_items(self, items, fields):
         fmt = ""
