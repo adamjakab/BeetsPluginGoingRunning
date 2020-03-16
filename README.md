@@ -4,24 +4,26 @@
 
 # Going Running (beets plugin)
 
-*A [beets](https://github.com/beetbox/beets) plugin for insane obsessive-compulsive music geeks.*
+The *beets-goingrunning* is a [beets](https://github.com/beetbox/beets) plugin for obsessive-compulsive music geek runners. It lets you configure different training activities by filtering songs based on their tag attributes (bpm, length, mood, loudness, etc) and generates a list of songs for that specific training.
 
-The *beets-goingrunning* plugin is for obsessive-compulsive music geek runners. It lets you configure different training activities by filtering 
-songs based on their speed(bpm) and duration (or any other queries) and attempts to generate a list of songs for that training.
+Have you ever tried to beat your PR and have good old Bob singing about ganja in the background? It doesn’t really work. Or don't you know how those recovery session end up with the Crüe kickstarting your heart? You'll be up in your Zone 4 in no time. 
+
+The fact is that it is very difficult and time consuming to compile an appropriate playlist for a specific training session. This plugin tries to help runners with this by allowing them to use their own library.
+
 
 ## Introduction
 
-To use this plugin at its best and to benefit the most from your library, you will need to make sure that you have
-bpm information on all of your songs. Since this plugin uses the bpm information to select songs, the songs with bpm=0 will be ignored (check with `beet ls bpm:0`). If you have many you should update them. There are two ways:
+To use this plugin at its best and to benefit the most from your library, you will want to make sure that your songs have the most possible information on rhythm, moods, loudness, etc.   
 
-1) Use the built-in [acousticbrainz plugin](https://beets.readthedocs.io/en/stable/plugins/acousticbrainz.html) to fetch
-the bpm information for your songs. It does a lot for well know songs but my library was still 30% uncovered after a full scan.
+Without going into much detail the most fundamental information you will want to harvest is `bpm`. Normally, when you run a fast pace training you will keep your pace (the number of times your feet hit the ground in a minute) around 170-180. If you are listening to songs with the same rhythm it helps a lot. If your library has many songs without the bpm information (check with `beet ls bpm:0`) you will not be able to use those songs. So, you should consider updating them. There are many tools you can use:
 
-2) Use the [bpmanalyser plugin](https://github.com/adamjakab/BeetsPluginBpmAnalyser). This will scan your songs and calculate
-the tempo (bpm) value for them. If you have a big collection it might take a while, but you can potentially end up with 
-100% coverage.
+1) Use the built-in [acousticbrainz plugin](https://beets.readthedocs.io/en/stable/plugins/acousticbrainz.html) to fetch the bpm plus many other information about your songs. This is your starting point. It is as easy as `beet cousticbrainz` and it will do the rest. This tool is based on an on-line database so it will be able to fetch only what has been submitted by someone else. If you have many "uncommon" songs you will need to integrate it with other tools. (My library was still 30% uncovered after a full scan.)
 
-The following explains how to use the *beets-goingrunning* plugin. If something is not clear please use the Issue tracker. Also, if there is a feature not present, please check in the [roadmap](./docs/ROADMAP.md) if it is planned. If not, create a feature request in the Issue tracker. 
+2) Use the [bpmanalyser plugin](https://github.com/adamjakab/BeetsPluginBpmAnalyser). This will scan your songs and calculate the tempo (bpm) value for them. If you have a big collection it might take a while, but since this tool does not use an on-line database, you can potentially end up with 100% coverage. This plugin will only give you bpm info.
+
+3) [Essentia extractors](https://essentia.upf.edu/index.html). The Acoustic Brainz (AB) project is based partly on these low and high level extractors. There is currently a highly under-development project [xtractor plugin](https://github.com/adamjakab/BeetsPluginXtractor) which aims to bring your library to 100% coverage. However, for the time being there are no distributable static extractors, so wou will have to compile your own extractors. 
+
+There are many other ways and tools we could list here but I think you got the point...
 
 
 ## Installation
@@ -31,12 +33,11 @@ The plugin can be installed via:
 $ pip install beets-goingrunning
 ```
 
-Activate the plugin in your configuration file:
+Activate the plugin in your configuration file by adding `goingrunning` to the plugins section:
 
 ```yaml
 plugins:
     - goingrunning
-    # [...]
 ```
 
 Check if plugin is loaded with `beet version`. It should list 'goingrunning' amongst the loaded plugins.
@@ -48,18 +49,26 @@ Invoke the plugin as:
 
     $ beet goingrunning training [options] [QUERY...]
     
-The following switches are available:
+or with the shorthand alias `gr`:
 
-**--list [-l]**: List all the configured trainings with their attributes. With this switch you do not enter the name of the training, just `beet goingrunning --list`
+    $ beet gr training [options] [QUERY...]
 
-**--count [-c]**: Count the number of songs available for a specific training. With `beet goingrunning longrun --count` you can see how many of your songs there are in your library that fit your specs.
+The following command line options are available:
 
-**--dry-run [-r]**: Only display what would be done without actually making changes to the file system. 
+**--list [-l]**: List all the configured trainings. With `beet goingrunning --list` you will be presented the list of the trainings you have configured in your configuration file.
+
+**--count [-c]**: Count the number of songs available for a specific training. With `beet goingrunning longrun --count` you can see how many of your songs will fit the specifications for the `longrun` training.
+
+**--dry-run [-r]**: Only display what would be done without actually making changes to the file system. The plugin will run without clearing the destination and without copying any files.
 
 **--quiet [-q]**: Do not display any output from the command.
 
+**--version [-v]**: Display the version number of the plugin. Useful when you need to report some issue and you have to state the version of the plugin you are using.
+
 
 ## Configuration
+
+suggest external configuration file with include:
 
 Your default configuration is:
 ```yaml
@@ -162,6 +171,15 @@ Now do it! Copy your songs to your target based on the `longrun` training:
 Do the same as above but today you feel reggae:
 
     $ beet goingrunning longrun genre:Reggae
+
+### Issues
+If something is not working as expected please use the Issue tracker.
+If the documentation is not clear please use the Issue tracker.
+If you have a feature request please use the Issue tracker.
+In any other situation please use the Issue tracker.
+
+### Roadmap
+Please check the [ROADMAP](./docs/ROADMAP.md) file. If there is a feature you would like to see but which is not planned, create a feature request in the Issue tracker. 
 
 
 ### Final Remarks:
