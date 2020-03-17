@@ -20,11 +20,14 @@ class BasicCheckTest(TestHelper, Assertions):
         self.assertIn(PLUGIN_NAME, out.getvalue())
         self.assertIn(PLUGIN_SHORT_DESCRIPTION, out.getvalue())
 
-    def test_application_plugin_list(self):
+    def test_application_version(self):
         with capture_stdout() as out:
             self.runcli("version")
 
         self.assertIn("plugins: {0}".format(PLUGIN_NAME), out.getvalue())
 
-    def test_plugin(self):
-        self.runcli(PLUGIN_NAME)
+    def test_plugin_no_arguments(self):
+        with capture_stdout() as out:
+            self.runcli(PLUGIN_NAME)
+
+        self.assertIn("Usage: beet goingrunning [training] [options] [QUERY...]", out.getvalue())

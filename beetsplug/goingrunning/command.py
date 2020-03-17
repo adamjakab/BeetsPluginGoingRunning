@@ -43,7 +43,7 @@ class GoingRunningCommand(Subcommand):
         self.config = cfg
         self.log = GRC.get_beets_logger()
 
-        self.parser = OptionParser(usage='%prog training [options] [QUERY...]')
+        self.parser = OptionParser(usage='beet goingrunning [training] [options] [QUERY...]')
 
         self.parser.add_option(
             '-l', '--list',
