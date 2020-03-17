@@ -24,18 +24,16 @@ import:
     autotag: no
 
 goingrunning:
-  # todo: this (clean_target) is dangerous here and should be checked ONLY on the target
-  clean_target: no
   targets:
     test:
-      device_root: ~/Documents/Projects/Python/BeetsPluginGoingRunning/BEETSDIR/Target1
-      device_path: MUSIC/AUTO
+      device_root: ~/Documents/Projects/Python/BeetsPluginGoingRunning/BEETSDIR/Target1/
+      device_path: MUSIC/AUTO/
       clean_target: yes
       delete_from_device:
         - xyz.txt
     SONY:
-      device_root: /Volumes/WALKMAN
-      device_path: MUSIC/AUTO
+      device_root: /Volumes/WALKMAN/
+      device_path: MUSIC/AUTO/
       clean_target: yes
       delete_from_device:
         - STDBDATA.DAT
@@ -50,7 +48,7 @@ goingrunning:
     test:
       query:
         mood_party: 0.8..
-      use_flavours: [chillout, sunshine]
+      use_flavours: []
       duration: 30
     halfmarathon:
       alias: HM
