@@ -4,7 +4,7 @@
 
 # Going Running (beets plugin)
 
-The *beets-goingrunning* is a [beets](https://github.com/beetbox/beets) plugin for obsessive-compulsive music geek runners. It lets you configure different training activities by filtering songs based on their tag attributes (bpm, length, mood, loudness, etc) and generates a list of songs for that specific training.
+The *beets-goingrunning* is a [beets](https://github.com/beetbox/beets) plugin for obsessive-compulsive music geek runners. It lets you configure different training activities by filtering songs based on their tag attributes (bpm, length, mood, loudness, etc), generates a list of songs for that specific training and copies those songs to your player device.
 
 Have you ever tried to beat your PR and have good old Bob singing about ganja in the background? It doesn’t really work. Or don't you know how those recovery session end up with the Crüe kickstarting your heart? You'll be up in your Zone 4 in no time. 
 
@@ -68,16 +68,7 @@ The following command line options are available:
 
 ## Configuration
 
-All your configuration will need to be created under the key `goingrunning`. As in my experience the configuration section can grow quite long depending on your needs, I find it quite useful to keep my goingrunning specific configuration in a separate file and from the main configuration file include it like this:
-
-```yaml
-include: 
-    - plg_goingrunning.yaml
-```
-
-This is of course optional.
-
-There are three concepts you need to know to configure the plugin: targets, trainings and flavours. They are explained in detail below.
+All your configuration will need to be created under the key `goingrunning`. There are three concepts you need to know to configure the plugin: targets, trainings and flavours. They are explained in detail below.
 
 
 ### Targets
@@ -156,7 +147,7 @@ Any key not defined in a specific training will be looked up from the `fallback`
 
 
 ### Flavours
-The flavours section serves the purpose of defining named queries. If you have 5 different high intensity trainings different in length but sharing queries about bpm, mood and loudness, you can create a single definition, called flavour, here and reuse that flavour in your different trainings with the `use_flavours` key.
+The flavours section serves the purpose of defining named queries. If you have 5 different high intensity trainings different in length but sharing queries about bpm, mood and loudness, you can create a single definition here, called flavour, and reuse that flavour in your different trainings with the `use_flavours` key.
 
 ```yaml
 goingrunning:
@@ -166,32 +157,47 @@ goingrunning:
       mood_aggressive: 0.8..
       average_loudness: 50..
     rocker:
-      genre: Jazz
-    sunshine:
+      genre: Rock
+    metallic:
+      genre: Metal
+  sunshine:
       genre: Reggae
+    60s:
+      year: 1960..1969
     chillout:
       bpm: 1..120
       mood_happy: 0.5..0.99
 ```
 
-    
+This way, from the above flavours you might add `use_flavours: [overthetop, rock, 60s]` to one training and `use_flavours: [overthetop, metallic]` to another so they will share the same `overthetop` intensity definition whilst having different genre preferences. Similarly, your recovery session might use `use_flavours: [chillout, sunshine]`.
+
+
+#### Using a separate configuration file
+In my experience the configuration section can grow quite long depending on your needs, so I find it useful to keep my `goingrunning` specific configuration in a separate file and from the main configuration file include it like this:
+
+```yaml
+include: 
+    - plg_goingrunning.yaml
+```
+
+
 ### Examples
 
 Show all the configured trainings:
 
     $ beet goingrunning --list
     
-Check what the `longrun` training would do:
+Check what would be done for the `10K` training:
 
-    $ beet goingrunning longrun --dry-run
+    $ beet goingrunning 10K --dry-run
     
-Now do it! Copy your songs to your target based on the `longrun` training:
+Let's go! Copy your songs to your target based on the `10K` training and using the plugin shorthand:
 
-    $ beet goingrunning longrun
-    
-Do the same as above but today you feel reggae:
+    $ beet run longrun
+    s
+Do the same as above but today you feel Ska:
 
-    $ beet goingrunning longrun genre:Reggae
+    $ beet run longrun genre:ska
 
 
 ### Issues

@@ -6,6 +6,7 @@ This is an ever-growing list of ideas that will be scheduled for implementation 
 ## Short term implementations 
 These should be easily implemented.
 
+- allow passing `flavour` names on command line
 - training info: show full info for a specific training:
     - total time
     - number of bins
