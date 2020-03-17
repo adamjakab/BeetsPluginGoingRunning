@@ -104,10 +104,10 @@ class CommonTest(UnitTestHelper, Assertions):
         self.assertEqual(0, common.get_duration_of_items([baditem]))
 
     def test_get_min_max_sum_avg_for_items(self):
-        item1 = self.create_item(bpm=100)
-        item2 = self.create_item(bpm=150)
-        item3 = self.create_item(bpm=200)
-        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items([item1, item2, item3], "bpm")
+        item1 = self.create_item(mood_happy=100)
+        item2 = self.create_item(mood_happy=150)
+        item3 = self.create_item(mood_happy=200)
+        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items([item1, item2, item3], "mood_happy")
         self.assertEqual(100, _min)
         self.assertEqual(200, _max)
         self.assertEqual(450, _sum)
@@ -123,18 +123,18 @@ class CommonTest(UnitTestHelper, Assertions):
         self.assertEqual(150.163, _avg)
 
         # ValueError
-        item1 = self.create_item(bpm=100)
-        item2 = self.create_item(bpm="")
-        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items([item1, item2], "bpm")
+        item1 = self.create_item(mood_happy=100)
+        item2 = self.create_item(mood_happy="")
+        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items([item1, item2], "mood_happy")
         self.assertEqual(100, _min)
         self.assertEqual(100, _max)
         self.assertEqual(100, _sum)
         self.assertEqual(100, _avg)
 
         # TypeError
-        item1 = self.create_item(bpm=100)
-        item2 = self.create_item(bpm={})
-        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items([item1, item2], "bpm")
+        item1 = self.create_item(mood_happy=100)
+        item2 = self.create_item(mood_happy={})
+        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items([item1, item2], "mood_happy")
         self.assertEqual(100, _min)
         self.assertEqual(100, _max)
         self.assertEqual(100, _sum)
