@@ -16,7 +16,7 @@ from shutil import copyfile
 from glob import glob
 from beets.dbcore.db import Results
 from beets.dbcore.queryparse import parse_query_part
-from beets.library import Library as BeatsLibrary, Item, parse_query_string
+from beets.library import Library, Item, parse_query_string
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
 
@@ -31,13 +31,13 @@ __PLUGIN_SHORT_DESCRIPTION__ = u'run with the music that matches your training s
 class GoingRunningCommand(Subcommand):
     log = None
     config: Subview = None
-    lib = None
+    lib: Library = None
     query = None
-    parser = None
+    parser: OptionParser = None
 
-    quiet = False
-    count_only = False
-    dry_run = False
+    cfg_quiet = False
+    cfg_count = False
+    cfg_dry_run = False
 
     def __init__(self, cfg):
         self.config = cfg
@@ -64,9 +64,15 @@ class GoingRunningCommand(Subcommand):
         )
 
         self.parser.add_option(
-            '-q', '--quiet',
+            '-q', '--cfg_quiet',
             action='store_true', dest='quiet', default=False,
-            help=u'keep quiet'
+            help=u'keep cfg_quiet'
+        )
+
+        self.parser.add_option(
+            '-v', '--version',
+            action='store_true', dest='version', default=False,
+            help=u'show plugin version'
         )
 
         # Keep this at the end
@@ -77,27 +83,31 @@ class GoingRunningCommand(Subcommand):
             aliases=[__PLUGIN_SHORT_NAME__]
         )
 
-    def func(self, lib: BeatsLibrary, options, arguments):
-        self.quiet = options.quiet
-        self.count_only = options.count
-        self.dry_run = options.dry_run
+    def func(self, lib: Library, options, arguments):
+        self.cfg_quiet = options.quiet
+        self.cfg_count = options.count
+        self.cfg_dry_run = options.dry_run
 
         self.lib = lib
         self.query = decargs(arguments)
 
         # You must either pass a training name or request listing
-        if len(self.query) < 1 and not options.list:
+        if len(self.query) < 1 and not (options.list or options.version):
             self.log.warning(
                 "You can either pass the name of a training or request a "
                 "listing (--list)!")
             self.parser.print_help()
             return
 
-        if options.list:
+        if options.version:
+            self.show_version_information()
+            return
+        elif options.list:
             self.list_trainings()
             return
 
         self.handle_training()
+
 
     def handle_training(self):
         training_name = self.query.pop(0)
@@ -113,7 +123,7 @@ class GoingRunningCommand(Subcommand):
         lib_items: Results = self._retrieve_library_items(training)
 
         # Show count only
-        if self.count_only:
+        if self.cfg_count:
             self._say("Number of songs available: {}".format(len(lib_items)))
             return
 
@@ -162,7 +172,7 @@ class GoingRunningCommand(Subcommand):
         self.display_library_items(sel_items, flds)
 
         # todo: move this inside the nex methods to show what would be done
-        if self.dry_run:
+        if self.cfg_dry_run:
             return
 
         self._clean_target_path(training)
@@ -540,7 +550,11 @@ class GoingRunningCommand(Subcommand):
 
             self._say("{0}: {1}".format(tkey, tval))
 
+    def show_version_information(self):
+        from beetsplug.goingrunning.version import __version__
+        self._say("Goingrunning(beets-{}) plugin for Beets: v{}".format(__PLUGIN_NAME__, __version__))
+
     def _say(self, msg):
         self.log.debug(msg)
-        if not self.quiet:
+        if not self.cfg_quiet:
             print(msg)
