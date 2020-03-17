@@ -10,7 +10,7 @@ from beets.util.confit import Subview
 from test.helper import TestHelper, Assertions, PLUGIN_NAME, capture_stdout
 from beetsplug.goingrunning.command import GoingRunningCommand
 from beetsplug.goingrunning import common as GoingRunningCommon
-
+import unittest
 
 class ConfigurationTest(TestHelper, Assertions):
 
@@ -26,8 +26,7 @@ class ConfigurationTest(TestHelper, Assertions):
         cfg: Subview = self.config[PLUGIN_NAME]
         cfg_keys = cfg.keys()
         cfg_keys.sort()
-        def_keys = ['duration', 'targets', 'trainings', 'target', 'query',
-                    'ordering']
+        def_keys = ['trainings', 'targets', 'flavours']
         def_keys.sort()
         self.assertEqual(def_keys, cfg_keys)
         # This has been removed
@@ -41,8 +40,7 @@ class ConfigurationTest(TestHelper, Assertions):
         # Check keys
         cfg_keys = cfg.keys()
         cfg_keys.sort()
-        chk_keys = ['duration', 'targets', 'target', 'query', 'ordering',
-                    'trainings']
+        chk_keys = ['duration', 'targets', 'target', 'query', 'ordering', 'trainings']
         chk_keys.sort()
         self.assertEqual(chk_keys, cfg_keys)
 
@@ -164,6 +162,7 @@ class ConfigurationTest(TestHelper, Assertions):
         # self.assertIn("song_len: [90, 180]", out.getvalue())
         self.assertIn("target: drive_3", out.getvalue())
 
+    @unittest.skip("Deprecated! Needs removal")
     def test_bubble_up(self):
         """ Check values when each level has its own  """
         self.reset_beets(config_file=b"config_user.yml")
@@ -185,6 +184,7 @@ class ConfigurationTest(TestHelper, Assertions):
                              GoingRunningCommon.get_config_value_bubble_up(
                                  cfg_l1, attrib))
 
+    @unittest.skip("Deprecated! Needs removal")
     def test_bubble_up_inexistent_key(self):
         """ Check values when each level has its own  """
         self.reset_beets(config_file=b"config_user.yml")
@@ -192,6 +192,7 @@ class ConfigurationTest(TestHelper, Assertions):
         inexistent_key = "you_will_never_find_me"
         self.assertEqual(None, GoingRunningCommon.get_config_value_bubble_up(cfg, inexistent_key))
 
+    @unittest.skip("Deprecated! Needs removal")
     def test_bubble_up_no_level_3(self):
         """ Check that values are taken from level 2 if they are not present
         on level 3 """
@@ -206,6 +207,7 @@ class ConfigurationTest(TestHelper, Assertions):
                              GoingRunningCommon.get_config_value_bubble_up(
                                  cfg_l3, attrib))
 
+    @unittest.skip("Deprecated! Needs removal")
     def test_bubble_up_no_level_3_or_2(self):
         """ Check that values are taken from level 1 if they are not present
         on level 3 or 2 """

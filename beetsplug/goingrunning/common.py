@@ -6,7 +6,6 @@
 #
 
 import logging
-from beets import config as beets_global_config
 from beets.util.confit import Subview
 from beets.random import random_objs
 
@@ -24,27 +23,15 @@ KNOWN_TEXTUAL_FLEX_ATTRIBUTES = ["gender", "genre_rosamerica", "rhythm", "voice_
 def get_beets_logger():
     return logging.getLogger('beets.goingrunning')
 
-
-def get_beets_global_config():
-    return beets_global_config
-
-
 def get_human_readable_time(seconds):
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     return "%d:%02d:%02d" % (h, m, s)
 
-
 def get_beet_query_formatted_string(key, val):
     quote_val = type(val) == str and " " in val
     fmt = "{k}:'{v}'" if quote_val else "{k}:{v}"
     return fmt.format(k=key, v=val)
-
-
-# @deprecated: DO NOT USE THIS NO MORE!
-def get_config_value_bubble_up(cfg_view: Subview, attrib: str):
-    raise DeprecationWarning("Deprecated! Use get_training_attribute!")
-
 
 def get_flavour_elements(flavour: Subview):
     elements = []
@@ -101,17 +88,3 @@ def get_duration_of_items(items):
                 pass
 
     return total_time
-
-
-def get_randomized_items(items, duration_min):
-    """ This randomization and limiting to duration_min is very basic
-    @todo: after randomization select songs to be as close as possible to the
-    duration_min (+-5seconds)
-    """
-    r_limit = 1
-    r_time_minutes = duration_min
-    r_equal_chance = True
-    rnd_items = random_objs(list(items), False, r_limit, r_time_minutes,
-                            r_equal_chance)
-
-    return rnd_items

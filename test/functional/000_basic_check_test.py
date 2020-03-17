@@ -8,8 +8,8 @@
 from test.helper import TestHelper, Assertions, PLUGIN_NAME, PLUGIN_SHORT_DESCRIPTION, capture_log, capture_stdout
 
 
-class CompletionTest(TestHelper, Assertions):
-    """Test invocation of ``beet goingrunning`` with this plugin.
+class BasicCheckTest(TestHelper, Assertions):
+    """Test presence and invocation of the plugin.
     Only ensures that command does not fail.
     """
 

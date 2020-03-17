@@ -19,7 +19,7 @@ from beetsplug.goingrunning import common as GRC
 class CommonModuleTest(TestHelper, Assertions):
 
     def test_must_have_training_keys(self):
-        must_have_keys = ['song_bpm', 'song_len', 'duration', 'target']
+        must_have_keys = ['query', 'duration', 'target']
         for key in must_have_keys:
             self.assertIn(key, GRC.MUST_HAVE_TRAINING_KEYS,
                           msg=u'Missing default training key: {0}'.format(key))
