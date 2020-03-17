@@ -6,6 +6,8 @@
 #
 
 import logging
+
+from beets.library import Item
 from beets.util.confit import Subview
 from beets.random import random_objs
 
@@ -45,7 +47,6 @@ def get_flavour_elements(flavour: Subview):
 
     return elements
 
-
 def get_training_attribute(training: Subview, attrib: str):
     """Returns the attribute value from "goingrunning.trainings" for the specified training or uses the
     spacial fallback training configuration.
@@ -59,7 +60,6 @@ def get_training_attribute(training: Subview, attrib: str):
 
     return value
 
-
 def get_target_attribute(target: Subview, attrib: str):
     """Returns the attribute value from "goingrunning.targets" for the specified target.
     """
@@ -68,7 +68,6 @@ def get_target_attribute(target: Subview, attrib: str):
         value = target[attrib].get()
 
     return value
-
 
 def get_duration_of_items(items):
     """
@@ -88,3 +87,37 @@ def get_duration_of_items(items):
                 pass
 
     return total_time
+
+
+def get_min_max_sum_avg_for_items(items, field_name):
+    _min = 99999999.9
+    _max = 0
+    _sum = 0
+    _avg = 0
+    _cnt = 0
+    for item in items:
+        try:
+            field_value = round(float(item.get(field_name, None)), 3)
+            _cnt += 1
+        except ValueError:
+            field_value = None
+        except TypeError:
+            field_value = None
+
+        # Min
+        if field_value is not None and field_value < _min:
+            _min = field_value
+
+        # Max
+        if field_value is not None and field_value > _max:
+            _max = field_value
+
+        # Sum
+        if field_value is not None:
+            _sum = _sum + field_value
+
+    # Avg
+    if _cnt > 0:
+        _avg = round(_sum / _cnt, 3)
+
+    return _min, _max, _sum, _avg

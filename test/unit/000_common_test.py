@@ -4,8 +4,6 @@
 #  Created: 3/17/20, 3:28 PM
 #  License: See LICENSE.txt
 #
-from beets.library import Item
-from beets.util.confit import Subview, ConfigView, LazyConfig, ConfigSource
 
 from test.helper import TestHelper, Assertions, get_plugin_configuration
 from beetsplug.goingrunning import common
@@ -14,8 +12,7 @@ from logging import Logger
 
 
 class CommonTest(TestHelper, Assertions):
-    """Test presence and invocation of the plugin.
-    Only ensures that command does not fail.
+    """Test methods in the beetsplug.goingrunning.common module
     """
 
     def test_module_values(self):
@@ -66,7 +63,7 @@ class CommonTest(TestHelper, Assertions):
             }
         }
         config = get_plugin_configuration(cfg)
-        training: Subview = config["trainings"]["10K"]
+        training = config["trainings"]["10K"]
 
         # Direct
         self.assertEqual("180..", common.get_training_attribute(training, "bpm"))
@@ -88,7 +85,7 @@ class CommonTest(TestHelper, Assertions):
             }
         }
         config = get_plugin_configuration(cfg)
-        target: Subview = config["targets"]["MPD1"]
+        target = config["targets"]["MPD1"]
 
         self.assertEqual("/media/mpd1/", common.get_target_attribute(target, "device_root"))
         self.assertEqual("auto/", common.get_target_attribute(target, "device_path"))
@@ -105,3 +102,40 @@ class CommonTest(TestHelper, Assertions):
         # TypeError
         baditem = self.create_item(length={})
         self.assertEqual(0, common.get_duration_of_items([baditem]))
+
+    def test_get_min_max_sum_avg_for_items(self):
+        item1 = self.create_item(bpm=100)
+        item2 = self.create_item(bpm=150)
+        item3 = self.create_item(bpm=200)
+        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items([item1, item2, item3], "bpm")
+        self.assertEqual(100, _min)
+        self.assertEqual(200, _max)
+        self.assertEqual(450, _sum)
+        self.assertEqual(150, _avg)
+
+        item1 = self.create_item(bpm=99.7512345)
+        item2 = self.create_item(bpm=150.482234)
+        item3 = self.create_item(bpm=200.254733)
+        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items([item1, item2, item3], "bpm")
+        self.assertEqual(99.751, _min)
+        self.assertEqual(200.255, _max)
+        self.assertEqual(450.488, _sum)
+        self.assertEqual(150.163, _avg)
+
+        # ValueError
+        item1 = self.create_item(bpm=100)
+        item2 = self.create_item(bpm="")
+        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items([item1, item2], "bpm")
+        self.assertEqual(100, _min)
+        self.assertEqual(100, _max)
+        self.assertEqual(100, _sum)
+        self.assertEqual(100, _avg)
+
+        # TypeError
+        item1 = self.create_item(bpm=100)
+        item2 = self.create_item(bpm={})
+        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items([item1, item2], "bpm")
+        self.assertEqual(100, _min)
+        self.assertEqual(100, _max)
+        self.assertEqual(100, _sum)
+        self.assertEqual(100, _avg)

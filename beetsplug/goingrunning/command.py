@@ -327,8 +327,8 @@ class GoingRunningCommand(Subcommand):
     def _get_items_for_duration(self, items, duration):
         selected = []
         total_time = 0
-        _min, _max, _sum, _avg = self._get_min_max_sum_avg_for_items(items,
-                                                                     "length")
+        _min, _max, _sum, _avg = GRC.get_min_max_sum_avg_for_items(items,
+                                                                   "length")
         est_num_songs = round(duration * 60 / _avg)
         bin_size = len(items) / est_num_songs
 
@@ -345,37 +345,6 @@ class GoingRunningCommand(Subcommand):
                 pass
 
         return selected
-
-    def _get_min_max_sum_avg_for_items(self, items, field_name):
-        _min = 99999999.9
-        _max = 0
-        _sum = 0
-        _avg = 0
-        for item in items:
-            item: Item
-            try:
-                field_value = round(float(item.get(field_name, None)), 3)
-            except ValueError:
-                field_value = None
-            except TypeError:
-                field_value = None
-
-            # Min
-            if field_value is not None and field_value < _min:
-                _min = field_value
-
-            # Max
-            if field_value is not None and field_value > _max:
-                _max = field_value
-
-            # Sum
-            if field_value is not None:
-                _sum = _sum + field_value
-
-        # Avg
-        _avg = round(_sum / len(items), 3)
-
-        return _min, _max, _sum, _avg
 
     def _score_library_items(self, training: Subview, items):
         ordering = {}
@@ -404,8 +373,8 @@ class GoingRunningCommand(Subcommand):
         # Populate Order Info
         for field_name in order_info.keys():
             field_data = order_info[field_name]
-            _min, _max, _sum, _avg = self._get_min_max_sum_avg_for_items(items,
-                                                                         field_name)
+            _min, _max, _sum, _avg = GRC.get_min_max_sum_avg_for_items(items,
+                                                                       field_name)
             field_data["min"] = _min
             field_data["max"] = _max
 
