@@ -25,6 +25,23 @@ These need some proper planning.
 
 - **possibility to handle multiple sections** inside a training (for interval trainings / strides at different speeds)
     - sections can also be repeated
+
+example of an interval training with 5 minutes fast and 2.5 minutes recovery repeated 5 times:    
+```yaml
+goingrunning:
+    trainings:
+      STRIDES-1K:
+        use_sections: [fast, recovery]
+        repeat_sections: 5
+        sections:
+          fast:
+            use_flavours: [energy, above170]
+            duration: 300
+          recovery:
+            use_flavours: [chillout, sunshine]
+            duration: 150
+```    
+  
 - maximize unheard song proposal(optional) by:
     - incrementing listen count on export
     - adding it to the query and proposing songs with lower counts
