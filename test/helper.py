@@ -261,10 +261,15 @@ class FunctionalTestHelper(TestCase, Assertions):
         self._tempdirs.append(temp_dir)
         return temp_dir
 
-    # def remove_temp_dir(self):
-    #     """Delete the temporary directory created by `create_temp_dir`.
-    #     """
-    #     shutil.rmtree(self.temp_dir)
+    def ensure_training_target_path(self, training_name):
+        # Set existing path for target
+        target_name = self.config[PLUGIN_NAME]["trainings"][training_name]["target"].get()
+        target = self.config[PLUGIN_NAME]["targets"][target_name]
+        device_root = self.create_temp_dir()
+        device_path = target["device_path"].get()
+        target["device_root"].set(device_root)
+        full_path = os.path.join(device_root, device_path)
+        os.makedirs(full_path)
 
     @staticmethod
     def unload_plugins():
@@ -323,8 +328,10 @@ class FunctionalTestHelper(TestCase, Assertions):
             'format': 'MP3',
         }
         values_.update(values)
-
         values_['title'] = values_['title'].format(item_count)
+
+        print("Creating Item: {}".format(values_))
+
         values_['db'] = self.lib
         item = Item(**values_)
 
@@ -346,4 +353,9 @@ class FunctionalTestHelper(TestCase, Assertions):
 
     def add_multiple_items_to_library(self, count=10, **values):
         for i in range(count):
-            self.add_single_item_to_library(**values)
+            new_values = values.copy()
+            for key in values:
+                if type(values[key]) == list and len(values[key]) == 2:
+                    random_val = randint(values[key][0], values[key][1])
+                    new_values[key] = random_val
+            self.add_single_item_to_library(**new_values)

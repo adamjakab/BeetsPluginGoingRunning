@@ -24,7 +24,7 @@ goingrunning:
         bpm: 0..999
       ordering:
         bpm: 100
-      duration: 60
+      duration: 10
       target: MPD_1
     training-2:
       alias: "Born to run"

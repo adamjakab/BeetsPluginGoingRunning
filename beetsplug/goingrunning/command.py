@@ -395,7 +395,6 @@ class GoingRunningCommand(Subcommand):
         #           order_info[field]["max"] == default_field_data["max"]
         #           ]
         # for field in bad_oi: del order_info[field]
-
         # self._say("ORDER INFO #3: {0}".format(order_info))
 
         # Calculate other values in Order Info

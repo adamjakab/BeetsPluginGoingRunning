@@ -89,15 +89,9 @@ class CommandTest(FunctionalTestHelper, Assertions):
         self.assertIn("The target[{0}] path does not exist: {1}".format(target_name, target_path), out.getvalue())
 
     def test_training_with_songs_multiple_config(self):
-        self.add_multiple_items_to_library(count=10, bpm=120)
+        self.add_multiple_items_to_library(count=10, bpm=[120, 180], length=[120, 240])
         training_name = "training-1"
-
-        # Set existing path for target
-        target_name = self.config[PLUGIN_NAME]["trainings"][training_name]["target"].get()
-        target = self.config[PLUGIN_NAME]["targets"][target_name]
-        device_root = self.create_temp_dir()
-        target["device_root"].set(device_root)
-        target["device_path"].set("")
+        self.ensure_training_target_path(training_name)
 
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME, training_name)
