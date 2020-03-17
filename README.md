@@ -172,7 +172,7 @@ goingrunning:
 This way, from the above flavours you might add `use_flavours: [overthetop, rock, 60s]` to one training and `use_flavours: [overthetop, metallic]` to another so they will share the same `overthetop` intensity definition whilst having different genre preferences. Similarly, your recovery session might use `use_flavours: [chillout, sunshine]`.
 
 
-#### Using a separate configuration file
+### Using a separate configuration file
 In my experience the configuration section can grow quite long depending on your needs, so I find it useful to keep my `goingrunning` specific configuration in a separate file and from the main configuration file include it like this:
 
 ```yaml
@@ -181,7 +181,7 @@ include:
 ```
 
 
-### Examples
+## Examples
 
 Show all the configured trainings:
 
@@ -200,16 +200,16 @@ Do the same as above but today you feel Ska:
     $ beet run longrun genre:ska
 
 
-### Issues
+## Issues
 If something is not working as expected please use the Issue tracker.
 If the documentation is not clear please use the Issue tracker.
 If you have a feature request please use the Issue tracker.
 In any other situation please use the Issue tracker.
 
 
-### Roadmap
+## Roadmap
 Please check the [ROADMAP](./docs/ROADMAP.md) file. If there is a feature you would like to see but which is not planned, create a feature request in the Issue tracker. 
 
 
-### Final Remarks
+## Final Remarks
 Enjoy!

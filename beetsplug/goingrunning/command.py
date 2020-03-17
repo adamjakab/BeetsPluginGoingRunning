@@ -91,6 +91,27 @@ class GoingRunningCommand(Subcommand):
         self.lib = lib
         self.query = decargs(arguments)
 
+        # TEMPORARY: Verify configuration upgrade!
+        # There is a major backward incompatible upgrade in version 1.1.1
+        try:
+            self.verify_configuration_upgrade()
+        except RuntimeError as e:
+            self._say("*" * 80)
+            self._say("********************   INCOMPATIBLE PLUGIN CONFIGURATION   *********************")
+            self._say("*" * 80)
+            self._say("* Your configuration has been created for an older version of the plugin.")
+            self._say("* Since version 1.1.1 the plugin has implemented changes that require your "
+                      "current configuration to be updated.")
+            self._say("* Please read the updated documentation here and update your configuration.")
+            self._say(
+                "* Documentation: https://github.com/adamjakab/BeetsPluginGoingRunning/blob/master/README.md"
+                "#configuration")
+            self._say("* I promise it will not happen again ;)")
+            self._say("* " + str(e))
+            self._say("* The plugin will exit now.")
+            self._say("*" * 80)
+            return
+
         # You must either pass a training name or request listing
         if len(self.query) < 1 and not (options.list or options.version):
             self.log.warning(
@@ -513,10 +534,21 @@ class GoingRunningCommand(Subcommand):
             except IndexError:
                 pass
 
+    def verify_configuration_upgrade(self):
+        """Check if user has old(pre v1.1.1) configuration keys in config
+        """
+        trainings = list(self.config["trainings"].keys())
+        training_names = [s for s in trainings if s != "fallback"]
+        for training_name in training_names:
+            training: Subview = self.config["trainings"][training_name]
+            tkeys = training.keys()
+            for tkey in tkeys:
+                if tkey in ["song_bpm", "song_len"]:
+                    raise RuntimeError("Offending key in training({}): {}".format(training_name, tkey))
+
     def list_trainings(self):
         """
         # @todo: order keys
-        :return: void
         """
         if not self.config["trainings"].exists() or len(self.config["trainings"].keys()) == 0:
             self._say("You have not created any trainings yet.")
