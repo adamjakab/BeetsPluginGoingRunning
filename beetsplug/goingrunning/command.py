@@ -24,7 +24,7 @@ from beetsplug.goingrunning import common as GRC
 
 # The plugin
 __PLUGIN_NAME__ = u'goingrunning'
-__PLUGIN_SHORT_NAME__ = u'gr'
+__PLUGIN_SHORT_NAME__ = u'run'
 __PLUGIN_SHORT_DESCRIPTION__ = u'run with the music that matches your training sessions'
 
 
