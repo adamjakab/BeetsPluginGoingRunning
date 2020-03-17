@@ -1,4 +1,0 @@
-# This configuration file is used to configuration file inclusion - MAIN
-
-include:
-  - config_inc_sub.yml

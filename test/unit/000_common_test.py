@@ -5,13 +5,13 @@
 #  License: See LICENSE.txt
 #
 
-from test.helper import TestHelper, Assertions, get_plugin_configuration
+from test.helper import UnitTestHelper, Assertions, get_plugin_configuration
 from beetsplug.goingrunning import common
 
 from logging import Logger
 
 
-class CommonTest(TestHelper, Assertions):
+class CommonTest(UnitTestHelper, Assertions):
     """Test methods in the beetsplug.goingrunning.common module
     """
 

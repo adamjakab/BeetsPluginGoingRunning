@@ -10,13 +10,13 @@
 #  License: See LICENSE.txt
 #
 
-from test.helper import TestHelper, Assertions, get_plugin_configuration
+from test.helper import UnitTestHelper, Assertions, get_plugin_configuration
 from beetsplug.goingrunning import command
 
 from logging import Logger
 
 
-class CommandTest(TestHelper, Assertions):
+class CommandTest(UnitTestHelper, Assertions):
     """Test methods in the beetsplug.goingrunning.command module
     """
 

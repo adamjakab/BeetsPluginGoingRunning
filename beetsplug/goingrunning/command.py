@@ -156,6 +156,10 @@ class GoingRunningCommand(Subcommand):
                 "There are no songs in your library that match this training!")
             return
 
+        # Verify target device path path
+        if not self._get_destination_path_for_training(training):
+            return
+
         # 1) order items by scoring system (need ordering in config)
         self._score_library_items(training, lib_items)
         sorted_lib_items = sorted(lib_items,
@@ -172,9 +176,6 @@ class GoingRunningCommand(Subcommand):
         # @todo: check if total time is close to duration - (config might be
         #  too restrictive or too few songs)
 
-        # Verify target device path path
-        if not self._get_destination_path_for_training(training):
-            return
 
         # Show some info
         self._say("Training duration: {0}".format(
@@ -327,10 +328,17 @@ class GoingRunningCommand(Subcommand):
     def _get_items_for_duration(self, items, duration):
         selected = []
         total_time = 0
-        _min, _max, _sum, _avg = GRC.get_min_max_sum_avg_for_items(items,
-                                                                   "length")
-        est_num_songs = round(duration * 60 / _avg)
-        bin_size = len(items) / est_num_songs
+        _min, _max, _sum, _avg = GRC.get_min_max_sum_avg_for_items(items, "length")
+
+        if _avg > 0:
+            est_num_songs = round(duration * 60 / _avg)
+        else:
+            est_num_songs = 0
+
+        if est_num_songs > 0:
+            bin_size = len(items) / est_num_songs
+        else:
+            bin_size = 0
 
         self._say("Estimated number of songs: {}".format(est_num_songs))
         self._say("Bin Size: {}".format(bin_size))
@@ -394,7 +402,10 @@ class GoingRunningCommand(Subcommand):
         for field_name in order_info.keys():
             field_data = order_info[field_name]
             field_data["delta"] = field_data["max"] - field_data["min"]
-            field_data["step"] = round(100 / field_data["delta"], 3)
+            if field_data["delta"] > 0:
+                field_data["step"] = round(100 / field_data["delta"], 3)
+            else:
+                field_data["step"] = 0
 
         # self._say("ORDER INFO: {0}".format(order_info))
 

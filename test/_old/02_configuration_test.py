@@ -1,6 +1,11 @@
 #  Copyright: Copyright (c) 2020., Adam Jakab
 #
 #  Author: Adam Jakab <adam at jakab dot pro>
+#  Created: 3/17/20, 9:10 PM
+#  License: See LICENSE.txt
+#
+#
+#  Author: Adam Jakab <adam at jakab dot pro>
 #  Created: 2/17/20, 10:53 PM
 #  License: See LICENSE.txt
 #
@@ -14,23 +19,6 @@ import unittest
 
 class ConfigurationTest(TestHelper, Assertions):
 
-    def test_has_plugin_default_config(self):
-        self.assertTrue(self.config.exists())
-        plg_cfg = self.config[PLUGIN_NAME]
-        self.assertTrue(plg_cfg.exists())
-        self.assertIsInstance(plg_cfg, Subview)
-
-    def test_plugin_default_config_keys(self):
-        """ Generic check to see if plugin related default configuration is
-        present in config """
-        cfg: Subview = self.config[PLUGIN_NAME]
-        cfg_keys = cfg.keys()
-        cfg_keys.sort()
-        def_keys = ['trainings', 'targets', 'flavours']
-        def_keys.sort()
-        self.assertEqual(def_keys, cfg_keys)
-        # This has been removed
-        self.assertNotIn("clean_target", cfg_keys)
 
     def test_user_config_main(self):
         """ Root level values check """
@@ -161,65 +149,3 @@ class ConfigurationTest(TestHelper, Assertions):
         # self.assertIn("song_bpm: [170, 180]", out.getvalue())
         # self.assertIn("song_len: [90, 180]", out.getvalue())
         self.assertIn("target: drive_3", out.getvalue())
-
-    @unittest.skip("Deprecated! Needs removal")
-    def test_bubble_up(self):
-        """ Check values when each level has its own  """
-        self.reset_beets(config_file=b"config_user.yml")
-
-        cfg_l1: Subview = self.config[PLUGIN_NAME]
-        cfg_l2: Subview = cfg_l1["trainings"]
-        cfg_l3: Subview = cfg_l2["training-1"]
-        self._dump_config(self.config)
-
-        # Each level has its own value
-        for attrib in ['duration', 'target', 'query', 'ordering']:
-            self.assertEqual(cfg_l3[attrib].get(),
-                             GoingRunningCommon.get_config_value_bubble_up(
-                                 cfg_l3, attrib))
-            self.assertEqual(cfg_l2[attrib].get(),
-                             GoingRunningCommon.get_config_value_bubble_up(
-                                 cfg_l2, attrib))
-            self.assertEqual(cfg_l1[attrib].get(),
-                             GoingRunningCommon.get_config_value_bubble_up(
-                                 cfg_l1, attrib))
-
-    @unittest.skip("Deprecated! Needs removal")
-    def test_bubble_up_inexistent_key(self):
-        """ Check values when each level has its own  """
-        self.reset_beets(config_file=b"config_user.yml")
-        cfg: Subview = self.config[PLUGIN_NAME]["trainings"]["training-1"]
-        inexistent_key = "you_will_never_find_me"
-        self.assertEqual(None, GoingRunningCommon.get_config_value_bubble_up(cfg, inexistent_key))
-
-    @unittest.skip("Deprecated! Needs removal")
-    def test_bubble_up_no_level_3(self):
-        """ Check that values are taken from level 2 if they are not present
-        on level 3 """
-        self.reset_beets(config_file=b"config_user_no_level_3.yml")
-
-        cfg_l1: Subview = self.config[PLUGIN_NAME]
-        cfg_l2: Subview = cfg_l1["trainings"]
-        cfg_l3: Subview = cfg_l2["training-1"]
-
-        for attrib in ['duration', 'target', 'query', 'ordering']:
-            self.assertEqual(cfg_l2[attrib].get(),
-                             GoingRunningCommon.get_config_value_bubble_up(
-                                 cfg_l3, attrib))
-
-    @unittest.skip("Deprecated! Needs removal")
-    def test_bubble_up_no_level_3_or_2(self):
-        """ Check that values are taken from level 1 if they are not present
-        on level 3 or 2 """
-        self.reset_beets(config_file=b"config_user_no_level_3_or_2.yml")
-
-        cfg_l1: Subview = self.config[PLUGIN_NAME]
-        cfg_l2: Subview = cfg_l1["trainings"]
-        cfg_l3: Subview = cfg_l2["training-1"]
-
-        for attrib in ['duration', 'target', 'query', 'ordering']:
-            self.assertEqual(cfg_l1[attrib].get(),
-                             GoingRunningCommon.get_config_value_bubble_up(
-                                 cfg_l3, attrib))
-
-        self._dump_config(self.config)

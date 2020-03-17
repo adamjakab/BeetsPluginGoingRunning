@@ -128,16 +128,48 @@ class Assertions(object):
                         msg=u'Path is not a file: {0}'.format(displayable_path(path)))
 
 
-class TestHelper(TestCase, Assertions):
+class UnitTestHelper(TestCase, Assertions):
+    __item_count = 0
+
+    def create_item(self, **values):
+        """Return an `Item` instance with sensible default values.
+
+        The item receives its attributes from `**values` paratmeter. The
+        `title`, `artist`, `album`, `track`, `format` and `path`
+        attributes have defaults if they are not given as parameters.
+        The `title` attribute is formatted with a running item count to
+        prevent duplicates.
+        """
+        item_count = self._get_item_count()
+        values_ = {
+            'title': u't\u00eftle {0}',
+            'artist': u'the \u00e4rtist',
+            'album': u'the \u00e4lbum',
+            'track': item_count,
+            'format': 'MP3',
+        }
+        values_.update(values)
+
+        values_['title'] = values_['title'].format(item_count)
+        item = Item(**values_)
+
+        return item
+
+    def _get_item_count(self):
+        self.__item_count += 1
+        return self.__item_count
+
+
+class FunctionalTestHelper(TestCase, Assertions):
     _test_config_dir_ = os.path.join(bytestring_path(os.path.dirname(__file__)), b'config')
     _test_fixture_dir = os.path.join(bytestring_path(os.path.dirname(__file__)), b'fixtures')
     _test_target_dir = bytestring_path("/tmp/beets-goingrunning-test-drive")
     __item_count = 0
 
     def setUp(self):
-        """Setup before running any tests.
+        """Setup before running any tests with an empty configuration file.
         """
-        self.reset_beets(config_file=b"empty.yml")
+        self.reset_beets(config_file=b"default.yml")
 
     def tearDown(self):
         self.teardown_beets()
@@ -149,7 +181,7 @@ class TestHelper(TestCase, Assertions):
 
     def _setup_beets(self, config_file: bytes, beet_files: list = None):
         self.addCleanup(self.teardown_beets)
-        self.beetsdir = bytestring_path(self.mkdtemp())
+        self.beetsdir = bytestring_path(self.create_temp_dir())
         os.environ['BEETSDIR'] = self.beetsdir.decode()
 
         self.config = beets.config
@@ -197,7 +229,7 @@ class TestHelper(TestCase, Assertions):
                     file_name = file_name.decode()
 
                 dst = os.path.join(self.beetsdir.decode(), file_name)
-                print("Copy to beetsdir: {}".format(file_name))
+                print("Copy({}) to beetsdir: {}".format(src, file_name))
 
                 shutil.copyfile(src, dst)
 
@@ -224,10 +256,15 @@ class TestHelper(TestCase, Assertions):
 
         # beets.config.read(user=False, defaults=True)
 
-    def mkdtemp(self):
-        path = tempfile.mkdtemp()
-        self._tempdirs.append(path)
-        return path
+    def create_temp_dir(self):
+        temp_dir = tempfile.mkdtemp()
+        self._tempdirs.append(temp_dir)
+        return temp_dir
+
+    # def remove_temp_dir(self):
+    #     """Delete the temporary directory created by `create_temp_dir`.
+    #     """
+    #     shutil.rmtree(self.temp_dir)
 
     @staticmethod
     def unload_plugins():
@@ -258,6 +295,12 @@ class TestHelper(TestCase, Assertions):
     def get_fixture_item_path(self, ext):
         assert (ext in 'mp3 m4a ogg'.split())
         return os.path.join(self._test_fixture_dir, bytestring_path('song.' + ext.lower()))
+
+    def _get_item_count(self):
+        """Internal counter for create_item
+        """
+        self.__item_count += 1
+        return self.__item_count
 
     def create_item(self, **values):
         """Return an `Item` instance with sensible default values.
@@ -293,33 +336,14 @@ class TestHelper(TestCase, Assertions):
 
         return item
 
-    def _get_item_count(self):
-        self.__item_count += 1
-        return self.__item_count
+    def add_single_item_to_library(self, **values):
+        item = self.create_item(**values)
+        # item = Item.from_path(self.get_fixture_item_path(values.pop('format')))
+        item.add(self.lib)
+        # item.move(MoveOperation.COPY)
+        # item.write()
+        return item
 
-    # def add_multiple_items_to_library(self, count=10, song_bpm=None, song_length=None, **kwargs):
-    #     if song_bpm is None:
-    #         song_bpm = [60, 220]
-    #     if song_length is None:
-    #         song_length = [15, 300]
-    #     for i in range(count):
-    #         bpm = randint(song_bpm[0], song_bpm[1])
-    #         length = randint(song_length[0], song_length[1])
-    #         self.add_single_item_to_library(bpm=bpm, length=length, **kwargs)
-    #
-    # def add_single_item_to_library(self, **kwargs):
-    #     values = {
-    #         'title': 'track 1',
-    #         'artist': 'artist 1',
-    #         'album': 'album 1',
-    #         'bpm': randint(120, 180),
-    #         'length': randint(90, 720),
-    #         'format': 'mp3',
-    #     }
-    #     values.update(kwargs)
-    #     item = Item.from_path(self.get_fixture_item_path(values.pop('format')))
-    #     item.update(values)
-    #     item.add(self.lib)
-    #     item.move(MoveOperation.COPY)
-    #     item.write()
-    #     return item
+    def add_multiple_items_to_library(self, count=10, **values):
+        for i in range(count):
+            self.add_single_item_to_library(**values)

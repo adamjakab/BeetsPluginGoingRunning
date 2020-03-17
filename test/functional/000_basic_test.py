@@ -5,10 +5,11 @@
 #  License: See LICENSE.txt
 #
 
-from test.helper import TestHelper, Assertions, PLUGIN_NAME, PLUGIN_SHORT_DESCRIPTION, capture_log, capture_stdout
+from test.helper import FunctionalTestHelper, Assertions, PLUGIN_NAME, PLUGIN_SHORT_DESCRIPTION, capture_log, \
+    capture_stdout
 
 
-class BasicCheckTest(TestHelper, Assertions):
+class BasicTest(FunctionalTestHelper, Assertions):
     """Test presence and invocation of the plugin.
     Only ensures that command does not fail.
     """
@@ -27,6 +28,7 @@ class BasicCheckTest(TestHelper, Assertions):
         self.assertIn("plugins: {0}".format(PLUGIN_NAME), out.getvalue())
 
     def test_plugin_no_arguments(self):
+        self.reset_beets(config_file=b"empty.yml")
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME)
 
