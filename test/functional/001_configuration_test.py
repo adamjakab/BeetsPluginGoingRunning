@@ -27,11 +27,11 @@ class ConfigurationTest(FunctionalTestHelper, Assertions):
 
     def test_obsolete_config(self):
         self.reset_beets(config_file=b"obsolete.yml")
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME)
 
-        self.assertIn("INCOMPATIBLE PLUGIN CONFIGURATION", out.getvalue())
-        self.assertIn("Offending key in training(training-1): song_bpm", out.getvalue())
+        stdout = self.run_with_output(PLUGIN_NAME)
+
+        self.assertIn("INCOMPATIBLE PLUGIN CONFIGURATION", stdout)
+        self.assertIn("Offending key in training(training-1): song_bpm", stdout)
 
     def test_default_config_sanity(self):
         self.assertTrue(self.config[PLUGIN_NAME].exists())

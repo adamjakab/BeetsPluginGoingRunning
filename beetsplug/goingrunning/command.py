@@ -470,4 +470,5 @@ class GoingRunningCommand(Subcommand):
         """
         self.log.debug(msg)
         if not self.cfg_quiet:
-            stdout.write(msg)
+            print(msg)
+            # stdout.write(msg + "\n")

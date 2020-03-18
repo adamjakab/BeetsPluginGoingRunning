@@ -71,13 +71,12 @@ def capture_log(logger='beets', suppress_output=True):
 
 
 @contextmanager
-def capture_stdout(suppress_output=True):
+def capture_stdout():
     """Save stdout in a StringIO.
     >>> with capture_stdout() as output:
     ...     print('spam')
     ...
     >>> output.getvalue()
-    'spam'
     """
     orig = sys.stdout
     sys.stdout = capture = StringIO()
@@ -85,9 +84,7 @@ def capture_stdout(suppress_output=True):
         yield sys.stdout
     finally:
         sys.stdout = orig
-        # if not suppress_output:
         print(capture.getvalue())
-
 
 @contextmanager
 def control_stdin(userinput=None):
@@ -246,7 +243,7 @@ class FunctionalTestHelper(TestCase, Assertions):
         self.config.read()
 
         self.config['plugins'] = []
-        self.config['verbose'] = True
+        self.config['verbose'] = False
         self.config['ui']['color'] = False
         self.config['threaded'] = False
         self.config['import']['copy'] = False
@@ -277,7 +274,7 @@ class FunctionalTestHelper(TestCase, Assertions):
                     file_name = file_name.decode()
 
                 dst = os.path.join(self.beetsdir.decode(), file_name)
-                print("Copy({}) to beetsdir: {}".format(src, file_name))
+                # print("Copy({}) to beetsdir: {}".format(src, file_name))
 
                 shutil.copyfile(src, dst)
 
@@ -326,15 +323,32 @@ class FunctionalTestHelper(TestCase, Assertions):
             plugins._classes = set()
             plugins._instances = {}
 
-    def runcli(self, *args):
-        # TODO mock stdin
+    # def runcli(self, *args):
+    #     # TODO mock stdin
+    #     with capture_stdout() as out:
+    #         try:
+    #             ui._raw_main(_convert_args(list(args)), self.lib)
+    #         except ui.UserError as u:
+    #             # TODO remove this and handle exceptions in tests
+    #             print(u.args[0])
+    #     return out.getvalue()
+
+    def run_command(self, *args, **kwargs):
+        """Run a beets command with an arbitrary amount of arguments. The
+           Library` defaults to `self.lib`, but can be overridden with
+           the keyword argument `lib`.
+        """
+        sys.argv = ['beet']  # avoid leakage from test suite args
+        lib = None
+        if hasattr(self, 'lib'):
+            lib = self.lib
+        lib = kwargs.get('lib', lib)
+        beets.ui._raw_main(_convert_args(list(args)), lib)
+
+    def run_with_output(self, *args):
         with capture_stdout() as out:
-            try:
-                ui._raw_main(_convert_args(list(args)), self.lib)
-            except ui.UserError as u:
-                # TODO remove this and handle exceptions in tests
-                print(u.args[0])
-        return out.getvalue()
+            self.run_command(*args)
+        return util.text_string(out.getvalue())
 
     def lib_path(self, path):
         return os.path.join(self.beetsdir, path.replace(b'/', bytestring_path(os.sep)))
@@ -378,7 +392,7 @@ class FunctionalTestHelper(TestCase, Assertions):
         values_.update(values)
         values_['title'] = values_['title'].format(item_count)
 
-        print("Creating Item: {}".format(values_))
+        #print("Creating Item: {}".format(values_))
 
         values_['db'] = self.lib
         item = Item(**values_)
