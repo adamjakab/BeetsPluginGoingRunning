@@ -312,13 +312,15 @@ class GoingRunningCommand(Subcommand):
 
         return dst_path
 
-    def _get_items_for_duration(self, items, duration):
+    def _get_items_for_duration(self, items, requested_duration):
+        """ fixme: this must become much more accurate - the entire selection concept is to be revisited
+        """
         selected = []
         total_time = 0
         _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items(items, "length")
 
         if _avg > 0:
-            est_num_songs = round(duration * 60 / _avg)
+            est_num_songs = round(requested_duration * 60 / _avg)
         else:
             est_num_songs = 0
 
@@ -335,9 +337,18 @@ class GoingRunningCommand(Subcommand):
             bin_end = round(bin_start + bin_size)
             song_index = random.randint(bin_start, bin_end)
             try:
-                selected.append(items[song_index])
+                item: Item = items[song_index]
             except IndexError:
-                pass
+                continue
+
+            song_len = round(item.get("length"))
+            total_time += song_len
+            selected.append(item)
+
+        self._say("Total time in list: {}".format(common.get_human_readable_time(total_time)), log_only=True)
+
+        if total_time < requested_duration * 60:
+            self._say("Song list is too short!!!", log_only=True)
 
         return selected
 
