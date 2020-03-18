@@ -149,6 +149,8 @@ Any key not defined in a specific training will be looked up from the `fallback`
 ### Flavours
 The flavours section serves the purpose of defining named queries. If you have 5 different high intensity trainings different in length but sharing queries about bpm, mood and loudness, you can create a single definition here, called flavour, and reuse that flavour in your different trainings with the `use_flavours` key.
 
+**Note**: Because flavours are only used to group query elements, the `query` key should not be used here (like it is in trainings). 
+
 ```yaml
 goingrunning:
   flavours:
@@ -191,13 +193,13 @@ Check what would be done for the `10K` training:
 
     $ beet goingrunning 10K --dry-run
     
-Let's go! Copy your songs to your target based on the `10K` training and using the plugin shorthand:
+Let's go! Copy your songs to your device based on the `10K` training and using the plugin shorthand:
 
-    $ beet run longrun
-    s
+    $ beet run 10K
+
 Do the same as above but today you feel Ska:
 
-    $ beet run longrun genre:ska
+    $ beet run 10K genre:ska
 
 
 ## Issues
