@@ -12,7 +12,7 @@ import shutil
 import sys
 import tempfile
 from contextlib import contextmanager
-from random import randint
+from random import randint, uniform
 from unittest import TestCase
 
 import beets
@@ -112,6 +112,36 @@ def get_plugin_configuration(cfg):
     return config[PLUGIN_NAME]
 
 
+def get_single_line_from_output(text: str, prefix: str):
+    selected_line = ""
+    lines = text.split("\n")
+    for line in lines:
+        if prefix in line:
+            selected_line = line
+            break
+
+    return selected_line
+
+
+def convert_time_to_seconds(time: str):
+    return sum(x * int(t) for x, t in zip([3600, 60, 1], time.split(":")))
+
+
+def get_value_separated_from_output(fulltext: str, prefix: str):
+    """Separate the value that has been printed to the stdout in the format of:
+    prefix: value
+    """
+    value = None
+    line = get_single_line_from_output(fulltext, prefix)
+    # print("SL:{}".format(line))
+
+    if prefix in line:
+        value = line.replace(prefix, "")
+        value = value.strip()
+
+    return value
+
+
 def _convert_args(args):
     """Convert args to strings
     """
@@ -154,6 +184,24 @@ class UnitTestHelper(TestCase, Assertions):
         item = Item(**values_)
 
         return item
+
+    def create_multiple_items(self, count=10, **values):
+        items = []
+        for i in range(count):
+            new_values = values.copy()
+            for key in values:
+                if type(values[key]) == list and len(values[key]) == 2:
+                    if type(values[key][0]) == float or type(values[key][1]) == float:
+                        random_val = uniform(values[key][0], values[key][1])
+                    elif type(values[key][0]) == int and type(values[key][1]) == int:
+                        random_val = randint(values[key][0], values[key][1])
+                    else:
+                        raise ValueError("Elements for key({}) are neither float nor int!")
+
+                    new_values[key] = random_val
+            items.append(self.create_item(**new_values))
+
+        return items
 
     def _get_item_count(self):
         self.__item_count += 1
@@ -356,6 +404,12 @@ class FunctionalTestHelper(TestCase, Assertions):
             new_values = values.copy()
             for key in values:
                 if type(values[key]) == list and len(values[key]) == 2:
-                    random_val = randint(values[key][0], values[key][1])
+                    if type(values[key][0]) == float or type(values[key][1]) == float:
+                        random_val = uniform(values[key][0], values[key][1])
+                    elif type(values[key][0]) == int and type(values[key][1]) == int:
+                        random_val = randint(values[key][0], values[key][1])
+                    else:
+                        raise ValueError("Elements for key({}) are neither float nor int!")
+
                     new_values[key] = random_val
             self.add_single_item_to_library(**new_values)

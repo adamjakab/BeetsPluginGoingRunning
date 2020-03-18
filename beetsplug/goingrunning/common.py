@@ -121,3 +121,95 @@ def get_min_max_sum_avg_for_items(items, field_name):
         _avg = round(_sum / _cnt, 3)
 
     return _min, _max, _sum, _avg
+
+
+def score_library_items(training: Subview, items):
+    ordering = {}
+    fields = []
+    if training["ordering"].exists() and len(training["ordering"].keys()) > 0:
+        ordering = training["ordering"].get()
+        fields = list(ordering.keys())
+
+    default_field_data = {
+        "min": 99999999.9,
+        "max": 0.0,
+        "delta": 0.0,
+        "step": 0.0,
+        "weight": 100
+    }
+
+    # Build Order Info
+    order_info = {}
+    for field in fields:
+        field_name = field.strip()
+        order_info[field_name] = default_field_data.copy()
+        order_info[field_name]["weight"] = ordering[field]
+
+    # self._say("ORDER INFO #1: {0}".format(order_info))
+
+    # Populate Order Info
+    for field_name in order_info.keys():
+        field_data = order_info[field_name]
+        _min, _max, _sum, _avg = get_min_max_sum_avg_for_items(items, field_name)
+        field_data["min"] = _min
+        field_data["max"] = _max
+
+    # self._say("ORDER INFO #2: {0}".format(order_info))
+
+    # todo: this will not work anymore - find a better way
+    # Remove bad items from Order Info
+    # bad_oi = [field for field in order_info if
+    #           order_info[field]["min"] == default_field_data["min"] and
+    #           order_info[field]["max"] == default_field_data["max"]
+    #           ]
+    # for field in bad_oi: del order_info[field]
+    # self._say("ORDER INFO #3: {0}".format(order_info))
+
+    # Calculate other values in Order Info
+    for field_name in order_info.keys():
+        field_data = order_info[field_name]
+        field_data["delta"] = field_data["max"] - field_data["min"]
+        if field_data["delta"] > 0:
+            field_data["step"] = round(100 / field_data["delta"], 3)
+        else:
+            field_data["step"] = 0
+
+    # self._say("ORDER INFO: {0}".format(order_info))
+
+    # Score the library items
+    for item in items:
+        item: Item
+        item["ordering_score"] = 0
+        item["ordering_info"] = {}
+        for field_name in order_info.keys():
+            field_data = order_info[field_name]
+            try:
+                field_value = round(float(item.get(field_name, None)), 3)
+            except ValueError:
+                field_value = None
+            except TypeError:
+                field_value = None
+
+            if field_value is None:
+                # Make up average value
+                field_value = round(field_data["delta"] / 2, 3)
+
+            distance_from_min = round(field_value - field_data["min"], 3)
+
+            # This is linear (we could some day use different models)
+            # field_score should always be between 0 and 100
+            field_score = round(distance_from_min * field_data["step"], 3)
+            field_score = field_score if field_score > 0 else 0
+            field_score = field_score if field_score < 100 else 100
+
+            weighted_field_score = round(
+                field_data["weight"] * field_score / 100, 3)
+
+            item["ordering_score"] = round(
+                item["ordering_score"] + weighted_field_score, 3)
+
+            item["ordering_info"][field_name] = {
+                "distance_from_min": distance_from_min,
+                "field_score": field_score,
+                "weighted_field_score": weighted_field_score
+            }

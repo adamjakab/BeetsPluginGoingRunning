@@ -27,21 +27,18 @@ goingrunning:
       duration: 10
       target: MPD_1
     training-2:
-      alias: "Born to run"
-      query:
-        bpm: 170..180
-        length: 90..180
+      alias: "Select songs by flavour only"
+      use_flavours: [runlikehell, 60s]
       ordering:
-        year+: 50
-        bpm+: 25
-      duration: 25
+        bpm: 100
+      duration: 10
       target: MPD_1
-    marathon:
-      alias: "Born to run"
+    training-3:
+      alias: "Select songs by both query and flavour"
       query:
         bpm: 145..160
-        length: 120..600
-      duration: 300
+      use_flavours: [sunshine]
+      duration: 10
       target: MPD_1
     one-hour-run:
       alias: "Born to run"
@@ -61,6 +58,11 @@ goingrunning:
     bad-target-2:
       target: MPD_3
   flavours:
+    runlikehell:
+      bpm: 170..
+      mood_aggressive: 0.7..
+    60s:
+      year: 1960..1969
     sunshine:
       genre: Reggae
 

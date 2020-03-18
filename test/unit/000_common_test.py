@@ -53,11 +53,16 @@ class CommonTest(UnitTestHelper, Assertions):
         cfg = {
             "trainings": {
                 "fallback": {
-                    "bpm": "120..",
+                    "query": {
+                        "bpm": "120..",
+                    },
                     "target": "MPD1",
                 },
                 "10K": {
-                    "bpm": "180..",
+                    "query": {
+                        "bpm": "180..",
+                        "length": "60..240",
+                    },
                     "use_flavours": ["f1", "f2"],
                 }
             }
@@ -66,11 +71,12 @@ class CommonTest(UnitTestHelper, Assertions):
         training = config["trainings"]["10K"]
 
         # Direct
-        self.assertEqual("180..", common.get_training_attribute(training, "bpm"))
-        self.assertEqual(["f1", "f2"], common.get_training_attribute(training, "use_flavours"))
+        self.assertEqual(cfg["trainings"]["10K"]["query"], common.get_training_attribute(training, "query"))
+        self.assertEqual(cfg["trainings"]["10K"]["use_flavours"],
+                         common.get_training_attribute(training, "use_flavours"))
 
         # Fallback
-        self.assertEqual("MPD1", common.get_training_attribute(training, "target"))
+        self.assertEqual(cfg["trainings"]["fallback"]["target"], common.get_training_attribute(training, "target"))
 
         # Inexistent
         self.assertEqual(None, common.get_training_attribute(training, "hoppa"))
@@ -139,3 +145,36 @@ class CommonTest(UnitTestHelper, Assertions):
         self.assertEqual(100, _max)
         self.assertEqual(100, _sum)
         self.assertEqual(100, _avg)
+
+    def test_score_library_items(self):
+        cfg = {
+            "trainings": {
+                "10K": {
+                    "ordering": {
+                        "bpm": 100,
+                    }
+                }
+            }
+        }
+        config = get_plugin_configuration(cfg)
+        training = config["trainings"]["10K"]
+
+        items = [
+            self.create_item(id=1, bpm=140),
+            self.create_item(id=2, bpm=120),
+            self.create_item(id=3, bpm=100),
+        ]
+        common.score_library_items(training, items)
+
+        _id = 0
+        for item in items:
+            # print(item.evaluate_template("$id - $bpm - $ordering_score"))
+            _id += 1
+            self.assertEqual(_id, item.get("id"))
+            self.assertTrue(hasattr(item, "ordering_score"))
+            self.assertIsInstance(item.get("ordering_score"), float)
+            self.assertTrue(hasattr(item, "ordering_info"))
+            self.assertIsInstance(item.get("ordering_info"), dict)
+
+        scores = [item.get("ordering_score") for item in items]
+        self.assertEqual([100, 50, 0], scores)

@@ -161,9 +161,8 @@ class GoingRunningCommand(Subcommand):
             return
 
         # 1) order items by scoring system (need ordering in config)
-        self._score_library_items(training, lib_items)
-        sorted_lib_items = sorted(lib_items,
-                                  key=operator.attrgetter('ordering_score'))
+        GRC.score_library_items(training, lib_items)
+        sorted_lib_items = sorted(lib_items, key=operator.attrgetter('ordering_score'))
 
         # 2) select random items n from the ordered list(T=length) - by
         # chosing n times song from the remaining songs between 1 and m
@@ -176,22 +175,15 @@ class GoingRunningCommand(Subcommand):
         # @todo: check if total time is close to duration - (config might be
         #  too restrictive or too few songs)
 
-
         # Show some info
-        self._say("Training duration: {0}".format(
-            GRC.get_human_readable_time(duration * 60)))
-        self._say("Selected song duration: {}".format(
-            GRC.get_human_readable_time(total_time)))
-        self._say("Number of songs available: {}".format(len(lib_items)))
-        self._say("Number of songs selected: {}".format(len(sel_items)))
+        self._say("Available songs: {}".format(len(lib_items)))
+        self._say("Selected songs: {}".format(len(sel_items)))
+        self._say("Planned training duration: {0}".format(GRC.get_human_readable_time(duration * 60)))
+        self._say("Total song duration: {}".format(GRC.get_human_readable_time(total_time)))
 
         # Show the selected songs and exit
-        # flds = ("ordering_score", "bpm", "year", "length", "ordering_info",
-        # "artist", "title")
-        flds = ("bpm", "year", "length", "artist", "title")
-        # self.display_library_items(sorted_lib_items, flds)
-        # self._say("="*80)
-        self.display_library_items(sel_items, flds)
+        flds = ["bpm", "year", "length", "artist", "title"]
+        self.display_library_items(sel_items, flds, prefix="Selected: ")
 
         # todo: move this inside the nex methods to show what would be done
         if self.cfg_dry_run:
@@ -340,8 +332,8 @@ class GoingRunningCommand(Subcommand):
         else:
             bin_size = 0
 
-        self._say("Estimated number of songs: {}".format(est_num_songs))
-        self._say("Bin Size: {}".format(bin_size))
+        self.log.debug("Estimated number of songs: {}".format(est_num_songs))
+        self.log.debug("Bin Size: {}".format(bin_size))
 
         for i in range(0, est_num_songs):
             bin_start = round(i * bin_size)
@@ -353,98 +345,6 @@ class GoingRunningCommand(Subcommand):
                 pass
 
         return selected
-
-    def _score_library_items(self, training: Subview, items):
-        ordering = {}
-        fields = []
-        if training["ordering"].exists() and len(training["ordering"].keys()) > 0:
-            ordering = training["ordering"].get()
-            fields = list(ordering.keys())
-
-        default_field_data = {
-            "min": 99999999.9,
-            "max": 0.0,
-            "delta": 0.0,
-            "step": 0.0,
-            "weight": 100
-        }
-
-        # Build Order Info
-        order_info = {}
-        for field in fields:
-            field_name = field.strip()
-            order_info[field_name] = default_field_data.copy()
-            order_info[field_name]["weight"] = ordering[field]
-
-        # self._say("ORDER INFO #1: {0}".format(order_info))
-
-        # Populate Order Info
-        for field_name in order_info.keys():
-            field_data = order_info[field_name]
-            _min, _max, _sum, _avg = GRC.get_min_max_sum_avg_for_items(items,
-                                                                       field_name)
-            field_data["min"] = _min
-            field_data["max"] = _max
-
-        # self._say("ORDER INFO #2: {0}".format(order_info))
-
-        # todo: this will not work anymore - find a better way
-        # Remove bad items from Order Info
-        # bad_oi = [field for field in order_info if
-        #           order_info[field]["min"] == default_field_data["min"] and
-        #           order_info[field]["max"] == default_field_data["max"]
-        #           ]
-        # for field in bad_oi: del order_info[field]
-        # self._say("ORDER INFO #3: {0}".format(order_info))
-
-        # Calculate other values in Order Info
-        for field_name in order_info.keys():
-            field_data = order_info[field_name]
-            field_data["delta"] = field_data["max"] - field_data["min"]
-            if field_data["delta"] > 0:
-                field_data["step"] = round(100 / field_data["delta"], 3)
-            else:
-                field_data["step"] = 0
-
-        # self._say("ORDER INFO: {0}".format(order_info))
-
-        # Score the library items
-        for item in items:
-            item: Item
-            item["ordering_score"] = 0
-            item["ordering_info"] = {}
-            for field_name in order_info.keys():
-                field_data = order_info[field_name]
-                try:
-                    field_value = round(float(item.get(field_name, None)), 3)
-                except ValueError:
-                    field_value = None
-                except TypeError:
-                    field_value = None
-
-                if field_value is None:
-                    # Make up average value
-                    field_value = round(field_data["delta"] / 2, 3)
-
-                distance_from_min = round(field_value - field_data["min"], 3)
-
-                # This is linear (we could some day use different models)
-                # field_score should always be between 0 and 100
-                field_score = round(distance_from_min * field_data["step"], 3)
-                field_score = field_score if field_score > 0 else 0
-                field_score = field_score if field_score < 100 else 100
-
-                weighted_field_score = round(
-                    field_data["weight"] * field_score / 100, 3)
-
-                item["ordering_score"] = round(
-                    item["ordering_score"] + weighted_field_score, 3)
-
-                item["ordering_info"][field_name] = {
-                    "dist": distance_from_min,
-                    "fld_score": field_score,
-                    "wfld_score": weighted_field_score
-                }
 
     def _gather_query_elements(self, training: Subview):
         """Order(strongest to weakest): command -> training -> flavours
@@ -494,9 +394,8 @@ class GoingRunningCommand(Subcommand):
 
         return self.lib.items(parsed_query)
 
-
-    def display_library_items(self, items, fields):
-        fmt = ""
+    def display_library_items(self, items, fields, prefix=""):
+        fmt = prefix
         for field in fields:
             fmt += "[{0}:{{{0}}}]".format(field)
 
@@ -512,18 +411,6 @@ class GoingRunningCommand(Subcommand):
                 self._say(fmt.format(**kwargs))
             except IndexError:
                 pass
-
-    def verify_configuration_upgrade(self):
-        """Check if user has old(pre v1.1.1) configuration keys in config
-        """
-        trainings = list(self.config["trainings"].keys())
-        training_names = [s for s in trainings if s != "fallback"]
-        for training_name in training_names:
-            training: Subview = self.config["trainings"][training_name]
-            tkeys = training.keys()
-            for tkey in tkeys:
-                if tkey in ["song_bpm", "song_len"]:
-                    raise RuntimeError("Offending key in training({}): {}".format(training_name, tkey))
 
     def list_trainings(self):
         """
@@ -565,7 +452,21 @@ class GoingRunningCommand(Subcommand):
         from beetsplug.goingrunning.version import __version__
         self._say("Goingrunning(beets-{}) plugin for Beets: v{}".format(__PLUGIN_NAME__, __version__))
 
+    def verify_configuration_upgrade(self):
+        """Check if user has old(pre v1.1.1) configuration keys in config
+        """
+        trainings = list(self.config["trainings"].keys())
+        training_names = [s for s in trainings if s != "fallback"]
+        for training_name in training_names:
+            training: Subview = self.config["trainings"][training_name]
+            tkeys = training.keys()
+            for tkey in tkeys:
+                if tkey in ["song_bpm", "song_len"]:
+                    raise RuntimeError("Offending key in training({}): {}".format(training_name, tkey))
+
     def _say(self, msg):
+        """Log and print to stdout
+        """
         self.log.debug(msg)
         if not self.cfg_quiet:
             print(msg)
