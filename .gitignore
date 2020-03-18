@@ -6,8 +6,7 @@
 
 ## Project
 coverage/
-BEETSDIR/*
-!BEETSDIR/config.yaml
+BEETSDIR/
 
 ## Python specific
 __pycache__/
