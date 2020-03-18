@@ -1,8 +1,5 @@
 [report]
 omit =
-    */pyshared/*
-    */python?.?/*
-    */site-packages/nose/*
     */test/*
     beetsplug/__init__.py
 exclude_lines =

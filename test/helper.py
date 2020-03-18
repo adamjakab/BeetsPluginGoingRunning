@@ -6,13 +6,13 @@
 #
 # References: https://docs.python.org/3/library/unittest.html
 #
-import json
+
 import os
 import shutil
 import sys
 import tempfile
 from contextlib import contextmanager
-from random import randint
+from random import randint, uniform
 from unittest import TestCase
 
 import beets
@@ -23,25 +23,23 @@ from beets import plugins
 from beets import ui
 from beets import util
 from beets.library import Item
-# from beets.mediafile import MediaFile
 from beets.util import (
-    MoveOperation,
     syspath,
     bytestring_path,
     displayable_path,
 )
-from beets.util.confit import Subview, Dumper
+from beets.util.confit import Subview, Dumper, LazyConfig, ConfigSource
 from six import StringIO
 
 from beetsplug import goingrunning
 
 # Values
-PLUGIN_NAME = 'goingrunning'
-PLUGIN_SHORT_DESCRIPTION = 'bring some music with you that matches your training'
+PLUGIN_NAME = u'goingrunning'
+PLUGIN_SHORT_NAME = u'run'
+PLUGIN_SHORT_DESCRIPTION = u'run with the music that matches your training sessions'
 
 
 class LogCapture(logging.Handler):
-
     def __init__(self):
         super(LogCapture, self).__init__()
         self.messages = []
@@ -60,9 +58,9 @@ def capture_log(logger='beets', suppress_output=True):
     capture = LogCapture()
     log = logging.getLogger(logger)
     log.propagate = True
-    if suppress_output:
-        # Is this too violent?
-        log.handlers = []
+    # if suppress_output:
+    # Is this too violent?
+    # log.handlers = []
     log.addHandler(capture)
     try:
         yield capture.messages
@@ -71,13 +69,12 @@ def capture_log(logger='beets', suppress_output=True):
 
 
 @contextmanager
-def capture_stdout(suppress_output=True):
+def capture_stdout():
     """Save stdout in a StringIO.
     >>> with capture_stdout() as output:
     ...     print('spam')
     ...
     >>> output.getvalue()
-    'spam'
     """
     orig = sys.stdout
     sys.stdout = capture = StringIO()
@@ -85,7 +82,6 @@ def capture_stdout(suppress_output=True):
         yield sys.stdout
     finally:
         sys.stdout = orig
-        # if not suppress_output:
         print(capture.getvalue())
 
 
@@ -104,6 +100,44 @@ def control_stdin(userinput=None):
         sys.stdin = org
 
 
+def get_plugin_configuration(cfg):
+    """Creates and returns a configuration from a dict to play around with"""
+    config = LazyConfig("unittest")
+    cfg = {PLUGIN_NAME: cfg}
+    config.add(ConfigSource(cfg))
+    return config[PLUGIN_NAME]
+
+
+def get_single_line_from_output(text: str, prefix: str):
+    selected_line = ""
+    lines = text.split("\n")
+    for line in lines:
+        if prefix in line:
+            selected_line = line
+            break
+
+    return selected_line
+
+
+def convert_time_to_seconds(time: str):
+    return sum(x * int(t) for x, t in zip([3600, 60, 1], time.split(":")))
+
+
+def get_value_separated_from_output(fulltext: str, prefix: str):
+    """Separate the value that has been printed to the stdout in the format of:
+    prefix: value
+    """
+    value = None
+    line = get_single_line_from_output(fulltext, prefix)
+    # print("SL:{}".format(line))
+
+    if prefix in line:
+        value = line.replace(prefix, "")
+        value = value.strip()
+
+    return value
+
+
 def _convert_args(args):
     """Convert args to strings
     """
@@ -120,15 +154,66 @@ class Assertions(object):
                         msg=u'Path is not a file: {0}'.format(displayable_path(path)))
 
 
-class TestHelper(TestCase, Assertions):
+class UnitTestHelper(TestCase, Assertions):
+    __item_count = 0
+
+    def create_item(self, **values):
+        """Return an `Item` instance with sensible default values.
+
+        The item receives its attributes from `**values` paratmeter. The
+        `title`, `artist`, `album`, `track`, `format` and `path`
+        attributes have defaults if they are not given as parameters.
+        The `title` attribute is formatted with a running item count to
+        prevent duplicates.
+        """
+        item_count = self._get_item_count()
+        values_ = {
+            'title': u't\u00eftle {0}',
+            'artist': u'the \u00e4rtist',
+            'album': u'the \u00e4lbum',
+            'track': item_count,
+            'format': 'MP3',
+        }
+        values_.update(values)
+
+        values_['title'] = values_['title'].format(item_count)
+        item = Item(**values_)
+
+        return item
+
+    def create_multiple_items(self, count=10, **values):
+        items = []
+        for i in range(count):
+            new_values = values.copy()
+            for key in values:
+                if type(values[key]) == list and len(values[key]) == 2:
+                    if type(values[key][0]) == float or type(values[key][1]) == float:
+                        random_val = uniform(values[key][0], values[key][1])
+                    elif type(values[key][0]) == int and type(values[key][1]) == int:
+                        random_val = randint(values[key][0], values[key][1])
+                    else:
+                        raise ValueError("Elements for key({}) are neither float nor int!")
+
+                    new_values[key] = random_val
+            items.append(self.create_item(**new_values))
+
+        return items
+
+    def _get_item_count(self):
+        self.__item_count += 1
+        return self.__item_count
+
+
+class FunctionalTestHelper(TestCase, Assertions):
     _test_config_dir_ = os.path.join(bytestring_path(os.path.dirname(__file__)), b'config')
     _test_fixture_dir = os.path.join(bytestring_path(os.path.dirname(__file__)), b'fixtures')
     _test_target_dir = bytestring_path("/tmp/beets-goingrunning-test-drive")
+    __item_count = 0
 
     def setUp(self):
-        """Setup before running any tests.
+        """Setup before running any tests with an empty configuration file.
         """
-        self.reset_beets(config_file=b"empty.yml")
+        self.reset_beets(config_file=b"default.yml")
 
     def tearDown(self):
         self.teardown_beets()
@@ -140,7 +225,7 @@ class TestHelper(TestCase, Assertions):
 
     def _setup_beets(self, config_file: bytes, beet_files: list = None):
         self.addCleanup(self.teardown_beets)
-        self.beetsdir = bytestring_path(self.mkdtemp())
+        self.beetsdir = bytestring_path(self.create_temp_dir())
         os.environ['BEETSDIR'] = self.beetsdir.decode()
 
         self.config = beets.config
@@ -188,7 +273,7 @@ class TestHelper(TestCase, Assertions):
                     file_name = file_name.decode()
 
                 dst = os.path.join(self.beetsdir.decode(), file_name)
-                print("Copy to beetsdir: {}".format(file_name))
+                # print("Copy({}) to beetsdir: {}".format(src, file_name))
 
                 shutil.copyfile(src, dst)
 
@@ -215,10 +300,20 @@ class TestHelper(TestCase, Assertions):
 
         # beets.config.read(user=False, defaults=True)
 
-    def mkdtemp(self):
-        path = tempfile.mkdtemp()
-        self._tempdirs.append(path)
-        return path
+    def create_temp_dir(self):
+        temp_dir = tempfile.mkdtemp()
+        self._tempdirs.append(temp_dir)
+        return temp_dir
+
+    def ensure_training_target_path(self, training_name):
+        # Set existing path for target
+        target_name = self.config[PLUGIN_NAME]["trainings"][training_name]["target"].get()
+        target = self.config[PLUGIN_NAME]["targets"][target_name]
+        device_root = self.create_temp_dir()
+        device_path = target["device_path"].get()
+        target["device_root"].set(device_root)
+        full_path = os.path.join(device_root, device_path)
+        os.makedirs(full_path)
 
     @staticmethod
     def unload_plugins():
@@ -227,15 +322,32 @@ class TestHelper(TestCase, Assertions):
             plugins._classes = set()
             plugins._instances = {}
 
-    def runcli(self, *args):
-        # TODO mock stdin
+    # def runcli(self, *args):
+    #     # TODO mock stdin
+    #     with capture_stdout() as out:
+    #         try:
+    #             ui._raw_main(_convert_args(list(args)), self.lib)
+    #         except ui.UserError as u:
+    #             # TODO remove this and handle exceptions in tests
+    #             print(u.args[0])
+    #     return out.getvalue()
+
+    def run_command(self, *args, **kwargs):
+        """Run a beets command with an arbitrary amount of arguments. The
+           Library` defaults to `self.lib`, but can be overridden with
+           the keyword argument `lib`.
+        """
+        sys.argv = ['beet']  # avoid leakage from test suite args
+        lib = None
+        if hasattr(self, 'lib'):
+            lib = self.lib
+        lib = kwargs.get('lib', lib)
+        beets.ui._raw_main(_convert_args(list(args)), lib)
+
+    def run_with_output(self, *args):
         with capture_stdout() as out:
-            try:
-                ui._raw_main(_convert_args(list(args)), self.lib)
-            except ui.UserError as u:
-                # TODO remove this and handle exceptions in tests
-                print(u.args[0])
-        return out.getvalue()
+            self.run_command(*args)
+        return util.text_string(out.getvalue())
 
     def lib_path(self, path):
         return os.path.join(self.beetsdir, path.replace(b'/', bytestring_path(os.sep)))
@@ -250,31 +362,67 @@ class TestHelper(TestCase, Assertions):
         assert (ext in 'mp3 m4a ogg'.split())
         return os.path.join(self._test_fixture_dir, bytestring_path('song.' + ext.lower()))
 
-    def add_multiple_items_to_library(self, count=10, song_bpm=None, song_length=None, **kwargs):
-        if song_bpm is None:
-            song_bpm = [60, 220]
-        if song_length is None:
-            song_length = [15, 300]
-        for i in range(count):
-            bpm = randint(song_bpm[0], song_bpm[1])
-            length = randint(song_length[0], song_length[1])
-            self.add_single_item_to_library(bpm=bpm, length=length, **kwargs)
+    def _get_item_count(self):
+        """Internal counter for create_item
+        """
+        self.__item_count += 1
+        return self.__item_count
 
-    def add_single_item_to_library(self, **kwargs):
-        values = {
-            'title': 'track 1',
-            'artist': 'artist 1',
-            'album': 'album 1',
-            'bpm': randint(120, 180),
-            'length': randint(90, 720),
-            'format': 'mp3',
+    def create_item(self, **values):
+        """Return an `Item` instance with sensible default values.
+
+        The item receives its attributes from `**values` paratmeter. The
+        `title`, `artist`, `album`, `track`, `format` and `path`
+        attributes have defaults if they are not given as parameters.
+        The `title` attribute is formated with a running item count to
+        prevent duplicates. The default for the `path` attribute
+        respects the `format` value.
+
+        The item is attached to the database from `self.lib`.
+        """
+        item_count = self._get_item_count()
+        values_ = {
+            'title': u't\u00eftle {0}',
+            'artist': u'the \u00e4rtist',
+            'album': u'the \u00e4lbum',
+            'track': item_count,
+            'format': 'MP3',
         }
-        values.update(kwargs)
-        item = Item.from_path(self.get_fixture_item_path(values.pop('format')))
-        item.update(values)
-        item.add(self.lib)
-        item.move(MoveOperation.COPY)
-        item.write()
+        values_.update(values)
+        values_['title'] = values_['title'].format(item_count)
+
+        # print("Creating Item: {}".format(values_))
+
+        values_['db'] = self.lib
+        item = Item(**values_)
+
+        if 'path' not in values:
+            item['path'] = 'test/fixtures/song.' + item['format'].lower()
+
+        # mtime needs to be set last since other assignments reset it.
+        item.mtime = 12345
+
         return item
 
+    def add_single_item_to_library(self, **values):
+        item = self.create_item(**values)
+        # item = Item.from_path(self.get_fixture_item_path(values.pop('format')))
+        item.add(self.lib)
+        # item.move(MoveOperation.COPY)
+        # item.write()
+        return item
 
+    def add_multiple_items_to_library(self, count=10, **values):
+        for i in range(count):
+            new_values = values.copy()
+            for key in values:
+                if type(values[key]) == list and len(values[key]) == 2:
+                    if type(values[key][0]) == float or type(values[key][1]) == float:
+                        random_val = uniform(values[key][0], values[key][1])
+                    elif type(values[key][0]) == int and type(values[key][1]) == int:
+                        random_val = randint(values[key][0], values[key][1])
+                    else:
+                        raise ValueError("Elements for key({}) are neither float nor int!")
+
+                    new_values[key] = random_val
+            self.add_single_item_to_library(**new_values)

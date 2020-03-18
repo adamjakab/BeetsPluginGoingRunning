@@ -1,0 +1,8 @@
+# This contains keys which indicate that it was created for a pre-v1.1.1 version
+# The plugin will issue a warning and exit when finding those keys
+
+goingrunning:
+  trainings:
+    training-1:
+      song_bpm: [100, 150]
+      song_len: [60, 120]
