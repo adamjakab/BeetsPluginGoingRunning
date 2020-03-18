@@ -11,7 +11,7 @@ import sys
 from beets.library import Item
 from beets.util.confit import Subview
 
-MUST_HAVE_TRAINING_KEYS = ['query', 'duration', 'target']
+MUST_HAVE_TRAINING_KEYS = ['duration', 'query', 'target']
 MUST_HAVE_TARGET_KEYS = ['device_root', 'device_path']
 
 KNOWN_NUMERIC_FLEX_ATTRIBUTES = ["danceable", "mood_acoustic", "mood_aggressive", "mood_electronic", "mood_happy",

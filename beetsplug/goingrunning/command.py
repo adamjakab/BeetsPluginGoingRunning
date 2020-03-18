@@ -176,8 +176,9 @@ class GoingRunningCommand(Subcommand):
         self._say("Planned training duration: {0}".format(common.get_human_readable_time(duration * 60)))
         self._say("Total song duration: {}".format(common.get_human_readable_time(total_time)))
 
-        # Show the selected songs and exit
-        flds = ["bpm", "year", "length", "artist", "title"]
+        # Show the selected songs
+        flds = self._get_training_query_element_keys(training)
+        flds += ["artist", "title"]
         self.display_library_items(sel_items, flds, prefix="Selected: ")
 
         # todo: move this inside the nex methods to show what would be done
@@ -340,6 +341,14 @@ class GoingRunningCommand(Subcommand):
 
         return selected
 
+    def _get_training_query_element_keys(self, training):
+        answer = []
+        query_elements = self._gather_query_elements(training)
+        for el in query_elements:
+            answer.append(el.split(":")[0])
+
+        return answer
+
     def _gather_query_elements(self, training: Subview):
         """Order(strongest to weakest): command -> training -> flavours
         """
@@ -391,7 +400,10 @@ class GoingRunningCommand(Subcommand):
     def display_library_items(self, items, fields, prefix=""):
         fmt = prefix
         for field in fields:
-            fmt += "[{0}:{{{0}}}]".format(field)
+            if field in ["artist", "album", "title"]:
+                fmt += "- {{{0}}} ".format(field)
+            else:
+                fmt += "[{0}: {{{0}}}] ".format(field)
 
         for item in items:
             kwargs = {}
@@ -400,6 +412,10 @@ class GoingRunningCommand(Subcommand):
                 if hasattr(item, field):
                     fld_val = item[field]
 
+                    if type(fld_val) in [float, int]:
+                        fld_val = round(fld_val, 3)
+                        fld_val = "{:7.3f}".format(fld_val)
+
                 kwargs[field] = fld_val
             try:
                 self._say(fmt.format(**kwargs))
@@ -407,9 +423,6 @@ class GoingRunningCommand(Subcommand):
                 pass
 
     def list_trainings(self):
-        """
-        # @todo: order keys
-        """
         if not self.config["trainings"].exists() or len(self.config["trainings"].keys()) == 0:
             self._say("You have not created any trainings yet.")
             return
@@ -425,22 +438,38 @@ class GoingRunningCommand(Subcommand):
             self._say("Training[{0}] does not exist.".format(training_name), log_only=True)
             return
 
+        display_name = "[   {}   ]".format(training_name)
+        self._say("\n{0}".format(display_name.center(80, "=")))
+
         training: Subview = self.config["trainings"][training_name]
-        training_keys = training.keys()
-        self._say("{0} ::: {1}".format("=" * 40, training_name))
+        training_keys = list(set(common.MUST_HAVE_TRAINING_KEYS) | set(training.keys()))
+        final_keys = ["duration", "query", "use_flavours", "combined_query", "ordering", "target"]
+        final_keys.extend(tk for tk in training_keys if tk not in final_keys)
 
-        training_keys = list(set(common.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
-        training_keys.sort()
+        for key in final_keys:
+            val = common.get_training_attribute(training, key)
 
-        for tkey in training_keys:
-            tval = common.get_training_attribute(training, tkey)
-            if isinstance(tval, dict):
+            # Handle non-existent (made up) keys
+            if key == "combined_query" and common.get_training_attribute(training, "use_flavours"):
+                val = self._gather_query_elements(training)
+
+            if val is None:
+                continue
+
+            if key == "duration":
+                val = common.get_human_readable_time(val * 60)
+            elif key == "ordering":
+                val = dict(val)
+            elif key == "query":
+                pass
+
+            if isinstance(val, dict):
                 value = []
-                for k in tval:
-                    value.append("{key}({val})".format(key=k, val=tval[k]))
-                tval = ", ".join(value)
+                for k in val:
+                    value.append("{key}({val})".format(key=k, val=val[k]))
+                val = ", ".join(value)
 
-            self._say("{0}: {1}".format(tkey, tval))
+            self._say("{0}: {1}".format(key, val))
 
     def show_version_information(self):
         from beetsplug.goingrunning.version import __version__

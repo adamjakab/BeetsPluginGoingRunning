@@ -34,9 +34,9 @@ class CommandTest(FunctionalTestHelper, Assertions):
 
     def test_training_listing_default(self):
         stdout = self.run_with_output(PLUGIN_NAME, "--list")
-        self.assertIn("::: training-1", stdout)
-        self.assertIn("::: training-2", stdout)
-        self.assertIn("::: training-3", stdout)
+        self.assertIn("[   training-1   ]", stdout)
+        self.assertIn("[   training-2   ]", stdout)
+        self.assertIn("[   training-3   ]", stdout)
 
     def test_training_handling_inexistent(self):
         training_name = "sitting_on_the_sofa"
