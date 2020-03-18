@@ -9,7 +9,6 @@ import logging
 
 from beets.library import Item
 from beets.util.confit import Subview
-from beets.random import random_objs
 
 MUST_HAVE_TRAINING_KEYS = ['query', 'duration', 'target']
 MUST_HAVE_TARGET_KEYS = ['device_root', 'device_path']

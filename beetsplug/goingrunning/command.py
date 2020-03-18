@@ -276,7 +276,7 @@ class GoingRunningCommand(Subcommand):
 
         if attrib == "name":
             attrib_val = target_name
-        if attrib in ("device_root", "device_path", "delete_from_device"):
+        elif attrib in ("device_root", "device_path", "delete_from_device"):
             # these should NOT propagate up
             try:
                 attrib_val = target[attrib].get()
