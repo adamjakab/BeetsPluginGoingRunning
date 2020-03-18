@@ -20,7 +20,7 @@ from beets.library import Library, Item, parse_query_string
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
 
-from beetsplug.goingrunning import common as GRC
+from beetsplug.goingrunning import common
 
 # The plugin
 __PLUGIN_NAME__ = u'goingrunning'
@@ -41,7 +41,7 @@ class GoingRunningCommand(Subcommand):
 
     def __init__(self, cfg):
         self.config = cfg
-        self.log = GRC.get_beets_logger()
+        self.log = common.get_beets_logger()
 
         self.parser = OptionParser(usage='beet goingrunning [training] [options] [QUERY...]')
 
@@ -161,25 +161,25 @@ class GoingRunningCommand(Subcommand):
             return
 
         # 1) order items by scoring system (need ordering in config)
-        GRC.score_library_items(training, lib_items)
+        common.score_library_items(training, lib_items)
         sorted_lib_items = sorted(lib_items, key=operator.attrgetter('ordering_score'))
 
         # 2) select random items n from the ordered list(T=length) - by
         # chosing n times song from the remaining songs between 1 and m
         # where m = T/n
-        duration = GRC.get_training_attribute(training, "duration")
-        # sel_items = GRC.get_randomized_items(lib_items, duration)
+        duration = common.get_training_attribute(training, "duration")
+        # sel_items = common.get_randomized_items(lib_items, duration)
         sel_items = self._get_items_for_duration(sorted_lib_items, duration)
 
-        total_time = GRC.get_duration_of_items(sel_items)
+        total_time = common.get_duration_of_items(sel_items)
         # @todo: check if total time is close to duration - (config might be
         #  too restrictive or too few songs)
 
         # Show some info
         self._say("Available songs: {}".format(len(lib_items)))
         self._say("Selected songs: {}".format(len(sel_items)))
-        self._say("Planned training duration: {0}".format(GRC.get_human_readable_time(duration * 60)))
-        self._say("Total song duration: {}".format(GRC.get_human_readable_time(total_time)))
+        self._say("Planned training duration: {0}".format(common.get_human_readable_time(duration * 60)))
+        self._say("Total song duration: {}".format(common.get_human_readable_time(total_time)))
 
         # Show the selected songs and exit
         flds = ["bpm", "year", "length", "artist", "title"]
@@ -194,7 +194,7 @@ class GoingRunningCommand(Subcommand):
         self._say("Run!")
 
     def _clean_target_path(self, training: Subview):
-        target_name = GRC.get_training_attribute(training, "target")
+        target_name = common.get_training_attribute(training, "target")
 
         if self._get_target_attribute_for_training(training, "clean_target"):
             dst_path = self._get_destination_path_for_training(training)
@@ -232,7 +232,7 @@ class GoingRunningCommand(Subcommand):
                 os.remove(dst_path)
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
-        target_name = GRC.get_training_attribute(training, "target")
+        target_name = common.get_training_attribute(training, "target")
         dst_path = self._get_destination_path_for_training(training)
         self._say("Copying to target[{0}]: {1}".format(target_name, dst_path))
 
@@ -257,7 +257,7 @@ class GoingRunningCommand(Subcommand):
             cnt += 1
 
     def _get_target_for_training(self, training: Subview):
-        target_name = GRC.get_training_attribute(training, "target")
+        target_name = common.get_training_attribute(training, "target")
         self.log.debug("Finding target: {0}".format(target_name))
 
         if not self.config["targets"][target_name].exists():
@@ -267,7 +267,7 @@ class GoingRunningCommand(Subcommand):
         return self.config["targets"][target_name]
 
     def _get_target_attribute_for_training(self, training: Subview, attrib: str = "name"):
-        target_name = GRC.get_training_attribute(training, "target")
+        target_name = common.get_training_attribute(training, "target")
         self.log.debug("Getting attribute[{0}] for target: {1}".format(attrib,
                                                                        target_name))
         target = self._get_target_for_training(training)
@@ -283,7 +283,7 @@ class GoingRunningCommand(Subcommand):
             except NotFoundError:
                 attrib_val = None
         else:
-            attrib_val = GRC.get_target_attribute(target, attrib)
+            attrib_val = common.get_target_attribute(target, attrib)
 
         self.log.debug(
             "Found target[{0}] attribute[{1}] path: {2}".format(target_name, attrib, attrib_val))
@@ -291,7 +291,7 @@ class GoingRunningCommand(Subcommand):
         return attrib_val
 
     def _get_destination_path_for_training(self, training: Subview):
-        target_name = GRC.get_training_attribute(training, "target")
+        target_name = common.get_training_attribute(training, "target")
         root = self._get_target_attribute_for_training(training, "device_root")
         path = self._get_target_attribute_for_training(training, "device_path")
         path = path or ""
@@ -320,7 +320,7 @@ class GoingRunningCommand(Subcommand):
     def _get_items_for_duration(self, items, duration):
         selected = []
         total_time = 0
-        _min, _max, _sum, _avg = GRC.get_min_max_sum_avg_for_items(items, "length")
+        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items(items, "length")
 
         if _avg > 0:
             est_num_songs = round(duration * 60 / _avg)
@@ -354,18 +354,18 @@ class GoingRunningCommand(Subcommand):
         flavour_query = []
 
         # Append the query elements from the configuration
-        tconf = GRC.get_training_attribute(training, "query")
+        tconf = common.get_training_attribute(training, "query")
         if tconf:
             for key in tconf.keys():
-                training_query.append(GRC.get_beet_query_formatted_string(key, tconf.get(key)))
+                training_query.append(common.get_beet_query_formatted_string(key, tconf.get(key)))
 
         # Append the query elements from the flavours defined on the training
-        flavours = GRC.get_training_attribute(training, "use_flavours")
+        flavours = common.get_training_attribute(training, "use_flavours")
         if flavours:
             flavours = [flavours] if type(flavours) == str else flavours
             for flavour_name in flavours:
                 flavour: Subview = self.config["flavours"][flavour_name]
-                flavour_query += GRC.get_flavour_elements(flavour)
+                flavour_query += common.get_flavour_elements(flavour)
 
         self.log.debug("Command query elements: {}".format(command_query))
         self.log.debug("Training query elements: {}".format(training_query))
@@ -435,11 +435,11 @@ class GoingRunningCommand(Subcommand):
         training_keys = training.keys()
         self._say("{0} ::: {1}".format("=" * 40, training_name))
 
-        training_keys = list(set(GRC.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
+        training_keys = list(set(common.MUST_HAVE_TRAINING_KEYS) | set(training_keys))
         training_keys.sort()
 
         for tkey in training_keys:
-            tval = GRC.get_training_attribute(training, tkey)
+            tval = common.get_training_attribute(training, tkey)
             if isinstance(tval, dict):
                 value = []
                 for k in tval:
