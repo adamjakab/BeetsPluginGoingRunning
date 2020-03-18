@@ -7,8 +7,7 @@
 
 from beets.util.confit import Subview
 
-from test.helper import FunctionalTestHelper, Assertions, PLUGIN_NAME, PLUGIN_SHORT_DESCRIPTION, capture_log, \
-    capture_stdout
+from test.helper import FunctionalTestHelper, Assertions, PLUGIN_NAME
 
 
 class ConfigurationTest(FunctionalTestHelper, Assertions):
@@ -27,9 +26,7 @@ class ConfigurationTest(FunctionalTestHelper, Assertions):
 
     def test_obsolete_config(self):
         self.reset_beets(config_file=b"obsolete.yml")
-
         stdout = self.run_with_output(PLUGIN_NAME)
-
         self.assertIn("INCOMPATIBLE PLUGIN CONFIGURATION", stdout)
         self.assertIn("Offending key in training(training-1): song_bpm", stdout)
 

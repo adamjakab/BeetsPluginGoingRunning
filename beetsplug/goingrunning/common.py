@@ -6,6 +6,7 @@
 #
 
 import logging
+import sys
 
 from beets.library import Item
 from beets.util.confit import Subview
@@ -20,14 +21,22 @@ KNOWN_NUMERIC_FLEX_ATTRIBUTES = ["danceable", "mood_acoustic", "mood_aggressive"
 KNOWN_TEXTUAL_FLEX_ATTRIBUTES = ["gender", "genre_rosamerica", "rhythm", "voice_instrumental", "chords_key",
                                  "chords_scale"]
 
+__logger__ = logging.getLogger('beets.goingrunning')
 
-def get_beets_logger():
-    return logging.getLogger('beets.goingrunning')
+
+def say(msg, log_only=False):
+    """Log and write to stdout
+    """
+    __logger__.debug(msg)
+    if not log_only:
+        sys.stdout.write(msg + "\n")
+
 
 def get_human_readable_time(seconds):
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     return "%d:%02d:%02d" % (h, m, s)
+
 
 def get_beet_query_formatted_string(key, val):
     quote_val = type(val) == str and " " in val

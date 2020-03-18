@@ -6,15 +6,14 @@
 #
 
 import operator
-import random
 import os
+import random
 import string
-from sys import stdout
+from glob import glob
 from optparse import OptionParser
 from pathlib import Path
-
 from shutil import copyfile
-from glob import glob
+
 from beets.dbcore.db import Results
 from beets.dbcore.queryparse import parse_query_part
 from beets.library import Library, Item, parse_query_string
@@ -30,7 +29,6 @@ __PLUGIN_SHORT_DESCRIPTION__ = u'run with the music that matches your training s
 
 
 class GoingRunningCommand(Subcommand):
-    log = None
     config: Subview = None
     lib: Library = None
     query = None
@@ -42,7 +40,6 @@ class GoingRunningCommand(Subcommand):
 
     def __init__(self, cfg):
         self.config = cfg
-        self.log = common.get_beets_logger()
 
         self.parser = OptionParser(usage='beet goingrunning [training] [options] [QUERY...]')
 
@@ -110,14 +107,11 @@ class GoingRunningCommand(Subcommand):
             self._say("* I promise it will not happen again ;)")
             self._say("* " + str(e))
             self._say("* The plugin will exit now.")
-            self._say("*" * 80)
+            common.say("*" * 80)
             return
 
         # You must either pass a training name or request listing
         if len(self.query) < 1 and not (options.list or options.version):
-            self.log.warning(
-                "You can either pass the name of a training or request a "
-                "listing (--list)!")
             self.parser.print_help()
             return
 
@@ -208,7 +202,7 @@ class GoingRunningCommand(Subcommand):
                     os.path.join(dst_path, "*.{}".format(ext)))
 
             for f in target_file_list:
-                self.log.debug("Deleting: {}".format(f))
+                self._say("Deleting: {}".format(f), log_only=True)
                 os.remove(f)
 
         additional_files = self._get_target_attribute_for_training(training,
@@ -225,11 +219,10 @@ class GoingRunningCommand(Subcommand):
                 dst_path = os.path.realpath(root.joinpath(path))
 
                 if not os.path.isfile(dst_path):
-                    self.log.debug(
-                        "The file to delete does not exist: {0}".format(path))
+                    self._say("The file to delete does not exist: {0}".format(path), log_only=True)
                     continue
 
-                self.log.debug("Deleting: {}".format(dst_path))
+                self._say("Deleting: {}".format(dst_path), log_only=True)
                 os.remove(dst_path)
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
@@ -246,20 +239,20 @@ class GoingRunningCommand(Subcommand):
             src = os.path.realpath(item.get("path").decode("utf-8"))
             if not os.path.isfile(src):
                 # todo: this is bad enough to interrupt! create option for this
-                self.log.warning("File does not exist: {}".format(src))
+                self._say("File does not exist: {}".format(src))
                 continue
 
             fn, ext = os.path.splitext(src)
             gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6),
                                                random_string(), ext)
             dst = "{0}/{1}".format(dst_path, gen_filename)
-            self.log.debug("Copying[{1}]: {0}".format(src, gen_filename))
+            self._say("Copying[{1}]: {0}".format(src, gen_filename), log_only=True)
             copyfile(src, dst)
             cnt += 1
 
     def _get_target_for_training(self, training: Subview):
         target_name = common.get_training_attribute(training, "target")
-        self.log.debug("Finding target: {0}".format(target_name))
+        self._say("Finding target: {0}".format(target_name), log_only=True)
 
         if not self.config["targets"][target_name].exists():
             self._say("The target name[{0}] is not defined!".format(target_name))
@@ -269,8 +262,8 @@ class GoingRunningCommand(Subcommand):
 
     def _get_target_attribute_for_training(self, training: Subview, attrib: str = "name"):
         target_name = common.get_training_attribute(training, "target")
-        self.log.debug("Getting attribute[{0}] for target: {1}".format(attrib,
-                                                                       target_name))
+        self._say("Getting attribute[{0}] for target: {1}".format(attrib,
+                                                                  target_name), log_only=True)
         target = self._get_target_for_training(training)
         if not target:
             return
@@ -286,8 +279,8 @@ class GoingRunningCommand(Subcommand):
         else:
             attrib_val = common.get_target_attribute(target, attrib)
 
-        self.log.debug(
-            "Found target[{0}] attribute[{1}] path: {2}".format(target_name, attrib, attrib_val))
+        self._say(
+            "Found target[{0}] attribute[{1}] path: {2}".format(target_name, attrib, attrib_val), log_only=True)
 
         return attrib_val
 
@@ -313,8 +306,8 @@ class GoingRunningCommand(Subcommand):
                                                                   dst_path))
             return
 
-        self.log.debug(
-            "Found target[{0}] path: {0}".format(target_name, dst_path))
+        self._say(
+            "Found target[{0}] path: {0}".format(target_name, dst_path), log_only=True)
 
         return dst_path
 
@@ -333,8 +326,8 @@ class GoingRunningCommand(Subcommand):
         else:
             bin_size = 0
 
-        self.log.debug("Estimated number of songs: {}".format(est_num_songs))
-        self.log.debug("Bin Size: {}".format(bin_size))
+        self._say("Estimated number of songs: {}".format(est_num_songs), log_only=True)
+        self._say("Bin Size: {}".format(bin_size), log_only=True)
 
         for i in range(0, est_num_songs):
             bin_start = round(i * bin_size)
@@ -368,12 +361,12 @@ class GoingRunningCommand(Subcommand):
                 flavour: Subview = self.config["flavours"][flavour_name]
                 flavour_query += common.get_flavour_elements(flavour)
 
-        self.log.debug("Command query elements: {}".format(command_query))
-        self.log.debug("Training query elements: {}".format(training_query))
-        self.log.debug("Flavour query elements: {}".format(flavour_query))
+        self._say("Command query elements: {}".format(command_query), log_only=True)
+        self._say("Training query elements: {}".format(training_query), log_only=True)
+        self._say("Flavour query elements: {}".format(flavour_query), log_only=True)
 
         raw_combined_query = command_query + training_query + flavour_query
-        self.log.debug("Raw combined query elements: {}".format(raw_combined_query))
+        self._say("Raw combined query elements: {}".format(raw_combined_query), log_only=True)
 
         # Remove duplicate keys
         combined_query = []
@@ -384,14 +377,14 @@ class GoingRunningCommand(Subcommand):
                 used_keys.append(key)
                 combined_query.append(query_part)
 
-        self.log.debug("Clean combined query elements: {}".format(combined_query))
+        self._say("Clean combined query elements: {}".format(combined_query), log_only=True)
 
         return combined_query
 
     def _retrieve_library_items(self, training: Subview):
         full_query = self._gather_query_elements(training)
         parsed_query = parse_query_string(" ".join(full_query), Item)[0]
-        self.log.debug("Song selection query: {}".format(parsed_query))
+        self._say("Song selection query: {}".format(parsed_query), log_only=True)
 
         return self.lib.items(parsed_query)
 
@@ -429,7 +422,7 @@ class GoingRunningCommand(Subcommand):
 
     def list_training_attributes(self, training_name: str):
         if not self.config["trainings"].exists() or not self.config["trainings"][training_name].exists():
-            self.log.debug("Training[{0}] does not exist.".format(training_name))
+            self._say("Training[{0}] does not exist.".format(training_name), log_only=True)
             return
 
         training: Subview = self.config["trainings"][training_name]
@@ -465,10 +458,6 @@ class GoingRunningCommand(Subcommand):
                 if tkey in ["song_bpm", "song_len"]:
                     raise RuntimeError("Offending key in training({}): {}".format(training_name, tkey))
 
-    def _say(self, msg):
-        """Log and write to stdout
-        """
-        self.log.debug(msg)
-        if not self.cfg_quiet:
-            print(msg)
-            # stdout.write(msg + "\n")
+    def _say(self, msg, log_only=False):
+        log_only = True if self.cfg_quiet else log_only
+        common.say(msg, log_only)

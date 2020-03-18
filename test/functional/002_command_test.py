@@ -5,10 +5,8 @@
 #  License: See LICENSE.txt
 #
 
-from beets.util.confit import Subview
-
-from test.helper import FunctionalTestHelper, Assertions, PLUGIN_NAME, PLUGIN_SHORT_DESCRIPTION, capture_log, \
-    capture_stdout, get_single_line_from_output, get_value_separated_from_output, convert_time_to_seconds
+from test.helper import FunctionalTestHelper, Assertions, PLUGIN_NAME, get_single_line_from_output, \
+    get_value_separated_from_output, convert_time_to_seconds
 
 
 class CommandTest(FunctionalTestHelper, Assertions):
@@ -16,77 +14,63 @@ class CommandTest(FunctionalTestHelper, Assertions):
     """
 
     def test_plugin_version(self):
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, "--version")
-
         from beetsplug.goingrunning.version import __version__
-        self.assertIn("Goingrunning(beets-{})".format(PLUGIN_NAME), out.getvalue())
-        self.assertIn("v{}".format(__version__), out.getvalue())
+
+        stdout = self.run_with_output(PLUGIN_NAME, "--version")
+        self.assertIn("Goingrunning(beets-{})".format(PLUGIN_NAME), stdout)
+        self.assertIn("v{}".format(__version__), stdout)
+
+        stdout = self.run_with_output(PLUGIN_NAME, "-v")
+        self.assertIn("Goingrunning(beets-{})".format(PLUGIN_NAME), stdout)
+        self.assertIn("v{}".format(__version__), stdout)
 
     def test_training_listing_empty(self):
         self.reset_beets(config_file=b"empty.yml")
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, "--list")
-        self.assertIn("You have not created any trainings yet.", out.getvalue())
+        stdout = self.run_with_output(PLUGIN_NAME, "--list")
+        self.assertIn("You have not created any trainings yet.", stdout)
 
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, "-l")
-        self.assertIn("You have not created any trainings yet.", out.getvalue())
+        stdout = self.run_with_output(PLUGIN_NAME, "-l")
+        self.assertIn("You have not created any trainings yet.", stdout)
 
     def test_training_listing_default(self):
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, "--list")
-
-        output = out.getvalue()
-        self.assertIn("::: training-1", output)
-        self.assertIn("::: training-2", output)
-        self.assertIn("::: training-3", output)
+        stdout = self.run_with_output(PLUGIN_NAME, "--list")
+        self.assertIn("::: training-1", stdout)
+        self.assertIn("::: training-2", stdout)
+        self.assertIn("::: training-3", stdout)
 
     def test_training_handling_inexistent(self):
         training_name = "sitting_on_the_sofa"
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, training_name)
-
-        self.assertIn("There is no training[{0}] registered with this name!".format(training_name), out.getvalue())
+        stdout = self.run_with_output(PLUGIN_NAME, training_name)
+        self.assertIn("There is no training[{0}] registered with this name!".format(training_name), stdout)
 
     def test_training_song_count(self):
         training_name = "training-1"
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, training_name, "--count")
-        self.assertIn("Number of songs available: {}".format(0), out.getvalue())
+        stdout = self.run_with_output(PLUGIN_NAME, training_name, "--count")
+        self.assertIn("Number of songs available: {}".format(0), stdout)
 
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, training_name, "-c")
-        self.assertIn("Number of songs available: {}".format(0), out.getvalue())
+        stdout = self.run_with_output(PLUGIN_NAME, training_name, "-c")
+        self.assertIn("Number of songs available: {}".format(0), stdout)
 
     def test_training_no_songs(self):
         training_name = "training-1"
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, training_name)
-
-        self.assertIn("Handling training: {0}".format(training_name), out.getvalue())
-        self.assertIn("There are no songs in your library that match this training!", out.getvalue())
+        stdout = self.run_with_output(PLUGIN_NAME, training_name)
+        self.assertIn("Handling training: {0}".format(training_name), stdout)
+        self.assertIn("There are no songs in your library that match this training!", stdout)
 
     def test_training_undefined_target(self):
         self.add_single_item_to_library()
-
         training_name = "bad-target-1"
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, training_name)
-
+        stdout = self.run_with_output(PLUGIN_NAME, training_name)
         target_name = "inexistent_target"
-        self.assertIn("The target name[{0}] is not defined!".format(target_name), out.getvalue())
+        self.assertIn("The target name[{0}] is not defined!".format(target_name), stdout)
 
     def test_training_bad_target(self):
         self.add_single_item_to_library()
-
         training_name = "bad-target-2"
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, training_name)
-
+        stdout = self.run_with_output(PLUGIN_NAME, training_name)
         target_name = "MPD_3"
         target_path = "/media/this/probably/does/not/exist/"
-        self.assertIn("The target[{0}] path does not exist: {1}".format(target_name, target_path), out.getvalue())
+        self.assertIn("The target[{0}] path does not exist: {1}".format(target_name, target_path), stdout)
 
     def test_handling_training_1(self):
         """Simple query based song selection
@@ -98,8 +82,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
 
         self.ensure_training_target_path(training_name)
 
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, training_name)
+        stdout = self.run_with_output(PLUGIN_NAME, training_name)
 
         """ Output for "training-1":
         
@@ -117,40 +100,38 @@ class CommandTest(FunctionalTestHelper, Assertions):
         
         """
 
-        output = out.getvalue()
-
         prefix = "Handling training:"
-        self.assertIn(prefix, output)
-        value = get_value_separated_from_output(output, prefix)
+        self.assertIn(prefix, stdout)
+        value = get_value_separated_from_output(stdout, prefix)
         self.assertEqual(training_name, value)
 
         prefix = "Available songs:"
-        self.assertIn(prefix, output)
-        value = int(get_value_separated_from_output(output, prefix))
+        self.assertIn(prefix, stdout)
+        value = int(get_value_separated_from_output(stdout, prefix))
         self.assertEqual(10, value)
 
         prefix = "Selected songs:"
-        self.assertIn(prefix, output)
-        value = int(get_value_separated_from_output(output, prefix))
+        self.assertIn(prefix, stdout)
+        value = int(get_value_separated_from_output(stdout, prefix))
         self.assertGreater(value, 0)
         self.assertLessEqual(value, 10)
 
         prefix = "Planned training duration:"
-        self.assertIn(prefix, output)
-        value = get_value_separated_from_output(output, prefix)
+        self.assertIn(prefix, stdout)
+        value = get_value_separated_from_output(stdout, prefix)
         seconds = convert_time_to_seconds(value)
         self.assertEqual("0:10:00", value)
         self.assertEqual(600, seconds)
 
         # Do not test for efficiency here
         prefix = "Total song duration:"
-        self.assertIn(prefix, output)
-        value = get_value_separated_from_output(output, prefix)
+        self.assertIn(prefix, stdout)
+        value = get_value_separated_from_output(stdout, prefix)
         seconds = convert_time_to_seconds(value)
         self.assertGreater(seconds, 0)
 
         prefix = "Run!"
-        line = get_single_line_from_output(output, prefix)
+        line = get_single_line_from_output(stdout, prefix)
         self.assertEqual(prefix, line)
 
     def test_handling_training_2(self):
@@ -176,8 +157,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
 
         self.ensure_training_target_path(training_name)
 
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, training_name)
+        stdout = self.run_with_output(PLUGIN_NAME, training_name)
 
         """ Output for "training-2":
 
@@ -196,40 +176,38 @@ class CommandTest(FunctionalTestHelper, Assertions):
 
         """
 
-        output = out.getvalue()
-
         prefix = "Handling training:"
-        self.assertIn(prefix, output)
-        value = get_value_separated_from_output(output, prefix)
+        self.assertIn(prefix, stdout)
+        value = get_value_separated_from_output(stdout, prefix)
         self.assertEqual(training_name, value)
 
         prefix = "Available songs:"
-        self.assertIn(prefix, output)
-        value = int(get_value_separated_from_output(output, prefix))
+        self.assertIn(prefix, stdout)
+        value = int(get_value_separated_from_output(stdout, prefix))
         self.assertEqual(10, value)
 
         prefix = "Selected songs:"
-        self.assertIn(prefix, output)
-        value = int(get_value_separated_from_output(output, prefix))
+        self.assertIn(prefix, stdout)
+        value = int(get_value_separated_from_output(stdout, prefix))
         self.assertGreater(value, 0)
         self.assertLessEqual(value, 10)
 
         prefix = "Planned training duration:"
-        self.assertIn(prefix, output)
-        value = get_value_separated_from_output(output, prefix)
+        self.assertIn(prefix, stdout)
+        value = get_value_separated_from_output(stdout, prefix)
         seconds = convert_time_to_seconds(value)
         self.assertEqual("0:10:00", value)
         self.assertEqual(600, seconds)
 
         # Do not test for efficiency here
         prefix = "Total song duration:"
-        self.assertIn(prefix, output)
-        value = get_value_separated_from_output(output, prefix)
+        self.assertIn(prefix, stdout)
+        value = get_value_separated_from_output(stdout, prefix)
         seconds = convert_time_to_seconds(value)
         self.assertGreater(seconds, 0)
 
         prefix = "Run!"
-        line = get_single_line_from_output(output, prefix)
+        line = get_single_line_from_output(stdout, prefix)
         self.assertEqual(prefix, line)
 
     def test_handling_training_3(self):
@@ -259,8 +237,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
 
         self.ensure_training_target_path(training_name)
 
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME, training_name)
+        stdout = self.run_with_output(PLUGIN_NAME, training_name)
 
         """ Output for "training-2":
 
@@ -279,38 +256,36 @@ class CommandTest(FunctionalTestHelper, Assertions):
 
         """
 
-        output = out.getvalue()
-
         prefix = "Handling training:"
-        self.assertIn(prefix, output)
-        value = get_value_separated_from_output(output, prefix)
+        self.assertIn(prefix, stdout)
+        value = get_value_separated_from_output(stdout, prefix)
         self.assertEqual(training_name, value)
 
         prefix = "Available songs:"
-        self.assertIn(prefix, output)
-        value = int(get_value_separated_from_output(output, prefix))
+        self.assertIn(prefix, stdout)
+        value = int(get_value_separated_from_output(stdout, prefix))
         self.assertEqual(10, value)
 
         prefix = "Selected songs:"
-        self.assertIn(prefix, output)
-        value = int(get_value_separated_from_output(output, prefix))
+        self.assertIn(prefix, stdout)
+        value = int(get_value_separated_from_output(stdout, prefix))
         self.assertGreater(value, 0)
         self.assertLessEqual(value, 10)
 
         prefix = "Planned training duration:"
-        self.assertIn(prefix, output)
-        value = get_value_separated_from_output(output, prefix)
+        self.assertIn(prefix, stdout)
+        value = get_value_separated_from_output(stdout, prefix)
         seconds = convert_time_to_seconds(value)
         self.assertEqual("0:10:00", value)
         self.assertEqual(600, seconds)
 
         # Do not test for efficiency here
         prefix = "Total song duration:"
-        self.assertIn(prefix, output)
-        value = get_value_separated_from_output(output, prefix)
+        self.assertIn(prefix, stdout)
+        value = get_value_separated_from_output(stdout, prefix)
         seconds = convert_time_to_seconds(value)
         self.assertGreater(seconds, 0)
 
         prefix = "Run!"
-        line = get_single_line_from_output(output, prefix)
+        line = get_single_line_from_output(stdout, prefix)
         self.assertEqual(prefix, line)

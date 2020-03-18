@@ -7,8 +7,7 @@
 
 from test.helper import (
     FunctionalTestHelper, Assertions,
-    PLUGIN_NAME, PLUGIN_SHORT_NAME, PLUGIN_SHORT_DESCRIPTION,
-    capture_log, capture_stdout
+    PLUGIN_NAME, PLUGIN_SHORT_NAME, PLUGIN_SHORT_DESCRIPTION
 )
 
 
@@ -18,28 +17,20 @@ class BasicTest(FunctionalTestHelper, Assertions):
     """
 
     def test_application(self):
-        with capture_stdout() as out:
-            self.runcli()
-
-        self.assertIn(PLUGIN_NAME, out.getvalue())
-        self.assertIn(PLUGIN_SHORT_DESCRIPTION, out.getvalue())
+        stdout = self.run_with_output()
+        self.assertIn(PLUGIN_NAME, stdout)
+        self.assertIn(PLUGIN_SHORT_DESCRIPTION, stdout)
 
     def test_application_version(self):
-        with capture_stdout() as out:
-            self.runcli("version")
-
-        self.assertIn("plugins: {0}".format(PLUGIN_NAME), out.getvalue())
+        stdout = self.run_with_output("version")
+        self.assertIn("plugins: {0}".format(PLUGIN_NAME), stdout)
 
     def test_plugin_no_arguments(self):
         self.reset_beets(config_file=b"empty.yml")
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_NAME)
-
-        self.assertIn("Usage: beet goingrunning [training] [options] [QUERY...]", out.getvalue())
+        stdout = self.run_with_output(PLUGIN_NAME)
+        self.assertIn("Usage: beet goingrunning [training] [options] [QUERY...]", stdout)
 
     def test_plugin_shortname_no_arguments(self):
         self.reset_beets(config_file=b"empty.yml")
-        with capture_stdout() as out:
-            self.runcli(PLUGIN_SHORT_NAME)
-
-        self.assertIn("Usage: beet goingrunning [training] [options] [QUERY...]", out.getvalue())
+        stdout = self.run_with_output(PLUGIN_SHORT_NAME)
+        self.assertIn("Usage: beet goingrunning [training] [options] [QUERY...]", stdout)

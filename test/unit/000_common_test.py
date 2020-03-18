@@ -5,10 +5,10 @@
 #  License: See LICENSE.txt
 #
 
-from test.helper import UnitTestHelper, Assertions, get_plugin_configuration
-from beetsplug.goingrunning import common
-
 from logging import Logger
+
+from beetsplug.goingrunning import common
+from test.helper import UnitTestHelper, Assertions, get_plugin_configuration, capture_stdout
 
 
 class CommonTest(UnitTestHelper, Assertions):
@@ -20,9 +20,20 @@ class CommonTest(UnitTestHelper, Assertions):
         self.assertTrue(hasattr(common, "MUST_HAVE_TARGET_KEYS"))
         self.assertTrue(hasattr(common, "KNOWN_NUMERIC_FLEX_ATTRIBUTES"))
         self.assertTrue(hasattr(common, "KNOWN_TEXTUAL_FLEX_ATTRIBUTES"))
+        self.assertTrue(hasattr(common, "__logger__"))
+        self.assertIsInstance(common.__logger__, Logger)
 
-    def test_get_beets_logger(self):
-        self.assertIsInstance(common.get_beets_logger(), Logger)
+    def test_say(self):
+        test_message = "one two three"
+
+        with capture_stdout() as out:
+            common.say(test_message)
+        self.assertIn(test_message, out.getvalue())
+
+        # todo: make it work
+        # with capture_log() as logs:
+        #     common.say(test_message)
+        # self.assertIn(test_message, '\n'.join(logs))
 
     def test_get_beets_global_config(self):
         self.assertEqual("0:00:00", common.get_human_readable_time(0), "Bad time format!")

@@ -6,7 +6,6 @@
 #
 # References: https://docs.python.org/3/library/unittest.html
 #
-import json
 import os
 import shutil
 import sys
@@ -25,7 +24,6 @@ from beets import util
 from beets.library import Item
 # from beets.mediafile import MediaFile
 from beets.util import (
-    MoveOperation,
     syspath,
     bytestring_path,
     displayable_path,
@@ -60,9 +58,9 @@ def capture_log(logger='beets', suppress_output=True):
     capture = LogCapture()
     log = logging.getLogger(logger)
     log.propagate = True
-    if suppress_output:
-        # Is this too violent?
-        log.handlers = []
+    # if suppress_output:
+    # Is this too violent?
+    # log.handlers = []
     log.addHandler(capture)
     try:
         yield capture.messages
@@ -243,7 +241,7 @@ class FunctionalTestHelper(TestCase, Assertions):
         self.config.read()
 
         self.config['plugins'] = []
-        self.config['verbose'] = False
+        self.config['verbose'] = True
         self.config['ui']['color'] = False
         self.config['threaded'] = False
         self.config['import']['copy'] = False
@@ -398,7 +396,7 @@ class FunctionalTestHelper(TestCase, Assertions):
         item = Item(**values_)
 
         if 'path' not in values:
-            item['path'] = 'audio.' + item['format'].lower()
+            item['path'] = 'test/fixtures/song.' + item['format'].lower()
 
         # mtime needs to be set last since other assignments reset it.
         item.mtime = 12345
