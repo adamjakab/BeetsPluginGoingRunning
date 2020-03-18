@@ -6,6 +6,7 @@
 #
 # References: https://docs.python.org/3/library/unittest.html
 #
+
 import os
 import shutil
 import sys
@@ -22,7 +23,6 @@ from beets import plugins
 from beets import ui
 from beets import util
 from beets.library import Item
-# from beets.mediafile import MediaFile
 from beets.util import (
     syspath,
     bytestring_path,
@@ -83,6 +83,7 @@ def capture_stdout():
     finally:
         sys.stdout = orig
         print(capture.getvalue())
+
 
 @contextmanager
 def control_stdin(userinput=None):
@@ -390,7 +391,7 @@ class FunctionalTestHelper(TestCase, Assertions):
         values_.update(values)
         values_['title'] = values_['title'].format(item_count)
 
-        #print("Creating Item: {}".format(values_))
+        # print("Creating Item: {}".format(values_))
 
         values_['db'] = self.lib
         item = Item(**values_)
