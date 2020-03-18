@@ -9,6 +9,7 @@ import operator
 import random
 import os
 import string
+from sys import stdout
 from optparse import OptionParser
 from pathlib import Path
 
@@ -465,8 +466,8 @@ class GoingRunningCommand(Subcommand):
                     raise RuntimeError("Offending key in training({}): {}".format(training_name, tkey))
 
     def _say(self, msg):
-        """Log and print to stdout
+        """Log and write to stdout
         """
         self.log.debug(msg)
         if not self.cfg_quiet:
-            print(msg)
+            stdout.write(msg)
