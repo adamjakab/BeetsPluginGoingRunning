@@ -5,8 +5,11 @@
 #  License: See LICENSE.txt
 #
 
-from test.helper import FunctionalTestHelper, Assertions, PLUGIN_NAME, PLUGIN_SHORT_DESCRIPTION, capture_log, \
-    capture_stdout
+from test.helper import (
+    FunctionalTestHelper, Assertions,
+    PLUGIN_NAME, PLUGIN_SHORT_NAME, PLUGIN_SHORT_DESCRIPTION,
+    capture_log, capture_stdout
+)
 
 
 class BasicTest(FunctionalTestHelper, Assertions):
@@ -31,5 +34,12 @@ class BasicTest(FunctionalTestHelper, Assertions):
         self.reset_beets(config_file=b"empty.yml")
         with capture_stdout() as out:
             self.runcli(PLUGIN_NAME)
+
+        self.assertIn("Usage: beet goingrunning [training] [options] [QUERY...]", out.getvalue())
+
+    def test_plugin_shortname_no_arguments(self):
+        self.reset_beets(config_file=b"empty.yml")
+        with capture_stdout() as out:
+            self.runcli(PLUGIN_SHORT_NAME)
 
         self.assertIn("Usage: beet goingrunning [training] [options] [QUERY...]", out.getvalue())

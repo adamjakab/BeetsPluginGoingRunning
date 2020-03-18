@@ -37,11 +37,11 @@ from beetsplug import goingrunning
 
 # Values
 PLUGIN_NAME = u'goingrunning'
+PLUGIN_SHORT_NAME = u'run'
 PLUGIN_SHORT_DESCRIPTION = u'run with the music that matches your training sessions'
 
 
 class LogCapture(logging.Handler):
-
     def __init__(self):
         super(LogCapture, self).__init__()
         self.messages = []
