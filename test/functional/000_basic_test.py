@@ -51,4 +51,3 @@ class BasicTest(FunctionalTestHelper, Assertions):
         line = get_single_line_from_output(stdout, prefix)
         expected = "{0} {1}".format(prefix, ", ".join([extra_plugin, PLUGIN_NAME]))
         self.assertEqual(expected, line)
-        self.tearDown()

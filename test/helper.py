@@ -18,10 +18,11 @@ from unittest import TestCase
 import beets
 import six
 import yaml
-from beets import logging
+from beets import logging, library
 from beets import plugins
 from beets import ui
 from beets import util
+from beets.dbcore import types
 from beets.library import Item
 from beets.util import (
     syspath,
@@ -279,6 +280,9 @@ class FunctionalTestHelper(TestCase, Assertions):
 
     def teardown_beets(self):
         self.unload_plugins()
+
+        # reset types updated here: beets/ui/__init__.py:1148
+        library.Item._types = {'data_source': types.STRING}
 
         shutil.rmtree(self._test_target_dir, ignore_errors=True)
 

@@ -22,7 +22,6 @@ class ConfigurationTest(FunctionalTestHelper, Assertions):
         self.assertTrue(self.config[PLUGIN_NAME]["targets"].exists())
         self.assertTrue(self.config[PLUGIN_NAME]["trainings"].exists())
         self.assertTrue(self.config[PLUGIN_NAME]["flavours"].exists())
-        # print(self.config[PLUGIN_NAME].flatten())
 
     def test_obsolete_config(self):
         self.reset_beets(config_file=b"obsolete.yml")

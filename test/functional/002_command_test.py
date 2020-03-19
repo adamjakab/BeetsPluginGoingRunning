@@ -73,8 +73,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
         self.assertIn("The target[{0}] path does not exist: {1}".format(target_name, target_path), stdout)
 
     def test_handling_training_1(self):
-        """Simple query based song selection
-        Check that command run until the end
+        """Simple query based song selection where everything matches
         """
         training_name = "training-1"
 
@@ -135,8 +134,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
         self.assertEqual(prefix, line)
 
     def test_handling_training_2(self):
-        """Simple flavour based song selection
-        Check that command run until the end
+        """Simple flavour based song selection with float value matching
         """
         training_name = "training-2"
 
@@ -212,7 +210,6 @@ class CommandTest(FunctionalTestHelper, Assertions):
 
     def test_handling_training_3(self):
         """Simple query + flavour based song selection
-        Check that command run until the end
         """
         training_name = "training-3"
 
