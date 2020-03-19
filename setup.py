@@ -50,6 +50,10 @@ setup(
         'requests'
     ],
 
+    extras_require={
+        'tests': ['requests'],
+    },
+
     classifiers=[
         'Topic :: Multimedia :: Sound/Audio',
         'License :: OSI Approved :: MIT License',
