@@ -1,8 +1,6 @@
 # CHANGELOG
 
-## 1.1.2 (in development)
-
-Special note: This release was  
+## v1.1.2 (in development)
 
 ### New features:
 - introduced flavour based song selection
@@ -12,18 +10,19 @@ Special note: This release was
 - advanced ordering based on multi-item scoring system
 
 ### Fixes
+- temporary fix for incompatibility issue with other plugins declaring the same types (Issue #15)
 - now removing .m3u playlist files from device on cleanup
 - removed confusing "bubble up" concept from config/code
 
 
 
-## 1.1.1
+## v1.1.1
 
-Special note: This version was skipped due to an incompatibility with some core plugins.
+**Special note**: Deleted right after its release due to an incompatibility issue with some core plugins.
 
 
 
-## 1.1.0
+## v1.1.0
 
 ### New features:
 - Queries are now compatible with command line queries (and can be overwritten)
