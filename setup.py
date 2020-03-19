@@ -50,6 +50,7 @@ setup(
         'requests'
     ],
 
+    # Extras needed during testing
     extras_require={
         'tests': ['requests'],
     },

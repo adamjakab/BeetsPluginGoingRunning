@@ -36,7 +36,8 @@ class BasicTest(FunctionalTestHelper, Assertions):
         self.assertIn("Usage: beet goingrunning [training] [options] [QUERY...]", stdout)
 
     def test_with_core_plugin_acousticbrainz(self):
-        """Introduced after release 1.1.1 when discovered core bug failing to compare flexible field types
+        """Flexible field type declaration conflict
+        Introduced after release 1.1.1 when discovered core bug failing to compare flexible field types
         Ref.: https://beets.readthedocs.io/en/stable/dev/plugins.html#flexible-field-types
         This bug is present in beets version 1.4.9 so until the `item_types` declaration in the `GoingRunningPlugin`
         class is commented out this test will pass.
@@ -50,3 +51,4 @@ class BasicTest(FunctionalTestHelper, Assertions):
         line = get_single_line_from_output(stdout, prefix)
         expected = "{0} {1}".format(prefix, ", ".join([extra_plugin, PLUGIN_NAME]))
         self.assertEqual(expected, line)
+        self.tearDown()
