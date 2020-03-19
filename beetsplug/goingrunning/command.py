@@ -14,6 +14,7 @@ from optparse import OptionParser
 from pathlib import Path
 from shutil import copyfile
 
+from beets import library
 from beets.dbcore.db import Results
 from beets.dbcore.queryparse import parse_query_part
 from beets.library import Library, Item, parse_query_string
@@ -402,8 +403,24 @@ class GoingRunningCommand(Subcommand):
         return combined_query
 
     def _retrieve_library_items(self, training: Subview):
+        """Returns the results of the library query for a specific training
+        The storing/overriding/restoring of the library.Item._types is made necessary
+        by this issue: https://github.com/beetbox/beets/issues/3520
+        Until the issue is solved this 'hack' is necessary.
+        """
         full_query = self._gather_query_elements(training)
+
+        # Store a copy of defined types and update them with our own overrides
+        original_types = library.Item._types.copy()
+        override_types = common.get_item_attribute_type_overrides()
+        library.Item._types.update(override_types)
+
+        # Execute the query parsing (this will use our own overrides)
         parsed_query = parse_query_string(" ".join(full_query), Item)[0]
+
+        # Restore the original types
+        library.Item._types = original_types.copy()
+
         self._say("Song selection query: {}".format(parsed_query), log_only=True)
 
         return self.lib.items(parsed_query)

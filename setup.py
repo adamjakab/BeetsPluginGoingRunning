@@ -46,8 +46,14 @@ setup(
 
     tests_require=[
         'pytest', 'nose', 'coverage',
-        'mock', 'six', 'yaml'
+        'mock', 'six', 'yaml',
+        'requests'
     ],
+
+    # Extras needed during testing
+    extras_require={
+        'tests': ['requests'],
+    },
 
     classifiers=[
         'Topic :: Multimedia :: Sound/Audio',

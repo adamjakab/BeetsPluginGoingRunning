@@ -18,10 +18,11 @@ from unittest import TestCase
 import beets
 import six
 import yaml
-from beets import logging
+from beets import logging, library
 from beets import plugins
 from beets import ui
 from beets import util
+from beets.dbcore import types
 from beets.library import Item
 from beets.util import (
     syspath,
@@ -218,9 +219,12 @@ class FunctionalTestHelper(TestCase, Assertions):
     def tearDown(self):
         self.teardown_beets()
 
-    def reset_beets(self, config_file: bytes, beet_files: list = None):
+    def reset_beets(self, config_file: bytes, extra_plugins=None, beet_files: list = None):
         self.teardown_beets()
         plugins._classes = {goingrunning.GoingRunningPlugin}
+        if extra_plugins:
+            plugins.load_plugins(extra_plugins)
+
         self._setup_beets(config_file, beet_files)
 
     def _setup_beets(self, config_file: bytes, beet_files: list = None):
@@ -228,17 +232,16 @@ class FunctionalTestHelper(TestCase, Assertions):
         self.beetsdir = bytestring_path(self.create_temp_dir())
         os.environ['BEETSDIR'] = self.beetsdir.decode()
 
-        self.config = beets.config
-        self.config.clear()
-
-        # copy additional files to beets dir (
-        self._copy_files_to_beetsdir(beet_files)
-
         # copy configuration file to beets dir
         config_file = os.path.join(self._test_config_dir_, config_file).decode()
         file_list = [{'file_name': 'config.yaml', 'file_path': config_file}]
         self._copy_files_to_beetsdir(file_list)
 
+        # copy additional files to beets dir (
+        self._copy_files_to_beetsdir(beet_files)
+
+        self.config = beets.config
+        self.config.clear()
         self.config.read()
 
         self.config['plugins'] = []
@@ -248,12 +251,10 @@ class FunctionalTestHelper(TestCase, Assertions):
         self.config['import']['copy'] = False
 
         os.makedirs(self._test_target_dir, exist_ok=True)
-
         self.config['directory'] = self.beetsdir.decode()
-
         self.lib = beets.library.Library(':memory:', self.beetsdir.decode())
 
-        # This will initialize (create instance) of the plugins
+        # This will initialize the plugins
         plugins.find_plugins()
 
     def _copy_files_to_beetsdir(self, file_list: list):
@@ -279,6 +280,9 @@ class FunctionalTestHelper(TestCase, Assertions):
 
     def teardown_beets(self):
         self.unload_plugins()
+
+        # reset types updated here: beets/ui/__init__.py:1148
+        library.Item._types = {'data_source': types.STRING}
 
         shutil.rmtree(self._test_target_dir, ignore_errors=True)
 
