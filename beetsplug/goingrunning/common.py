@@ -8,18 +8,38 @@
 import logging
 import sys
 
+from beets.dbcore import types
 from beets.library import Item
 from beets.util.confit import Subview
 
 MUST_HAVE_TRAINING_KEYS = ['duration', 'query', 'target']
 MUST_HAVE_TARGET_KEYS = ['device_root', 'device_path']
 
-KNOWN_NUMERIC_FLEX_ATTRIBUTES = ["danceable", "mood_acoustic", "mood_aggressive", "mood_electronic", "mood_happy",
-                                 "mood_party", "mood_relaxed", "mood_sad", "tonal", "average_loudness",
-                                 "chords_changes_rate", "chords_number_rate", "key_strength"]
+KNOWN_NUMERIC_FLEX_ATTRIBUTES = [
+    "average_loudness",
+    "chords_changes_rate",
+    "chords_number_rate",
+    "danceable",
+    "key_strength"
+    "mood_acoustic",
+    "mood_aggressive",
+    "mood_electronic",
+    "mood_happy",
+    "mood_party",
+    "mood_relaxed",
+    "mood_sad",
+    "rhythm"
+    "tonal",
+]
 
-KNOWN_TEXTUAL_FLEX_ATTRIBUTES = ["gender", "genre_rosamerica", "rhythm", "voice_instrumental", "chords_key",
-                                 "chords_scale"]
+KNOWN_TEXTUAL_FLEX_ATTRIBUTES = [
+    "gender",
+    "genre_rosamerica",
+    "rhythm",
+    "voice_instrumental",
+    "chords_key",
+    "chords_scale"
+]
 
 __logger__ = logging.getLogger('beets.goingrunning')
 
@@ -30,6 +50,14 @@ def say(msg, log_only=False):
     __logger__.debug(msg)
     if not log_only:
         sys.stdout.write(msg + "\n")
+
+
+def get_item_attribute_type_overrides():
+    _types = {}
+    for attr in KNOWN_NUMERIC_FLEX_ATTRIBUTES:
+        _types[attr] = types.Float(6)
+
+    return _types
 
 
 def get_human_readable_time(seconds):
