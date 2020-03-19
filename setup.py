@@ -46,7 +46,8 @@ setup(
 
     tests_require=[
         'pytest', 'nose', 'coverage',
-        'mock', 'six', 'yaml'
+        'mock', 'six', 'yaml',
+        'requests'
     ],
 
     classifiers=[
