@@ -7,12 +7,10 @@
 import os
 
 from beets.plugins import BeetsPlugin
-
-from beets.dbcore import types
 from beets.util.confit import ConfigSource, load_yaml
 
-from beetsplug.goingrunning.command import GoingRunningCommand
 from beetsplug.goingrunning import common as GRC
+from beetsplug.goingrunning.command import GoingRunningCommand
 
 
 class GoingRunningPlugin(BeetsPlugin):
@@ -27,13 +25,14 @@ class GoingRunningPlugin(BeetsPlugin):
     def commands(self):
         return [GoingRunningCommand(self.config)]
 
-    @property
-    def item_types(self):
-        """Declare FLOAT types for numeric flex attributes so that query parser will correctly use NumericQuery for them
-        """
-        t = {}
-
-        for attr in GRC.KNOWN_NUMERIC_FLEX_ATTRIBUTES:
-            t[attr] = types.FLOAT
-
-        return t
+    # fixme: This creates conflict with the acousticbrainz plugin because of a bug in beets/plugins.py:340
+    # @property
+    # def item_types(self):
+    #     """Declare FLOAT types for numeric flex attributes so that query parser will correctly use NumericQuery for
+    #     them
+    #     """
+    #     t = {}
+    #     for attr in GRC.KNOWN_NUMERIC_FLEX_ATTRIBUTES:
+    #         t[attr] = types.FLOAT
+    #
+    #     return t

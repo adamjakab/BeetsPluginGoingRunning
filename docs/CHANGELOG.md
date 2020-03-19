@@ -1,6 +1,9 @@
 # CHANGELOG
 
-## 1.1.1 (in development)
+## 1.1.2 (in development)
+
+
+## 1.1.1
 
 ### New features:
 - introduced flavour based song selection
