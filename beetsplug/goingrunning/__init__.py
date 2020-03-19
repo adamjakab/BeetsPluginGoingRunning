@@ -6,8 +6,6 @@
 #
 import os
 
-from beets import plugins
-from beets.dbcore import types
 from beets.plugins import BeetsPlugin
 from beets.util.confit import ConfigSource, load_yaml
 
@@ -26,22 +24,3 @@ class GoingRunningPlugin(BeetsPlugin):
 
     def commands(self):
         return [GoingRunningCommand(self.config)]
-
-    @property
-    def item_types(self):
-        """Declare Float types for numeric flex attributes so that query parser will correctly use NumericQuery
-        fixme: This creates conflict with the acousticbrainz plugin because of a bug in beets/plugins.py:340
-        read here: test/functional/000_basic_test.py:38
-        NOTE: It will allow declaring item_types if `acousticbrainz` plugin is not activated
-        """
-        item_types = {}
-
-        conflicting_plugins = ['acousticbrainz']
-        active_plugins = [plugin.name for plugin in plugins.find_plugins()]
-
-        if not set(conflicting_plugins) <= set(active_plugins):
-            # Conflicting plugins are not active
-            for attr in GRC.KNOWN_NUMERIC_FLEX_ATTRIBUTES:
-                item_types[attr] = types.Float(6)
-
-        return item_types
