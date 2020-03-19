@@ -33,6 +33,6 @@ class GoingRunningPlugin(BeetsPlugin):
     #     """
     #     t = {}
     #     for attr in GRC.KNOWN_NUMERIC_FLEX_ATTRIBUTES:
-    #         t[attr] = types.FLOAT
+    #         t[attr] = types.Float(6)
     #
     #     return t

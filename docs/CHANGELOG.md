@@ -2,8 +2,7 @@
 
 ## 1.1.2 (in development)
 
-
-## 1.1.1
+Special note: This release was  
 
 ### New features:
 - introduced flavour based song selection
@@ -12,10 +11,16 @@
 - added file check for stale library items 
 - advanced ordering based on multi-item scoring system
 
-
 ### Fixes
 - now removing .m3u playlist files from device on cleanup
 - removed confusing "bubble up" concept from config/code
+
+
+
+## 1.1.1
+
+Special note: This version was skipped due to an incompatibility with some core plugins.
+
 
 
 ## 1.1.0
