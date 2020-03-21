@@ -20,7 +20,7 @@ KNOWN_NUMERIC_FLEX_ATTRIBUTES = [
     "chords_changes_rate",
     "chords_number_rate",
     "danceable",
-    "key_strength"
+    "key_strength",
     "mood_acoustic",
     "mood_aggressive",
     "mood_electronic",
@@ -28,7 +28,7 @@ KNOWN_NUMERIC_FLEX_ATTRIBUTES = [
     "mood_party",
     "mood_relaxed",
     "mood_sad",
-    "rhythm"
+    "rhythm",
     "tonal",
 ]
 
@@ -38,7 +38,7 @@ KNOWN_TEXTUAL_FLEX_ATTRIBUTES = [
     "rhythm",
     "voice_instrumental",
     "chords_key",
-    "chords_scale"
+    "chords_scale",
 ]
 
 __logger__ = logging.getLogger('beets.goingrunning')
