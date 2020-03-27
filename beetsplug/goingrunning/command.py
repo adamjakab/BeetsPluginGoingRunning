@@ -416,6 +416,7 @@ class GoingRunningCommand(Subcommand):
         library.Item._types.update(override_types)
 
         # Execute the query parsing (this will use our own overrides)
+        # todo: use this instead: parsed_query, parsed_ordering = parse_query_parts(full_query, Item)
         parsed_query = parse_query_string(" ".join(full_query), Item)[0]
 
         # Restore the original types
