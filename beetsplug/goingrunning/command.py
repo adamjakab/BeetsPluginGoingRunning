@@ -258,8 +258,8 @@ class GoingRunningCommand(Subcommand):
                       log_only=True)
             copyfile(src, dst)
 
-            # todo: implement this: increment play_count
-            # common.increment_play_count_on_item(item)
+            # increment play_count
+            common.increment_play_count_on_item(item)
 
             cnt += 1
 

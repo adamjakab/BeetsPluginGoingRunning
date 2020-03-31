@@ -10,6 +10,7 @@ import os
 
 from beets.dbcore import types
 from beets.library import Item
+from beets.mediafile import MediaFile, MP3DescStorageStyle, MediaField
 from beets.util.confit import Subview
 
 # Get values as: plg_ns['__PLUGIN_NAME__']
@@ -255,3 +256,23 @@ def score_library_items(training: Subview, items):
                 "field_score": field_score,
                 "weighted_field_score": weighted_field_score
             }
+
+
+def increment_play_count_on_item(item: Item):
+    # clear_dirty is necessary to make sure that `ordering_score` and
+    # `ordering_info` will not get stored
+    item.clear_dirty()
+    play_count = item.get("play_count", 0) + 1
+    item["play_count"] = play_count
+    item.store()
+    item.write()
+
+
+def write_play_count_to_mediafile(item: Item, path: str):
+    """Event("after_write") listener method for storing TXXX field to MediaFile
+    """
+    play_count_fld = MediaField(MP3DescStorageStyle(desc="play_count"))
+    mf = MediaFile(path)
+    mf.add_field("play_count", play_count_fld)
+    setattr(mf, "play_count", str(item.get("play_count", 0)))
+    mf.save()

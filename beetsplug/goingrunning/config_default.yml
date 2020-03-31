@@ -1,3 +1,4 @@
+use_play_count: yes
 targets: {}
 trainings: {}
 flavours: {}

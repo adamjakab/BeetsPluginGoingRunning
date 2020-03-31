@@ -6,10 +6,10 @@
 #
 import os
 
+from beets.dbcore import types
 from beets.plugins import BeetsPlugin
 from beets.util.confit import ConfigSource, load_yaml
-
-from beetsplug.goingrunning import common as GRC
+from beetsplug.goingrunning import common
 from beetsplug.goingrunning.command import GoingRunningCommand
 
 
@@ -18,9 +18,17 @@ class GoingRunningPlugin(BeetsPlugin):
 
     def __init__(self):
         super(GoingRunningPlugin, self).__init__()
-        config_file_path = os.path.join(os.path.dirname(__file__), self._default_plugin_config_file_name_)
-        source = ConfigSource(load_yaml(config_file_path) or {}, config_file_path)
+        config_file_path = os.path.join(os.path.dirname(__file__),
+                                        self._default_plugin_config_file_name_)
+        source = ConfigSource(load_yaml(config_file_path) or {},
+                              config_file_path)
         self.config.add(source)
+        self.register_listener('after_write',
+                               common.write_play_count_to_mediafile)
 
     def commands(self):
         return [GoingRunningCommand(self.config)]
+
+    @property
+    def item_types(self):
+        return {'play_count': types.INTEGER}
