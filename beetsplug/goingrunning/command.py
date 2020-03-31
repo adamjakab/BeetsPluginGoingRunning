@@ -140,7 +140,8 @@ class GoingRunningCommand(Subcommand):
 
         # Show count only
         if self.cfg_count:
-            self._say("Number of songs available: {}".format(len(lib_items)))
+            self._say("Number of songs available: {}".format(len(lib_items)),
+                      log_only=False)
             return
 
         self._say("Handling training: {0}".format(training_name))
@@ -157,12 +158,18 @@ class GoingRunningCommand(Subcommand):
 
         # 1) order items by scoring system (need ordering in config)
         common.score_library_items(training, lib_items)
-        sorted_lib_items = sorted(lib_items, key=operator.attrgetter('ordering_score'))
+        sorted_lib_items = sorted(lib_items,
+                                  key=operator.attrgetter('ordering_score'))
 
         # 2) select random items n from the ordered list(T=length) - by
         # chosing n times song from the remaining songs between 1 and m
         # where m = T/n
         duration = common.get_training_attribute(training, "duration")
+        if not duration:
+            self._say("There is no duration set for the selected training!",
+                      log_only=False)
+            return
+
         # sel_items = common.get_randomized_items(lib_items, duration)
         sel_items = self._get_items_for_duration(sorted_lib_items, duration)
 
@@ -247,9 +254,15 @@ class GoingRunningCommand(Subcommand):
             gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6),
                                                random_string(), ext)
             dst = "{0}/{1}".format(dst_path, gen_filename)
-            self._say("Copying[{1}]: {0}".format(src, gen_filename), log_only=True)
+            self._say("Copying[{1}]: {0}".format(src, gen_filename),
+                      log_only=True)
             copyfile(src, dst)
+
+            # todo: implement this: increment play_count
+            # common.increment_play_count_on_item(item)
+
             cnt += 1
+
 
     def _get_target_for_training(self, training: Subview):
         target_name = common.get_training_attribute(training, "target")
@@ -455,19 +468,21 @@ class GoingRunningCommand(Subcommand):
             self._say("You have not created any trainings yet.")
             return
 
-        self._say("Available trainings:")
+        self._say("Available trainings:", log_only=False)
         trainings = list(self.config["trainings"].keys())
         training_names = [s for s in trainings if s != "fallback"]
         for training_name in training_names:
             self.list_training_attributes(training_name)
 
     def list_training_attributes(self, training_name: str):
-        if not self.config["trainings"].exists() or not self.config["trainings"][training_name].exists():
-            self._say("Training[{0}] does not exist.".format(training_name), log_only=True)
+        if not self.config["trainings"].exists() or not \
+        self.config["trainings"][training_name].exists():
+            self._say("Training[{0}] does not exist.".format(training_name),
+                      is_error=True)
             return
 
         display_name = "[   {}   ]".format(training_name)
-        self._say("\n{0}".format(display_name.center(80, "=")))
+        self._say("\n{0}".format(display_name.center(80, "=")), log_only=False)
 
         training: Subview = self.config["trainings"][training_name]
         training_keys = list(set(common.MUST_HAVE_TRAINING_KEYS) | set(training.keys()))
@@ -497,7 +512,7 @@ class GoingRunningCommand(Subcommand):
                     value.append("{key}({val})".format(key=k, val=val[k]))
                 val = ", ".join(value)
 
-            self._say("{0}: {1}".format(key, val))
+            self._say("{0}: {1}".format(key, val), log_only=False)
 
     def verify_configuration_upgrade(self):
         """Check if user has old(pre v1.1.1) configuration keys in config
