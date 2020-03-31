@@ -30,14 +30,19 @@ from beets.util import (
     displayable_path,
 )
 from beets.util.confit import Subview, Dumper, LazyConfig, ConfigSource
+from beetsplug import goingrunning
+from beetsplug.goingrunning import common
 from six import StringIO
 
-from beetsplug import goingrunning
+logging.getLogger('beets').propagate = True
 
 # Values
-PLUGIN_NAME = u'goingrunning'
-PLUGIN_SHORT_NAME = u'run'
-PLUGIN_SHORT_DESCRIPTION = u'run with the music that matches your training sessions'
+PLUGIN_NAME = common.plg_ns['__PLUGIN_NAME__']
+PLUGIN_ALIAS = common.plg_ns['__PLUGIN_ALIAS__']
+PLUGIN_SHORT_DESCRIPTION = common.plg_ns['__PLUGIN_SHORT_DESCRIPTION__']
+PLUGIN_VERSION = common.plg_ns['__version__']
+PACKAGE_NAME = common.plg_ns['__PACKAGE_NAME__']
+PACKAGE_TITLE = common.plg_ns['__PACKAGE_TITLE__']
 
 
 class LogCapture(logging.Handler):
@@ -50,7 +55,7 @@ class LogCapture(logging.Handler):
 
 
 @contextmanager
-def capture_log(logger='beets', suppress_output=True):
+def capture_log(logger='beets'):
     """Capture Logger output
         with capture_log() as logs:
             log.info(msg)
@@ -58,10 +63,6 @@ def capture_log(logger='beets', suppress_output=True):
     """
     capture = LogCapture()
     log = logging.getLogger(logger)
-    log.propagate = True
-    # if suppress_output:
-    # Is this too violent?
-    # log.handlers = []
     log.addHandler(capture)
     try:
         yield capture.messages
@@ -125,9 +126,10 @@ def convert_time_to_seconds(time: str):
 
 
 def get_value_separated_from_output(fulltext: str, prefix: str):
-    """Separate the value that has been printed to the stdout in the format of:
+    """Separate a value from the logged output in the format of:
     prefix: value
     """
+    prefix = "{}: {}".format(PLUGIN_NAME, prefix)
     value = None
     line = get_single_line_from_output(fulltext, prefix)
     # print("SL:{}".format(line))
@@ -353,14 +355,21 @@ class FunctionalTestHelper(TestCase, Assertions):
             self.run_command(*args)
         return util.text_string(out.getvalue())
 
+    def run_with_log_capture(self, *args):
+        with capture_log() as out:
+            self.run_command(*args)
+        return util.text_string("\n".join(out))
+
     def lib_path(self, path):
-        return os.path.join(self.beetsdir, path.replace(b'/', bytestring_path(os.sep)))
+        return os.path.join(self.beetsdir,
+                            path.replace(b'/', bytestring_path(os.sep)))
 
     @staticmethod
     def _dump_config(cfg: Subview):
         # print(json.dumps(cfg.get(), indent=4, sort_keys=False))
         flat = cfg.flatten()
-        print(yaml.dump(flat, Dumper=Dumper, default_flow_style=None, indent=2, width=1000))
+        print(yaml.dump(flat, Dumper=Dumper, default_flow_style=None, indent=2,
+                        width=1000))
 
     def get_fixture_item_path(self, ext):
         assert (ext in 'mp3 m4a ogg'.split())

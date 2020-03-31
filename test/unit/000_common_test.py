@@ -8,7 +8,9 @@
 from logging import Logger
 
 from beetsplug.goingrunning import common
-from test.helper import UnitTestHelper, Assertions, get_plugin_configuration, capture_stdout
+
+from test.helper import UnitTestHelper, Assertions, get_plugin_configuration, \
+    capture_log
 
 
 class CommonTest(UnitTestHelper, Assertions):
@@ -26,14 +28,9 @@ class CommonTest(UnitTestHelper, Assertions):
     def test_say(self):
         test_message = "one two three"
 
-        with capture_stdout() as out:
+        with capture_log() as logs:
             common.say(test_message)
-        self.assertIn(test_message, out.getvalue())
-
-        # todo: make it work
-        # with capture_log() as logs:
-        #     common.say(test_message)
-        # self.assertIn(test_message, '\n'.join(logs))
+        self.assertIn(test_message, '\n'.join(logs))
 
     def test_get_beets_global_config(self):
         self.assertEqual("0:00:00", common.get_human_readable_time(0), "Bad time format!")

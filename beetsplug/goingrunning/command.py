@@ -20,13 +20,7 @@ from beets.dbcore.queryparse import parse_query_part
 from beets.library import Library, Item, parse_query_string
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
-
 from beetsplug.goingrunning import common
-
-# The plugin
-__PLUGIN_NAME__ = u'goingrunning'
-__PLUGIN_SHORT_NAME__ = u'run'
-__PLUGIN_SHORT_DESCRIPTION__ = u'run with the music that matches your training sessions'
 
 
 class GoingRunningCommand(Subcommand):
@@ -42,7 +36,11 @@ class GoingRunningCommand(Subcommand):
     def __init__(self, cfg):
         self.config = cfg
 
-        self.parser = OptionParser(usage='beet goingrunning [training] [options] [QUERY...]')
+        self.parser = OptionParser(
+            usage='beet {plg} [training] [options] [QUERY...]'.format(
+                plg=common.plg_ns['__PLUGIN_NAME__']
+            )
+        )
 
         self.parser.add_option(
             '-l', '--list',
@@ -77,9 +75,10 @@ class GoingRunningCommand(Subcommand):
         # Keep this at the end
         super(GoingRunningCommand, self).__init__(
             parser=self.parser,
-            name=__PLUGIN_NAME__,
-            help=__PLUGIN_SHORT_DESCRIPTION__,
-            aliases=[__PLUGIN_SHORT_NAME__]
+            name=common.plg_ns['__PLUGIN_NAME__'],
+            aliases=[common.plg_ns['__PLUGIN_ALIAS__']] \
+                if common.plg_ns['__PLUGIN_ALIAS__'] else [],
+            help=common.plg_ns['__PLUGIN_SHORT_DESCRIPTION__']
         )
 
     def func(self, lib: Library, options, arguments):
@@ -500,10 +499,6 @@ class GoingRunningCommand(Subcommand):
 
             self._say("{0}: {1}".format(key, val))
 
-    def show_version_information(self):
-        from beetsplug.goingrunning.version import __version__
-        self._say("Goingrunning(beets-{}) plugin for Beets: v{}".format(__PLUGIN_NAME__, __version__))
-
     def verify_configuration_upgrade(self):
         """Check if user has old(pre v1.1.1) configuration keys in config
         """
@@ -514,8 +509,17 @@ class GoingRunningCommand(Subcommand):
             tkeys = training.keys()
             for tkey in tkeys:
                 if tkey in ["song_bpm", "song_len"]:
-                    raise RuntimeError("Offending key in training({}): {}".format(training_name, tkey))
+                    raise RuntimeError(
+                        "Offending key in training({}): {}".format(
+                            training_name, tkey))
 
-    def _say(self, msg, log_only=False):
-        log_only = True if self.cfg_quiet else log_only
-        common.say(msg, log_only)
+    def show_version_information(self):
+        self._say("{pt}({pn}) plugin for Beets: v{ver}".format(
+            pt=common.plg_ns['__PACKAGE_TITLE__'],
+            pn=common.plg_ns['__PACKAGE_NAME__'],
+            ver=common.plg_ns['__version__']
+        ), log_only=False)
+
+    @staticmethod
+    def _say(msg, log_only=True, is_error=False):
+        common.say(msg, log_only, is_error)

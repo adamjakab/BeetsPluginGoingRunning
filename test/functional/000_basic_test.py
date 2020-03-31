@@ -7,7 +7,8 @@
 
 from test.helper import (
     FunctionalTestHelper, Assertions,
-    PLUGIN_NAME, PLUGIN_SHORT_NAME, PLUGIN_SHORT_DESCRIPTION, get_single_line_from_output
+    PLUGIN_NAME, PLUGIN_ALIAS, PLUGIN_SHORT_DESCRIPTION,
+    get_single_line_from_output
 )
 
 
@@ -32,7 +33,7 @@ class BasicTest(FunctionalTestHelper, Assertions):
 
     def test_plugin_shortname_no_arguments(self):
         self.reset_beets(config_file=b"empty.yml")
-        stdout = self.run_with_output(PLUGIN_SHORT_NAME)
+        stdout = self.run_with_output(PLUGIN_ALIAS)
         self.assertIn("Usage: beet goingrunning [training] [options] [QUERY...]", stdout)
 
     def test_with_core_plugin_acousticbrainz(self):

@@ -6,11 +6,17 @@
 #
 
 import logging
-import sys
+import os
 
 from beets.dbcore import types
 from beets.library import Item
 from beets.util.confit import Subview
+
+# Get values as: plg_ns['__PLUGIN_NAME__']
+plg_ns = {}
+about_path = os.path.join(os.path.dirname(__file__), u'about.py')
+with open(about_path) as about_file:
+    exec(about_file.read(), plg_ns)
 
 MUST_HAVE_TRAINING_KEYS = ['duration', 'query', 'target']
 MUST_HAVE_TARGET_KEYS = ['device_root', 'device_path']
@@ -41,15 +47,15 @@ KNOWN_TEXTUAL_FLEX_ATTRIBUTES = [
     "chords_scale",
 ]
 
-__logger__ = logging.getLogger('beets.goingrunning')
+__logger__ = logging.getLogger('beets.{plg}'.format(plg=plg_ns[
+    '__PLUGIN_NAME__']))
 
 
-def say(msg, log_only=False):
-    """Log and write to stdout
-    """
-    __logger__.debug(msg)
-    if not log_only:
-        sys.stdout.write(msg + "\n")
+def say(msg, log_only=True, is_error=False):
+    _level = logging.DEBUG
+    _level = _level if log_only else logging.INFO
+    _level = _level if not is_error else logging.ERROR
+    __logger__.log(level=_level, msg=msg)
 
 
 def get_item_attribute_type_overrides():

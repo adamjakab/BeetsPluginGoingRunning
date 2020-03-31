@@ -10,10 +10,10 @@
 #  License: See LICENSE.txt
 #
 
-from test.helper import UnitTestHelper, Assertions, get_plugin_configuration
 from beetsplug.goingrunning import command
 
-from logging import Logger
+from test.helper import UnitTestHelper, Assertions, get_plugin_configuration, \
+    PLUGIN_NAME, PLUGIN_ALIAS, PLUGIN_SHORT_DESCRIPTION
 
 
 class CommandTest(UnitTestHelper, Assertions):
@@ -21,14 +21,11 @@ class CommandTest(UnitTestHelper, Assertions):
     """
 
     def test_module_values(self):
-        self.assertTrue(hasattr(command, "__PLUGIN_NAME__"))
-        self.assertTrue(hasattr(command, "__PLUGIN_SHORT_NAME__"))
-        self.assertTrue(hasattr(command, "__PLUGIN_SHORT_DESCRIPTION__"))
-
-        self.assertEqual(u'goingrunning', command.__PLUGIN_NAME__)
-        self.assertEqual(u'run', command.__PLUGIN_SHORT_NAME__)
-        self.assertEqual(u'run with the music that matches your training sessions',
-                         command.__PLUGIN_SHORT_DESCRIPTION__)
+        self.assertEqual(u'goingrunning', PLUGIN_NAME)
+        self.assertEqual(u'run', PLUGIN_ALIAS)
+        self.assertEqual(
+            u'run with the music that matches your training sessions',
+            PLUGIN_SHORT_DESCRIPTION)
 
     def test_class_init_config(self):
         cfg = {"something": "good"}
