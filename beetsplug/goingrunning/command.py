@@ -95,14 +95,24 @@ class GoingRunningCommand(Subcommand):
             self.verify_configuration_upgrade()
         except RuntimeError as e:
             self._say("*" * 80)
-            self._say("********************   INCOMPATIBLE PLUGIN CONFIGURATION   *********************")
-            self._say("*" * 80)
-            self._say("* Your configuration has been created for an older version of the plugin.")
-            self._say("* Since version 1.1.1 the plugin has implemented changes that require your "
-                      "current configuration to be updated.")
-            self._say("* Please read the updated documentation here and update your configuration.")
             self._say(
-                "* Documentation: https://github.com/adamjakab/BeetsPluginGoingRunning/blob/master/README.md"
+                "********************   INCOMPATIBLE PLUGIN CONFIGURATION   "
+                "*********************")
+            self._say("*" * 80)
+            self._say(
+                "* Your configuration has been created for an older version "
+                "of the plugin.")
+            self._say(
+                "* Since version 1.1.1 the plugin has implemented changes "
+                "that require your "
+                "current configuration to be updated.")
+            self._say(
+                "* Please read the updated documentation here and update your "
+                "configuration.")
+            self._say(
+                "* Documentation: "
+                "https://github.com/adamjakab/BeetsPluginGoingRunning/blob"
+                "/master/README.md"
                 "#configuration")
             self._say("* I promise it will not happen again ;)")
             self._say("* " + str(e))
@@ -123,7 +133,6 @@ class GoingRunningCommand(Subcommand):
             return
 
         self.handle_training()
-
 
     def handle_training(self):
         training_name = self.query.pop(0)
@@ -180,8 +189,10 @@ class GoingRunningCommand(Subcommand):
         # Show some info
         self._say("Available songs: {}".format(len(lib_items)))
         self._say("Selected songs: {}".format(len(sel_items)))
-        self._say("Planned training duration: {0}".format(common.get_human_readable_time(duration * 60)))
-        self._say("Total song duration: {}".format(common.get_human_readable_time(total_time)))
+        self._say("Planned training duration: {0}".format(
+            common.get_human_readable_time(duration * 60)))
+        self._say("Total song duration: {}".format(
+            common.get_human_readable_time(total_time)))
 
         # Show the selected songs
         flds = self._get_training_query_element_keys(training)
@@ -227,7 +238,9 @@ class GoingRunningCommand(Subcommand):
                 dst_path = os.path.realpath(root.joinpath(path))
 
                 if not os.path.isfile(dst_path):
-                    self._say("The file to delete does not exist: {0}".format(path), log_only=True)
+                    self._say(
+                        "The file to delete does not exist: {0}".format(path),
+                        log_only=True)
                     continue
 
                 self._say("Deleting: {}".format(dst_path), log_only=True)
@@ -235,6 +248,8 @@ class GoingRunningCommand(Subcommand):
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
         target_name = common.get_training_attribute(training, "target")
+        increment_play_count = common.get_training_attribute(
+            training, "increment_play_count")
         dst_path = self._get_destination_path_for_training(training)
         self._say("Copying to target[{0}]: {1}".format(target_name, dst_path))
 
@@ -258,26 +273,28 @@ class GoingRunningCommand(Subcommand):
                       log_only=True)
             copyfile(src, dst)
 
-            # increment play_count
-            common.increment_play_count_on_item(item)
+            if increment_play_count:
+                common.increment_play_count_on_item(item)
 
             cnt += 1
-
 
     def _get_target_for_training(self, training: Subview):
         target_name = common.get_training_attribute(training, "target")
         self._say("Finding target: {0}".format(target_name), log_only=True)
 
         if not self.config["targets"][target_name].exists():
-            self._say("The target name[{0}] is not defined!".format(target_name))
+            self._say(
+                "The target name[{0}] is not defined!".format(target_name))
             return
 
         return self.config["targets"][target_name]
 
-    def _get_target_attribute_for_training(self, training: Subview, attrib: str = "name"):
+    def _get_target_attribute_for_training(self, training: Subview,
+                                           attrib: str = "name"):
         target_name = common.get_training_attribute(training, "target")
         self._say("Getting attribute[{0}] for target: {1}".format(attrib,
-                                                                  target_name), log_only=True)
+                                                                  target_name),
+                  log_only=True)
         target = self._get_target_for_training(training)
         if not target:
             return
@@ -294,7 +311,10 @@ class GoingRunningCommand(Subcommand):
             attrib_val = common.get_target_attribute(target, attrib)
 
         self._say(
-            "Found target[{0}] attribute[{1}] path: {2}".format(target_name, attrib, attrib_val), log_only=True)
+            "Found target[{0}] attribute[{1}] path: {2}".format(target_name,
+                                                                attrib,
+                                                                attrib_val),
+            log_only=True)
 
         return attrib_val
 
@@ -321,16 +341,19 @@ class GoingRunningCommand(Subcommand):
             return
 
         self._say(
-            "Found target[{0}] path: {0}".format(target_name, dst_path), log_only=True)
+            "Found target[{0}] path: {0}".format(target_name, dst_path),
+            log_only=True)
 
         return dst_path
 
     def _get_items_for_duration(self, items, requested_duration):
-        """ fixme: this must become much more accurate - the entire selection concept is to be revisited
+        """ fixme: this must become much more accurate - the entire selection
+        concept is to be revisited
         """
         selected = []
         total_time = 0
-        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items(items, "length")
+        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items(items,
+                                                                      "length")
 
         if _avg > 0:
             est_num_songs = round(requested_duration * 60 / _avg)
@@ -342,7 +365,8 @@ class GoingRunningCommand(Subcommand):
         else:
             bin_size = 0
 
-        self._say("Estimated number of songs: {}".format(est_num_songs), log_only=True)
+        self._say("Estimated number of songs: {}".format(est_num_songs),
+                  log_only=True)
         self._say("Bin Size: {}".format(bin_size), log_only=True)
 
         for i in range(0, est_num_songs):
@@ -358,7 +382,8 @@ class GoingRunningCommand(Subcommand):
             total_time += song_len
             selected.append(item)
 
-        self._say("Total time in list: {}".format(common.get_human_readable_time(total_time)), log_only=True)
+        self._say("Total time in list: {}".format(
+            common.get_human_readable_time(total_time)), log_only=True)
 
         if total_time < requested_duration * 60:
             self._say("Song list is too short!!!", log_only=True)
@@ -384,7 +409,8 @@ class GoingRunningCommand(Subcommand):
         tconf = common.get_training_attribute(training, "query")
         if tconf:
             for key in tconf.keys():
-                training_query.append(common.get_beet_query_formatted_string(key, tconf.get(key)))
+                training_query.append(
+                    common.get_beet_query_formatted_string(key, tconf.get(key)))
 
         # Append the query elements from the flavours defined on the training
         flavours = common.get_training_attribute(training, "use_flavours")
@@ -394,12 +420,16 @@ class GoingRunningCommand(Subcommand):
                 flavour: Subview = self.config["flavours"][flavour_name]
                 flavour_query += common.get_flavour_elements(flavour)
 
-        self._say("Command query elements: {}".format(command_query), log_only=True)
-        self._say("Training query elements: {}".format(training_query), log_only=True)
-        self._say("Flavour query elements: {}".format(flavour_query), log_only=True)
+        self._say("Command query elements: {}".format(command_query),
+                  log_only=True)
+        self._say("Training query elements: {}".format(training_query),
+                  log_only=True)
+        self._say("Flavour query elements: {}".format(flavour_query),
+                  log_only=True)
 
         raw_combined_query = command_query + training_query + flavour_query
-        self._say("Raw combined query elements: {}".format(raw_combined_query), log_only=True)
+        self._say("Raw combined query elements: {}".format(raw_combined_query),
+                  log_only=True)
 
         # Remove duplicate keys
         combined_query = []
@@ -410,13 +440,15 @@ class GoingRunningCommand(Subcommand):
                 used_keys.append(key)
                 combined_query.append(query_part)
 
-        self._say("Clean combined query elements: {}".format(combined_query), log_only=True)
+        self._say("Clean combined query elements: {}".format(combined_query),
+                  log_only=True)
 
         return combined_query
 
     def _retrieve_library_items(self, training: Subview):
         """Returns the results of the library query for a specific training
-        The storing/overriding/restoring of the library.Item._types is made necessary
+        The storing/overriding/restoring of the library.Item._types is made
+        necessary
         by this issue: https://github.com/beetbox/beets/issues/3520
         Until the issue is solved this 'hack' is necessary.
         """
@@ -428,13 +460,15 @@ class GoingRunningCommand(Subcommand):
         library.Item._types.update(override_types)
 
         # Execute the query parsing (this will use our own overrides)
-        # todo: use this instead: parsed_query, parsed_ordering = parse_query_parts(full_query, Item)
+        # todo: use this instead: parsed_query, parsed_ordering =
+        #  parse_query_parts(full_query, Item)
         parsed_query = parse_query_string(" ".join(full_query), Item)[0]
 
         # Restore the original types
         library.Item._types = original_types.copy()
 
-        self._say("Song selection query: {}".format(parsed_query), log_only=True)
+        self._say("Song selection query: {}".format(parsed_query),
+                  log_only=True)
 
         return self.lib.items(parsed_query)
 
@@ -464,7 +498,8 @@ class GoingRunningCommand(Subcommand):
                 pass
 
     def list_trainings(self):
-        if not self.config["trainings"].exists() or len(self.config["trainings"].keys()) == 0:
+        if not self.config["trainings"].exists() or len(
+                self.config["trainings"].keys()) == 0:
             self._say("You have not created any trainings yet.")
             return
 
@@ -476,7 +511,7 @@ class GoingRunningCommand(Subcommand):
 
     def list_training_attributes(self, training_name: str):
         if not self.config["trainings"].exists() or not \
-        self.config["trainings"][training_name].exists():
+                self.config["trainings"][training_name].exists():
             self._say("Training[{0}] does not exist.".format(training_name),
                       is_error=True)
             return
@@ -485,15 +520,18 @@ class GoingRunningCommand(Subcommand):
         self._say("\n{0}".format(display_name.center(80, "=")), log_only=False)
 
         training: Subview = self.config["trainings"][training_name]
-        training_keys = list(set(common.MUST_HAVE_TRAINING_KEYS) | set(training.keys()))
-        final_keys = ["duration", "query", "use_flavours", "combined_query", "ordering", "target"]
+        training_keys = list(
+            set(common.MUST_HAVE_TRAINING_KEYS) | set(training.keys()))
+        final_keys = ["duration", "query", "use_flavours", "combined_query",
+                      "ordering", "target"]
         final_keys.extend(tk for tk in training_keys if tk not in final_keys)
 
         for key in final_keys:
             val = common.get_training_attribute(training, key)
 
             # Handle non-existent (made up) keys
-            if key == "combined_query" and common.get_training_attribute(training, "use_flavours"):
+            if key == "combined_query" and common.get_training_attribute(
+                    training, "use_flavours"):
                 val = self._gather_query_elements(training)
 
             if val is None:

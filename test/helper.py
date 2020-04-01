@@ -24,6 +24,7 @@ from beets import ui
 from beets import util
 from beets.dbcore import types
 from beets.library import Item
+from beets.mediafile import MediaFile
 from beets.util import (
     syspath,
     bytestring_path,
@@ -303,6 +304,8 @@ class FunctionalTestHelper(TestCase, Assertions):
 
         if hasattr(self, 'config'):
             self.config.clear()
+
+        MediaFile.fields()
 
         # beets.config.read(user=False, defaults=True)
 
