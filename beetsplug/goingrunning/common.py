@@ -1,9 +1,6 @@
 #  Copyright: Copyright (c) 2020., Adam Jakab
-#
 #  Author: Adam Jakab <adam at jakab dot pro>
-#  Created: 2/19/20, 12:29 PM
 #  License: See LICENSE.txt
-#
 
 import logging
 import os

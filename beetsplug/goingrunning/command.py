@@ -1,9 +1,6 @@
 #  Copyright: Copyright (c) 2020., Adam Jakab
-#
 #  Author: Adam Jakab <adam at jakab dot pro>
-#  Created: 2/19/20, 11:32 AM
 #  License: See LICENSE.txt
-#
 
 import operator
 import os
@@ -20,6 +17,7 @@ from beets.dbcore.queryparse import parse_query_part
 from beets.library import Library, Item, parse_query_string
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
+
 from beetsplug.goingrunning import common
 
 
