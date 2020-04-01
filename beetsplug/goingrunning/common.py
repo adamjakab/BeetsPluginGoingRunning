@@ -69,10 +69,8 @@ def get_human_readable_time(seconds):
     return "%d:%02d:%02d" % (h, m, s)
 
 
-def get_beet_query_formatted_string(key, val):
-    quote_val = type(val) == str and " " in val
-    fmt = "{k}:'{v}'" if quote_val else "{k}:{v}"
-    return fmt.format(k=key, v=val)
+def get_query_element_string(key, val):
+    return "{k}:{v}".format(k=key, v=val)
 
 def get_flavour_elements(flavour: Subview):
     elements = []
@@ -82,7 +80,7 @@ def get_flavour_elements(flavour: Subview):
 
     for key in flavour.keys():
         # todo: in future flavours can have "use_flavours" key to make this recursive
-        elements.append(get_beet_query_formatted_string(key, flavour[key].get()))
+        elements.append(get_query_element_string(key, flavour[key].get()))
 
     return elements
 

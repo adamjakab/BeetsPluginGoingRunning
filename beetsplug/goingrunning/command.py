@@ -14,7 +14,7 @@ from shutil import copyfile
 from beets import library
 from beets.dbcore.db import Results
 from beets.dbcore.queryparse import parse_query_part
-from beets.library import Library, Item, parse_query_string
+from beets.library import Library, Item, parse_query_parts
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
 
@@ -138,8 +138,8 @@ class GoingRunningCommand(Subcommand):
         training: Subview = self.config["trainings"][training_name]
         if not training.exists():
             self._say(
-                "There is no training[{0}] registered with this name!".format(
-                    training_name))
+                "There is no training with this name[{0}]!".format(
+                    training_name), log_only=False)
             return
 
         # Get the library items
@@ -151,12 +151,13 @@ class GoingRunningCommand(Subcommand):
                       log_only=False)
             return
 
-        self._say("Handling training: {0}".format(training_name))
+        self._say("Handling training: {0}".format(training_name),
+                  log_only=False)
 
         # Check count
         if len(lib_items) < 1:
             self._say(
-                "There are no songs in your library that match this training!")
+                "No songs in your library match this training!", log_only=False)
             return
 
         # Verify target device path path
@@ -219,7 +220,7 @@ class GoingRunningCommand(Subcommand):
                     os.path.join(dst_path, "*.{}".format(ext)))
 
             for f in target_file_list:
-                self._say("Deleting: {}".format(f), log_only=True)
+                self._say("Deleting: {}".format(f))
                 os.remove(f)
 
         additional_files = self._get_target_attribute_for_training(training,
@@ -241,7 +242,7 @@ class GoingRunningCommand(Subcommand):
                         log_only=True)
                     continue
 
-                self._say("Deleting: {}".format(dst_path), log_only=True)
+                self._say("Deleting: {}".format(dst_path))
                 os.remove(dst_path)
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
@@ -278,7 +279,7 @@ class GoingRunningCommand(Subcommand):
 
     def _get_target_for_training(self, training: Subview):
         target_name = common.get_training_attribute(training, "target")
-        self._say("Finding target: {0}".format(target_name), log_only=True)
+        self._say("Finding target: {0}".format(target_name))
 
         if not self.config["targets"][target_name].exists():
             self._say(
@@ -365,7 +366,7 @@ class GoingRunningCommand(Subcommand):
 
         self._say("Estimated number of songs: {}".format(est_num_songs),
                   log_only=True)
-        self._say("Bin Size: {}".format(bin_size), log_only=True)
+        self._say("Bin Size: {}".format(bin_size))
 
         for i in range(0, est_num_songs):
             bin_start = round(i * bin_size)
@@ -381,10 +382,10 @@ class GoingRunningCommand(Subcommand):
             selected.append(item)
 
         self._say("Total time in list: {}".format(
-            common.get_human_readable_time(total_time)), log_only=True)
+            common.get_human_readable_time(total_time)))
 
         if total_time < requested_duration * 60:
-            self._say("Song list is too short!!!", log_only=True)
+            self._say("Song list is too short!!!")
 
         return selected
 
@@ -397,7 +398,8 @@ class GoingRunningCommand(Subcommand):
         return answer
 
     def _gather_query_elements(self, training: Subview):
-        """Order(strongest to weakest): command -> training -> flavours
+        """Sum all query elements and order them (strongest to weakest):
+        command -> training -> flavours
         """
         command_query = self.query
         training_query = []
@@ -408,7 +410,7 @@ class GoingRunningCommand(Subcommand):
         if tconf:
             for key in tconf.keys():
                 training_query.append(
-                    common.get_beet_query_formatted_string(key, tconf.get(key)))
+                    common.get_query_element_string(key, tconf.get(key)))
 
         # Append the query elements from the flavours defined on the training
         flavours = common.get_training_attribute(training, "use_flavours")
@@ -425,11 +427,8 @@ class GoingRunningCommand(Subcommand):
         self._say("Flavour query elements: {}".format(flavour_query),
                   log_only=True)
 
+        # Remove duplicate keys (first one wins)
         raw_combined_query = command_query + training_query + flavour_query
-        self._say("Raw combined query elements: {}".format(raw_combined_query),
-                  log_only=True)
-
-        # Remove duplicate keys
         combined_query = []
         used_keys = []
         for query_part in raw_combined_query:
@@ -438,7 +437,7 @@ class GoingRunningCommand(Subcommand):
                 used_keys.append(key)
                 combined_query.append(query_part)
 
-        self._say("Clean combined query elements: {}".format(combined_query),
+        self._say("Combined query elements: {}".format(combined_query),
                   log_only=True)
 
         return combined_query
@@ -457,16 +456,13 @@ class GoingRunningCommand(Subcommand):
         override_types = common.get_item_attribute_type_overrides()
         library.Item._types.update(override_types)
 
-        # Execute the query parsing (this will use our own overrides)
-        # todo: use this instead: parsed_query, parsed_ordering =
-        #  parse_query_parts(full_query, Item)
-        parsed_query = parse_query_string(" ".join(full_query), Item)[0]
+        # Execute the query parsing (using our own type overrides)
+        parsed_query, parsed_ordering = parse_query_parts(full_query, Item)
 
         # Restore the original types
         library.Item._types = original_types.copy()
 
-        self._say("Song selection query: {}".format(parsed_query),
-                  log_only=True)
+        self._say("Parsed query: {}".format(parsed_query))
 
         return self.lib.items(parsed_query)
 
@@ -491,7 +487,7 @@ class GoingRunningCommand(Subcommand):
 
                 kwargs[field] = fld_val
             try:
-                self._say(fmt.format(**kwargs))
+                self._say(fmt.format(**kwargs), log_only=False)
             except IndexError:
                 pass
 
