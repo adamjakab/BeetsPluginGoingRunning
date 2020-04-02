@@ -221,6 +221,7 @@ class RandomFromBinsPicker(BasePicker):
         common.say("Number of bins: {}".format(num_bins))
         common.say("Bin size: {}".format(bin_size))
 
+        self.bin_boundaries = []
         for bi in range(0, num_bins):
             is_last_bin = bi == (num_bins - 1)
             low = bi * bin_size
