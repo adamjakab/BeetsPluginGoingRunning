@@ -1,8 +1,10 @@
-[![Build Status](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning.svg?branch=master)](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning)
-[![Coverage Status](https://coveralls.io/repos/github/adamjakab/BeetsPluginGoingRunning/badge.svg?branch=master)](https://coveralls.io/github/adamjakab/BeetsPluginGoingRunning?branch=master)
+[![Build Status](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning.svg?branch=devel)](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning)
+[![Coverage Status](https://coveralls.io/repos/github/adamjakab/BeetsPluginGoingRunning/badge.svg?branch=devel)](https://coveralls.io/github/adamjakab/BeetsPluginGoingRunning?branch=devel)
 [![PyPi](https://img.shields.io/pypi/v/beets-goingrunning.svg)](https://pypi.org/project/beets-goingrunning/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/beets-goingrunning.svg)](https://pypi.org/project/beets-goingrunning/)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.txt)
 
-# Going Running (beets plugin)
+# Going Running (Beets Plugin)
 
 The *beets-goingrunning* is a [beets](https://github.com/beetbox/beets) plugin for obsessive-compulsive music geek runners. It lets you configure different training activities by filtering songs based on their tag attributes (bpm, length, mood, loudness, etc), generates a list of songs for that specific training and copies those songs to your player device.
 

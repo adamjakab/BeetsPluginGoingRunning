@@ -25,9 +25,10 @@ class ConfigurationTest(FunctionalTestHelper, Assertions):
 
     def test_obsolete_config(self):
         self.reset_beets(config_file=b"obsolete.yml")
-        stdout = self.run_with_output(PLUGIN_NAME)
-        self.assertIn("INCOMPATIBLE PLUGIN CONFIGURATION", stdout)
-        self.assertIn("Offending key in training(training-1): song_bpm", stdout)
+
+        logged = self.run_with_log_capture(PLUGIN_NAME)
+        self.assertIn("INCOMPATIBLE PLUGIN CONFIGURATION", logged)
+        self.assertIn("Offending key in training(training-1): song_bpm", logged)
 
     def test_default_config_sanity(self):
         self.assertTrue(self.config[PLUGIN_NAME].exists())
@@ -53,7 +54,7 @@ class ConfigurationTest(FunctionalTestHelper, Assertions):
         target = targets["MPD_1"]
         self.assertIsInstance(target, Subview)
         self.assertTrue(target.exists())
-        self.assertEqual("/tmp/beets-goingrunning-test-drive/", target["device_root"].get())
+        self.assertEqual("/tmp/", target["device_root"].get())
         self.assertEqual("Music/", target["device_path"].get())
         self.assertTrue(target["clean_target"].get())
         self.assertEqual(["xyz.txt"], target["delete_from_device"].get())
