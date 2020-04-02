@@ -11,9 +11,10 @@ from pathlib import Path
 from shutil import copyfile
 
 from beets import library
+from beets.dbcore import query
 from beets.dbcore.db import Results
-from beets.dbcore.queryparse import parse_query_part
-from beets.library import Library, Item, parse_query_parts
+from beets.dbcore.queryparse import parse_query_part, construct_query_part
+from beets.library import Library, Item
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
 from beetsplug.goingrunning import common
@@ -161,8 +162,6 @@ class GoingRunningCommand(Subcommand):
                       log_only=False)
             return
 
-
-
         # Check count
         if len(lib_items) < 1:
             self._say(
@@ -200,7 +199,7 @@ class GoingRunningCommand(Subcommand):
         flds += ["play_count", "artist", "title"]
         self.display_library_items(sel_items, flds, prefix="Selected: ")
 
-        # 5) Clea, Copy, Run
+        # 5) Clean, Copy, Run
         self._clean_target_path(training)
         self._copy_items_to_target(training, sel_items)
         self._say("Run!", log_only=False)
@@ -366,8 +365,8 @@ class GoingRunningCommand(Subcommand):
         return answer
 
     def _gather_query_elements(self, training: Subview):
-        """Sum all query elements and order them (strongest to weakest):
-        command -> training -> flavours
+        """Sum all query elements into one big list ordered from strongest to
+        weakest: command -> training -> flavours
         """
         command_query = self.query
         training_query = []
@@ -395,26 +394,68 @@ class GoingRunningCommand(Subcommand):
         self._say("Flavour query elements: {}".format(flavour_query),
                   log_only=True)
 
-        # Remove duplicate keys (first one wins)
         raw_combined_query = command_query + training_query + flavour_query
-        combined_query = []
-        used_keys = []
-        for query_part in raw_combined_query:
-            key = parse_query_part(query_part)[0]
-            if key not in used_keys:
-                used_keys.append(key)
-                combined_query.append(query_part)
+        # combined_query = []
+        # used_keys = []
+        # for query_part in raw_combined_query:
+        #     key = parse_query_part(query_part)[0]
+        #     if key not in used_keys:
+        #         used_keys.append(key)
+        #         combined_query.append(query_part)
 
-        self._say("Combined query elements: {}".format(combined_query),
-                  log_only=True)
+        self._say("Combined query elements: {}".
+                  format(raw_combined_query), log_only=True)
 
-        return combined_query
+        return raw_combined_query
+
+    def parse_query_elements(self, query_elements, model_cls):
+        registry = {}
+
+        # Iterate through elements and group them in a registry by field name
+        for query_element in query_elements:
+            key, term, query_class, negate = parse_query_part(query_element)
+            if key not in registry.keys():
+                registry[key] = []
+            registry[key].append({
+                "term": term,
+                "query_class": query_class,
+                "negate": negate,
+                "q_string": query_element
+            })
+
+        def parse_and_merge_items(k, lst, cls):
+            parsed_items = []
+
+            for item in lst:
+                prefixes = {}
+                qp = construct_query_part(cls, prefixes, item["q_string"])
+                parsed_items.append(qp)
+
+            if len(parsed_items) == 1:
+                answer = parsed_items.pop()
+            else:
+                answer = query.OrQuery(parsed_items)
+
+            return answer
+
+        query_parts = []
+        for key in registry.keys():
+            reg_item_list = registry[key]
+            parsed_and_merged = parse_and_merge_items(
+                key, reg_item_list, model_cls)
+            print("{}: {}".format(key, parsed_and_merged))
+            query_parts.append(parsed_and_merged)
+
+        if len(query_parts) == 0:
+            query_parts.append(query.TrueQuery())
+
+        return query.AndQuery(query_parts)
 
     def _retrieve_library_items(self, training: Subview):
         """Returns the results of the library query for a specific training
-        The storing/overriding/restoring of the library.Item._types is made
-        necessary
-        by this issue: https://github.com/beetbox/beets/issues/3520
+        The storing/overriding/restoring of the library.Item._types
+        is made necessary by this issue:
+        https://github.com/beetbox/beets/issues/3520
         Until the issue is solved this 'hack' is necessary.
         """
         full_query = self._gather_query_elements(training)
@@ -425,7 +466,7 @@ class GoingRunningCommand(Subcommand):
         library.Item._types.update(override_types)
 
         # Execute the query parsing (using our own type overrides)
-        parsed_query, parsed_ordering = parse_query_parts(full_query, Item)
+        parsed_query = self.parse_query_elements(full_query, Item)
 
         # Restore the original types
         library.Item._types = original_types.copy()
