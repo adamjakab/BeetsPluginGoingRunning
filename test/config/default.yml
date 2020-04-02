@@ -5,7 +5,7 @@ format_item: "[bpm:$bpm][length:$length][genre:$genre]: $artist - $album - $titl
 goingrunning:
   targets:
     MPD_1:
-      device_root: /tmp/beets-goingrunning-test-drive/
+      device_root: /tmp/
       device_path: Music/
       clean_target: yes
       delete_from_device:
@@ -54,8 +54,10 @@ goingrunning:
       duration: 10
       target: MPD_1
     bad-target-1:
-      target: inexistent_target
+      alias: "This training does not define a target"
     bad-target-2:
+      target: inexistent_target
+    bad-target-3:
       target: MPD_3
   flavours:
     runlikehell:

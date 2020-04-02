@@ -54,7 +54,7 @@ class ConfigurationTest(FunctionalTestHelper, Assertions):
         target = targets["MPD_1"]
         self.assertIsInstance(target, Subview)
         self.assertTrue(target.exists())
-        self.assertEqual("/tmp/beets-goingrunning-test-drive/", target["device_root"].get())
+        self.assertEqual("/tmp/", target["device_root"].get())
         self.assertEqual("Music/", target["device_path"].get())
         self.assertTrue(target["clean_target"].get())
         self.assertEqual(["xyz.txt"], target["delete_from_device"].get())

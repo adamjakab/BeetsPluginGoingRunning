@@ -136,11 +136,20 @@ class GoingRunningCommand(Subcommand):
         training_name = self.query.pop(0)
         training: Subview = self.config["trainings"][training_name]
 
+        self._say("Handling training: {0}".format(training_name),
+                  log_only=False)
+
         # todo: create a sanity checker for training to check all attributes
         if not training.exists():
             self._say(
                 "There is no training with this name[{0}]!".format(
                     training_name), log_only=False)
+            return
+
+        # Verify target device path path
+        if not self._get_destination_path_for_training(training):
+            self._say(
+                "Invalid target!", log_only=False)
             return
 
         # Get the library items
@@ -152,17 +161,12 @@ class GoingRunningCommand(Subcommand):
                       log_only=False)
             return
 
-        self._say("Handling training: {0}".format(training_name),
-                  log_only=False)
+
 
         # Check count
         if len(lib_items) < 1:
             self._say(
                 "No songs in your library match this training!", log_only=False)
-            return
-
-        # Verify target device path path
-        if not self._get_destination_path_for_training(training):
             return
 
         duration = common.get_training_attribute(training, "duration")
@@ -320,14 +324,21 @@ class GoingRunningCommand(Subcommand):
 
     def _get_destination_path_for_training(self, training: Subview):
         target_name = common.get_training_attribute(training, "target")
+
+        if not target_name:
+            self._say(
+                "Training does not declare a `target`!".
+                    format(target_name), log_only=False)
+            return
+
         root = self._get_target_attribute_for_training(training, "device_root")
         path = self._get_target_attribute_for_training(training, "device_path")
         path = path or ""
 
         if not root:
             self._say(
-                "The target[{0}] does not declare a device root path.".format(
-                    target_name))
+                "The target[{0}] does not declare a device root path.".
+                    format(target_name), log_only=False)
             return
 
         root = Path(root).expanduser()
@@ -336,8 +347,8 @@ class GoingRunningCommand(Subcommand):
 
         if not os.path.isdir(dst_path):
             self._say(
-                "The target[{0}] path does not exist: {1}".format(target_name,
-                                                                  dst_path))
+                "The target[{0}] path does not exist: {1}".
+                    format(target_name, dst_path), log_only=False)
             return
 
         self._say(

@@ -65,9 +65,16 @@ class CommandTest(FunctionalTestHelper, Assertions):
             "No songs in your library match this training!",
             logged)
 
-    def test_training_undefined_target(self):
+    def test_training_target_not_set(self):
         self.add_single_item_to_library()
         training_name = "bad-target-1"
+        logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
+        self.assertIn(
+            "Training does not declare a `target`!", logged)
+
+    def test_training_undefined_target(self):
+        self.add_single_item_to_library()
+        training_name = "bad-target-2"
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
         target_name = "inexistent_target"
         self.assertIn(
@@ -75,7 +82,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
 
     def test_training_bad_target(self):
         self.add_single_item_to_library()
-        training_name = "bad-target-2"
+        training_name = "bad-target-3"
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
         target_name = "MPD_3"
         target_path = "/media/this/probably/does/not/exist/"

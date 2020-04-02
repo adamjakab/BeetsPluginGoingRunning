@@ -257,6 +257,9 @@ class FunctionalTestHelper(TestCase, Assertions):
         self.config['directory'] = self.beetsdir.decode()
         self.lib = beets.library.Library(':memory:', self.beetsdir.decode())
 
+        # Music target dir (MPD-1)
+        os.makedirs(syspath("/tmp/Music"), exist_ok=True)
+
         # This will initialize the plugins
         plugins.find_plugins()
 
@@ -283,6 +286,9 @@ class FunctionalTestHelper(TestCase, Assertions):
 
     def teardown_beets(self):
         self.unload_plugins()
+
+        # Music target dir (MPD-1)
+        shutil.rmtree(syspath("/tmp/Music"), ignore_errors=True)
 
         # reset types updated here: beets/ui/__init__.py:1148
         library.Item._types = {'data_source': types.STRING}
