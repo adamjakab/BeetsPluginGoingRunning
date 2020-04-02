@@ -8,7 +8,7 @@ __author__ = u'Adam Jakab'
 __email__ = u'adam@jakab.pro'
 __copyright__ = u'Copyright (c) 2020, {} <{}>'.format(__author__, __email__)
 __license__ = u'License :: OSI Approved :: MIT License'
-__version__ = u'1.2.0'
+__version__ = u'1.2.1'
 __status__ = u'Stable'
 
 __PACKAGE_TITLE__ = u'GoingRunning'

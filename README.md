@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning.svg?branch=master)](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning)
-[![Coverage Status](https://coveralls.io/repos/github/adamjakab/BeetsPluginGoingRunning/badge.svg?branch=master)](https://coveralls.io/github/adamjakab/BeetsPluginGoingRunning?branch=master)
+[![Build Status](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning.svg?branch=devel)](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning)
+[![Coverage Status](https://coveralls.io/repos/github/adamjakab/BeetsPluginGoingRunning/badge.svg?branch=devel)](https://coveralls.io/github/adamjakab/BeetsPluginGoingRunning?branch=devel)
 [![PyPi](https://img.shields.io/pypi/v/beets-goingrunning.svg)](https://pypi.org/project/beets-goingrunning/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/beets-goingrunning.svg)](https://pypi.org/project/beets-goingrunning/)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.txt)
@@ -134,7 +134,6 @@ The duration is expressed in minutes and serves the purpose of defining the tota
 #### target
 This key indicates to which target (defined in the `targets` section) your songs will be copied to.
 
-
 #### the `fallback` training
 You might also define a special `fallback` training:
 
@@ -146,6 +145,9 @@ goingrunning:
 ```
 
 Any key not defined in a specific training will be looked up from the `fallback` training. So, if in the `10K` example you were to remove the `target` key, it would be looked up from the `fallback` training and your songs would be copied to the `my_other_device` target.
+
+#### Play count and favouring unplayed songs
+In the default configuration of the plugin, on the `fallback` training there are two disabled options that you might want to consider enabling: `increment_play_count` and `favour_unplayed`. They are meant to be used together. The `increment_play_count` option, on copying your songs to your device, will increment the `play_count` attribute by one and store it in your library and on your media file. The `favour_unplayed` option will instruct the algorithm that picks the songs from your selection to favour the songs that have lower `play_count`. This feature will make you discover songs in your library that you might have never heard. At the same time it ensures that the proposed songs are always changed even if you keep your selection query and your ordering unchanged. 
 
 
 ### Flavours
