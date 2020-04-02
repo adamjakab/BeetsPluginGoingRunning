@@ -45,7 +45,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
         training_name = "sitting_on_the_sofa"
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
         self.assertIn(
-            "There is no training[{0}] registered with this name!".format(
+            "There is no training with this name[{}]!".format(
                 training_name), logged)
 
     def test_training_song_count(self):
@@ -62,7 +62,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
         self.assertIn("Handling training: {0}".format(training_name), logged)
         self.assertIn(
-            "There are no songs in your library that match this training!",
+            "No songs in your library match this training!",
             logged)
 
     def test_training_undefined_target(self):

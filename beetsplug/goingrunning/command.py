@@ -451,14 +451,14 @@ class GoingRunningCommand(Subcommand):
         common.say("{}".format("=" * 120), log_only=False)
 
     def list_trainings(self):
-        if not self.config["trainings"].exists() or len(
-                self.config["trainings"].keys()) == 0:
+        trainings = list(self.config["trainings"].keys())
+        training_names = [s for s in trainings if s != "fallback"]
+
+        if len(training_names) == 0:
             self._say("You have not created any trainings yet.")
             return
 
         self._say("Available trainings:", log_only=False)
-        trainings = list(self.config["trainings"].keys())
-        training_names = [s for s in trainings if s != "fallback"]
         for training_name in training_names:
             self.list_training_attributes(training_name)
 
