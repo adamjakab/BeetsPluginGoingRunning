@@ -1,12 +1,22 @@
 # CHANGELOG
 
-## v1.1.3 (in development)
+## v1.2.1 (in development)
 
 ### New features:
 
 
 ### Fixes
 
+
+
+## v1.2.0
+
+### New features:
+- introduced `play_count` handling and `favour_unplayed` based song selection
+
+### Fixes
+- multiple lines in logging
+- trainings without target
 
 
 ## v1.1.2
