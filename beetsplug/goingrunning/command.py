@@ -2,7 +2,6 @@
 #  Author: Adam Jakab <adam at jakab dot pro>
 #  License: See LICENSE.txt
 
-import operator
 import os
 import random
 import string
@@ -17,8 +16,9 @@ from beets.dbcore.queryparse import parse_query_part
 from beets.library import Library, Item, parse_query_parts
 from beets.ui import Subcommand, decargs
 from beets.util.confit import Subview, NotFoundError
-
 from beetsplug.goingrunning import common
+from beetsplug.goingrunning import itemorder
+from beetsplug.goingrunning import itempick
 
 
 class GoingRunningCommand(Subcommand):
@@ -134,8 +134,9 @@ class GoingRunningCommand(Subcommand):
 
     def handle_training(self):
         training_name = self.query.pop(0)
-
         training: Subview = self.config["trainings"][training_name]
+
+        # todo: create a sanity checker for training to check all attributes
         if not training.exists():
             self._say(
                 "There is no training with this name[{0}]!".format(
@@ -164,28 +165,25 @@ class GoingRunningCommand(Subcommand):
         if not self._get_destination_path_for_training(training):
             return
 
-        # 1) order items by scoring system (need ordering in config)
-        common.score_library_items(training, lib_items)
-        sorted_lib_items = sorted(lib_items,
-                                  key=operator.attrgetter('ordering_score'))
-
-        # 2) select random items n from the ordered list(T=length) - by
-        # chosing n times song from the remaining songs between 1 and m
-        # where m = T/n
         duration = common.get_training_attribute(training, "duration")
         if not duration:
             self._say("There is no duration set for the selected training!",
                       log_only=False)
             return
 
-        # sel_items = common.get_randomized_items(lib_items, duration)
-        sel_items = self._get_items_for_duration(sorted_lib_items, duration)
+        # 1) order items by `ordering_strategy`
+        sorted_items = itemorder.get_ordered_items(training, lib_items)
+        # flds = ["ordering_score", "artist", "title"]
+        # self.display_library_items(sorted_items, flds, prefix="SORTED: ")
 
+        # 2) select items that cover the training duration
+        itempick.favour_unplayed = \
+            common.get_training_attribute(training, "favour_unplayed")
+        sel_items = itempick.get_items_for_duration(training, sorted_items,
+                                                    duration * 60)
+
+        # 3) Show some info
         total_time = common.get_duration_of_items(sel_items)
-        # @todo: check if total time is close to duration - (config might be
-        #  too restrictive or too few songs)
-
-        # Show some info
         self._say("Available songs: {}".format(len(lib_items)))
         self._say("Selected songs: {}".format(len(sel_items)))
         self._say("Planned training duration: {0}".format(
@@ -193,18 +191,15 @@ class GoingRunningCommand(Subcommand):
         self._say("Total song duration: {}".format(
             common.get_human_readable_time(total_time)))
 
-        # Show the selected songs
+        # 4) Show the selected songs
         flds = self._get_training_query_element_keys(training)
-        flds += ["artist", "title"]
+        flds += ["play_count", "artist", "title"]
         self.display_library_items(sel_items, flds, prefix="Selected: ")
 
-        # todo: move this inside the nex methods to show what would be done
-        if self.cfg_dry_run:
-            return
-
+        # 5) Clea, Copy, Run
         self._clean_target_path(training)
         self._copy_items_to_target(training, sel_items)
-        self._say("Run!")
+        self._say("Run!", log_only=False)
 
     def _clean_target_path(self, training: Subview):
         target_name = common.get_training_attribute(training, "target")
@@ -212,7 +207,8 @@ class GoingRunningCommand(Subcommand):
         if self._get_target_attribute_for_training(training, "clean_target"):
             dst_path = self._get_destination_path_for_training(training)
 
-            self._say("Cleaning target[{0}]: {1}".format(target_name, dst_path))
+            self._say("Cleaning target[{0}]: {1}".
+                      format(target_name, dst_path), log_only=False)
             song_extensions = ["mp3", "mp4", "flac", "wav", "ogg", "wma", "m3u"]
             target_file_list = []
             for ext in song_extensions:
@@ -221,7 +217,8 @@ class GoingRunningCommand(Subcommand):
 
             for f in target_file_list:
                 self._say("Deleting: {}".format(f))
-                os.remove(f)
+                if not self.cfg_dry_run:
+                    os.remove(f)
 
         additional_files = self._get_target_attribute_for_training(training,
                                                                    "delete_from_device")
@@ -230,7 +227,8 @@ class GoingRunningCommand(Subcommand):
                                                            "device_root")
             root = Path(root).expanduser()
 
-            self._say("Deleting additional files: {0}".format(additional_files))
+            self._say("Deleting additional files: {0}".
+                      format(additional_files), log_only=False)
 
             for path in additional_files:
                 path = Path(str.strip(path, "/"))
@@ -243,14 +241,16 @@ class GoingRunningCommand(Subcommand):
                     continue
 
                 self._say("Deleting: {}".format(dst_path))
-                os.remove(dst_path)
+                if not self.cfg_dry_run:
+                    os.remove(dst_path)
 
     def _copy_items_to_target(self, training: Subview, rnd_items):
         target_name = common.get_training_attribute(training, "target")
         increment_play_count = common.get_training_attribute(
             training, "increment_play_count")
         dst_path = self._get_destination_path_for_training(training)
-        self._say("Copying to target[{0}]: {1}".format(target_name, dst_path))
+        self._say("Copying to target[{0}]: {1}".
+                  format(target_name, dst_path), log_only=False)
 
         def random_string(length=6):
             letters = string.ascii_letters + string.digits
@@ -270,10 +270,11 @@ class GoingRunningCommand(Subcommand):
             dst = "{0}/{1}".format(dst_path, gen_filename)
             self._say("Copying[{1}]: {0}".format(src, gen_filename),
                       log_only=True)
-            copyfile(src, dst)
 
-            if increment_play_count:
-                common.increment_play_count_on_item(item)
+            if not self.cfg_dry_run:
+                copyfile(src, dst)
+                if increment_play_count:
+                    common.increment_play_count_on_item(item)
 
             cnt += 1
 
@@ -344,50 +345,6 @@ class GoingRunningCommand(Subcommand):
             log_only=True)
 
         return dst_path
-
-    def _get_items_for_duration(self, items, requested_duration):
-        """ fixme: this must become much more accurate - the entire selection
-        concept is to be revisited
-        """
-        selected = []
-        total_time = 0
-        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items(items,
-                                                                      "length")
-
-        if _avg > 0:
-            est_num_songs = round(requested_duration * 60 / _avg)
-        else:
-            est_num_songs = 0
-
-        if est_num_songs > 0:
-            bin_size = len(items) / est_num_songs
-        else:
-            bin_size = 0
-
-        self._say("Estimated number of songs: {}".format(est_num_songs),
-                  log_only=True)
-        self._say("Bin Size: {}".format(bin_size))
-
-        for i in range(0, est_num_songs):
-            bin_start = round(i * bin_size)
-            bin_end = round(bin_start + bin_size)
-            song_index = random.randint(bin_start, bin_end)
-            try:
-                item: Item = items[song_index]
-            except IndexError:
-                continue
-
-            song_len = round(item.get("length"))
-            total_time += song_len
-            selected.append(item)
-
-        self._say("Total time in list: {}".format(
-            common.get_human_readable_time(total_time)))
-
-        if total_time < requested_duration * 60:
-            self._say("Song list is too short!!!")
-
-        return selected
 
     def _get_training_query_element_keys(self, training):
         answer = []
@@ -474,6 +431,7 @@ class GoingRunningCommand(Subcommand):
             else:
                 fmt += "[{0}: {{{0}}}] ".format(field)
 
+        common.say("{}".format("=" * 120), log_only=False)
         for item in items:
             kwargs = {}
             for field in fields:
@@ -490,6 +448,7 @@ class GoingRunningCommand(Subcommand):
                 self._say(fmt.format(**kwargs), log_only=False)
             except IndexError:
                 pass
+        common.say("{}".format("=" * 120), log_only=False)
 
     def list_trainings(self):
         if not self.config["trainings"].exists() or len(

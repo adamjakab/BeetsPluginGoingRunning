@@ -1,3 +1,8 @@
 targets: {}
-trainings: {}
+trainings:
+  fallback:
+    increment_play_count: no
+    favour_unplayed: no
+    ordering_strategy: score_based_linear
+    pick_strategy: random_from_bins
 flavours: {}

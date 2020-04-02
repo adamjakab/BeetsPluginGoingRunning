@@ -1,7 +1,7 @@
 #  Copyright: Copyright (c) 2020., Adam Jakab
 #  Author: Adam Jakab <adam at jakab dot pro>
 #  License: See LICENSE.txt
-
+import importlib
 import logging
 import os
 
@@ -109,21 +109,19 @@ def get_target_attribute(target: Subview, attrib: str):
 def get_duration_of_items(items):
     """
     Calculate the total duration of the media items using the "length" attribute
-    :param items: list
-    :return: int
     """
     total_time = 0
 
     if isinstance(items, list):
         for item in items:
             try:
-                total_time += int(item.get("length"))
+                total_time += item.get("length")
             except TypeError:
                 pass
             except ValueError:
                 pass
 
-    return total_time
+    return round(total_time)
 
 
 def get_min_max_sum_avg_for_items(items, field_name):
@@ -153,6 +151,10 @@ def get_min_max_sum_avg_for_items(items, field_name):
         if field_value is not None:
             _sum = _sum + field_value
 
+    # Min (correction)
+    if _min > _max:
+        _min = _max
+
     # Avg
     if _cnt > 0:
         _avg = round(_sum / _cnt, 3)
@@ -160,103 +162,25 @@ def get_min_max_sum_avg_for_items(items, field_name):
     return _min, _max, _sum, _avg
 
 
-def score_library_items(training: Subview, items):
-    ordering = {}
-    fields = []
-    if training["ordering"].exists() and len(training["ordering"].keys()) > 0:
-        ordering = training["ordering"].get()
-        fields = list(ordering.keys())
-
-    default_field_data = {
-        "min": 99999999.9,
-        "max": 0.0,
-        "delta": 0.0,
-        "step": 0.0,
-        "weight": 100
-    }
-
-    # Build Order Info
-    order_info = {}
-    for field in fields:
-        field_name = field.strip()
-        order_info[field_name] = default_field_data.copy()
-        order_info[field_name]["weight"] = ordering[field]
-
-    # self._say("ORDER INFO #1: {0}".format(order_info))
-
-    # Populate Order Info
-    for field_name in order_info.keys():
-        field_data = order_info[field_name]
-        _min, _max, _sum, _avg = get_min_max_sum_avg_for_items(items, field_name)
-        field_data["min"] = _min
-        field_data["max"] = _max
-
-    # self._say("ORDER INFO #2: {0}".format(order_info))
-
-    # todo: this will not work anymore - find a better way
-    # Remove bad items from Order Info
-    # bad_oi = [field for field in order_info if
-    #           order_info[field]["min"] == default_field_data["min"] and
-    #           order_info[field]["max"] == default_field_data["max"]
-    #           ]
-    # for field in bad_oi: del order_info[field]
-    # self._say("ORDER INFO #3: {0}".format(order_info))
-
-    # Calculate other values in Order Info
-    for field_name in order_info.keys():
-        field_data = order_info[field_name]
-        field_data["delta"] = field_data["max"] - field_data["min"]
-        if field_data["delta"] > 0:
-            field_data["step"] = round(100 / field_data["delta"], 3)
-        else:
-            field_data["step"] = 0
-
-    # self._say("ORDER INFO: {0}".format(order_info))
-
-    # Score the library items
-    for item in items:
-        item: Item
-        item["ordering_score"] = 0
-        item["ordering_info"] = {}
-        for field_name in order_info.keys():
-            field_data = order_info[field_name]
-            try:
-                field_value = round(float(item.get(field_name, None)), 3)
-            except ValueError:
-                field_value = None
-            except TypeError:
-                field_value = None
-
-            if field_value is None:
-                # Make up average value
-                field_value = round(field_data["delta"] / 2, 3)
-
-            distance_from_min = round(field_value - field_data["min"], 3)
-
-            # This is linear (we could some day use different models)
-            # field_score should always be between 0 and 100
-            field_score = round(distance_from_min * field_data["step"], 3)
-            field_score = field_score if field_score > 0 else 0
-            field_score = field_score if field_score < 100 else 100
-
-            weighted_field_score = round(
-                field_data["weight"] * field_score / 100, 3)
-
-            item["ordering_score"] = round(
-                item["ordering_score"] + weighted_field_score, 3)
-
-            item["ordering_info"][field_name] = {
-                "distance_from_min": distance_from_min,
-                "field_score": field_score,
-                "weighted_field_score": weighted_field_score
-            }
-
-
 def increment_play_count_on_item(item: Item):
-    print("IPC")
     # clear_dirty is necessary to make sure that `ordering_score` and
     # `ordering_info` will not get stored to the library
     item.clear_dirty()
     item["play_count"] = item.get("play_count", 0) + 1
     item.store()
     item.write()
+
+
+def get_class_instance(module_name, class_name):
+    try:
+        module = importlib.import_module(module_name)
+    except ModuleNotFoundError as err:
+        raise RuntimeError("Module load error! {}".format(err))
+
+    try:
+        klass = getattr(module, class_name)
+        instance = klass()
+    except BaseException as err:
+        raise RuntimeError("Instance creation error! {}".format(err))
+
+    return instance
