@@ -96,7 +96,11 @@ class CommandTest(FunctionalTestHelper, Assertions):
         """
         training_name = "training-1"
 
-        self.add_multiple_items_to_library(count=10, bpm=[120, 180], length=[120, 240])
+        self.add_multiple_items_to_library(
+            count=10,
+            bpm=[120, 180],
+            length=[120, 240]
+        )
 
         self.ensure_training_target_path(training_name)
 
