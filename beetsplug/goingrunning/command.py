@@ -443,7 +443,7 @@ class GoingRunningCommand(Subcommand):
             reg_item_list = registry[key]
             parsed_and_merged = parse_and_merge_items(
                 key, reg_item_list, model_cls)
-            print("{}: {}".format(key, parsed_and_merged))
+            self._say("{}: {}".format(key, parsed_and_merged))
             query_parts.append(parsed_and_merged)
 
         if len(query_parts) == 0:

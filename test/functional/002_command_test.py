@@ -15,6 +15,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
     """
 
     def test_plugin_version(self):
+        self.setup_beets({"config_file": b"default.yml"})
         versioninfo = "{pt}({pn}) plugin for Beets: v{ver}".format(
             pt=PACKAGE_TITLE,
             pn=PACKAGE_NAME,
@@ -28,7 +29,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
         self.assertIn(versioninfo, logged)
 
     def test_training_listing_empty(self):
-        self.reset_beets(config_file=b"empty.yml")
+        self.setup_beets({"config_file": b"empty.yml"})
         logged = self.run_with_log_capture(PLUGIN_NAME, "--list")
         self.assertIn("You have not created any trainings yet.", logged)
 
@@ -36,12 +37,14 @@ class CommandTest(FunctionalTestHelper, Assertions):
         self.assertIn("You have not created any trainings yet.", logged)
 
     def test_training_listing_default(self):
+        self.setup_beets({"config_file": b"default.yml"})
         logged = self.run_with_log_capture(PLUGIN_NAME, "--list")
         self.assertIn("[   training-1   ]", logged)
         self.assertIn("[   training-2   ]", logged)
         self.assertIn("[   training-3   ]", logged)
 
     def test_training_handling_inexistent(self):
+        self.setup_beets({"config_file": b"default.yml"})
         training_name = "sitting_on_the_sofa"
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
         self.assertIn(
@@ -49,7 +52,9 @@ class CommandTest(FunctionalTestHelper, Assertions):
                 training_name), logged)
 
     def test_training_song_count(self):
+        self.setup_beets({"config_file": b"default.yml"})
         training_name = "training-1"
+        self.ensure_training_target_path(training_name)
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name,
                                            "--count")
         self.assertIn("Number of songs available: {}".format(0), logged)
@@ -58,7 +63,9 @@ class CommandTest(FunctionalTestHelper, Assertions):
         self.assertIn("Number of songs available: {}".format(0), logged)
 
     def test_training_no_songs(self):
+        self.setup_beets({"config_file": b"default.yml"})
         training_name = "training-1"
+        self.ensure_training_target_path(training_name)
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
         self.assertIn("Handling training: {0}".format(training_name), logged)
         self.assertIn(
@@ -66,6 +73,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
             logged)
 
     def test_training_target_not_set(self):
+        self.setup_beets({"config_file": b"default.yml"})
         self.add_single_item_to_library()
         training_name = "bad-target-1"
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
@@ -73,6 +81,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
             "Training does not declare a `target`!", logged)
 
     def test_training_undefined_target(self):
+        self.setup_beets({"config_file": b"default.yml"})
         self.add_single_item_to_library()
         training_name = "bad-target-2"
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
@@ -81,6 +90,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
             "The target name[{0}] is not defined!".format(target_name), logged)
 
     def test_training_bad_target(self):
+        self.setup_beets({"config_file": b"default.yml"})
         self.add_single_item_to_library()
         training_name = "bad-target-3"
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
@@ -94,6 +104,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
     def test_handling_training_1(self):
         """Simple query based song selection where everything matches
         """
+        self.setup_beets({"config_file": b"default.yml"})
         training_name = "training-1"
 
         self.add_multiple_items_to_library(
@@ -161,6 +172,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
     def test_handling_training_2(self):
         """Simple flavour based song selection with float value matching
         """
+        self.setup_beets({"config_file": b"default.yml"})
         training_name = "training-2"
 
         # Add matching items
@@ -239,6 +251,7 @@ class CommandTest(FunctionalTestHelper, Assertions):
     def test_handling_training_3(self):
         """Simple query + flavour based song selection
         """
+        self.setup_beets({"config_file": b"default.yml"})
         training_name = "training-3"
 
         # Add matching items for query + flavour
