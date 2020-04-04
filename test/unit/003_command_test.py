@@ -24,3 +24,4 @@ class CommandTest(UnitTestHelper):
         config = get_plugin_configuration(cfg)
         inst = command.GoingRunningCommand(config)
         self.assertEqual(config, inst.config)
+

@@ -7,7 +7,8 @@
 
 from logging import Logger
 
-from beetsplug.goingrunning import common
+from beets.dbcore import types
+from beetsplug.goingrunning import common, GoingRunningPlugin
 
 from test.helper import UnitTestHelper, get_plugin_configuration, \
     capture_log
@@ -32,11 +33,25 @@ class CommonTest(UnitTestHelper):
             common.say(test_message)
         self.assertIn(test_message, '\n'.join(logs))
 
+    def test_get_item_attribute_type_overrides(self):
+        res = common.get_item_attribute_type_overrides()
+        self.assertListEqual(common.KNOWN_NUMERIC_FLEX_ATTRIBUTES,
+                             list(res.keys()))
+
+        exp_types = [types.Float for n in
+                     range(0, len(common.KNOWN_NUMERIC_FLEX_ATTRIBUTES))]
+        res_types = [type(v) for v in res.values()]
+        self.assertListEqual(exp_types, res_types)
+
     def test_get_beets_global_config(self):
-        self.assertEqual("0:00:00", common.get_human_readable_time(0), "Bad time format!")
-        self.assertEqual("0:00:33", common.get_human_readable_time(33), "Bad time format!")
-        self.assertEqual("0:33:33", common.get_human_readable_time(2013), "Bad time format!")
-        self.assertEqual("3:33:33", common.get_human_readable_time(12813), "Bad time format!")
+        self.assertEqual("0:00:00", common.get_human_readable_time(0),
+                         "Bad time format!")
+        self.assertEqual("0:00:33", common.get_human_readable_time(33),
+                         "Bad time format!")
+        self.assertEqual("0:33:33", common.get_human_readable_time(2013),
+                         "Bad time format!")
+        self.assertEqual("3:33:33", common.get_human_readable_time(12813),
+                         "Bad time format!")
 
     def test_get_flavour_elements(self):
         cfg = {
@@ -152,35 +167,17 @@ class CommonTest(UnitTestHelper):
         self.assertEqual(100, _sum)
         self.assertEqual(100, _avg)
 
-    # def test_score_library_items(self):
-    #     cfg = {
-    #         "trainings": {
-    #             "10K": {
-    #                 "ordering": {
-    #                     "bpm": 100,
-    #                 }
-    #             }
-    #         }
-    #     }
-    #     config = get_plugin_configuration(cfg)
-    #     training = config["trainings"]["10K"]
-    #
-    #     items = [
-    #         self.create_item(id=1, bpm=140),
-    #         self.create_item(id=2, bpm=120),
-    #         self.create_item(id=3, bpm=100),
-    #     ]
-    #     common.score_library_items(training, items)
-    #
-    #     _id = 0
-    #     for item in items:
-    #         # print(item.evaluate_template("$id - $bpm - $ordering_score"))
-    #         _id += 1
-    #         self.assertEqual(_id, item.get("id"))
-    #         self.assertTrue(hasattr(item, "ordering_score"))
-    #         self.assertIsInstance(item.get("ordering_score"), float)
-    #         self.assertTrue(hasattr(item, "ordering_info"))
-    #         self.assertIsInstance(item.get("ordering_info"), dict)
-    #
-    #     scores = [item.get("ordering_score") for item in items]
-    #     self.assertEqual([100, 50, 0], scores)
+    def test_get_class_instance(self):
+        module_name = 'beetsplug.goingrunning'
+        class_name = 'GoingRunningPlugin'
+        instance = common.get_class_instance(module_name, class_name)
+        self.assertIsInstance(instance, GoingRunningPlugin)
+
+        with self.assertRaises(RuntimeError):
+            module_name = 'beetsplug.goingtosleep'
+            common.get_class_instance(module_name, class_name)
+
+        with self.assertRaises(RuntimeError):
+            module_name = 'beetsplug.goingrunning'
+            class_name = 'GoingToSleepPlugin'
+            common.get_class_instance(module_name, class_name)
