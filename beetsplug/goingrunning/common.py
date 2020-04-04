@@ -2,9 +2,11 @@
 #  Author: Adam Jakab <adam at jakab dot pro>
 #  License: See LICENSE.txt
 import importlib
+# todo: use beets logger?!
+# from beets import logging
+import logging
 import os
 
-from beets import logging
 from beets.dbcore import types
 from beets.library import Item
 from beets.util.confit import Subview
@@ -48,10 +50,14 @@ __logger__ = logging.getLogger('beets.{plg}'.format(plg=plg_ns[
     '__PLUGIN_NAME__']))
 
 
-def say(msg, log_only=True, is_error=False):
+def say(msg: str, log_only=True, is_error=False):
+    """
+    https://beets.readthedocs.io/en/stable/dev/plugins.html#logging
+    """
     _level = logging.DEBUG
     _level = _level if log_only else logging.INFO
     _level = _level if not is_error else logging.ERROR
+    msg = msg.replace('\'', '"')
     __logger__.log(level=_level, msg=msg)
 
 

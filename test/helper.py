@@ -1,7 +1,6 @@
 #  Copyright: Copyright (c) 2020., Adam Jakab
 #  Author: Adam Jakab <adam at jakab dot pro>
 #  License: See LICENSE.txt
-#
 # References: https://docs.python.org/3/library/unittest.html
 #
 
@@ -42,7 +41,7 @@ PLUGIN_SHORT_DESCRIPTION = common.plg_ns['__PLUGIN_SHORT_DESCRIPTION__']
 PLUGIN_VERSION = common.plg_ns['__version__']
 
 _default_logger_name_ = 'beets.{plg}'.format(plg=PLUGIN_NAME)
-logging.getLogger(_default_logger_name_).propagate = True
+logging.getLogger(_default_logger_name_).propagate = False
 
 
 class LogCapture(logging.Handler):
@@ -244,7 +243,7 @@ class UnitTestHelper(BaseTestHelper):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        logging.getLogger(_default_logger_name_).set_global_level(logging.DEBUG)
+        beets.ui._configure({"verbose": True})
 
     def setUp(self):
         super().setUp()

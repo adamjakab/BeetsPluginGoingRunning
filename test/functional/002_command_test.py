@@ -136,7 +136,6 @@ class CommandTest(FunctionalTestHelper):
         /private/var/folders/yv/9ntm56m10ql9wf_1zkbw74hr0000gp/T/tmpa2soyuro
         /Music
         Run!
-        
         """
 
         prefix = "Handling training:"
