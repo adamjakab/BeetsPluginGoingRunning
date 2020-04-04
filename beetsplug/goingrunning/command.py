@@ -410,6 +410,8 @@ class GoingRunningCommand(Subcommand):
         # Iterate through elements and group them in a registry by field name
         for query_element in query_elements:
             key, term, query_class, negate = parse_query_part(query_element)
+            if not key:
+                continue
             if key not in registry.keys():
                 registry[key] = []
             registry[key].append({

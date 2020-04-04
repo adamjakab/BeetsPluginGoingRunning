@@ -79,10 +79,12 @@ def get_human_readable_time(seconds):
 
 
 def get_normalized_query_element(key, val):
-    tpl = "{k}:{v}"
-    answer = tpl.format(k=key, v=val)
+    answer = ""
 
-    if key == "genre" and type(val) == list:
+    tpl = "{k}:{v}"
+    if type(val) in [str, int, float, bool]:
+        answer = tpl.format(k=key, v=val)
+    elif type(val) == list:
         answer = []
         for v in val:
             answer.append(tpl.format(k=key, v=v))
