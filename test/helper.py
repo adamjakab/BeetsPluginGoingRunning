@@ -184,8 +184,15 @@ class Assertions(object):
 
 
 class BaseTestHelper(TestCase, Assertions):
+    _test_config_dir_ = os.path.join(bytestring_path(
+        os.path.dirname(__file__)), b'config')
+
+    _test_fixture_dir = os.path.join(bytestring_path(
+        os.path.dirname(__file__)), b'fixtures')
+
     _tempdirs = []
     _tmpdir = None
+    beetsdir = None
     __item_count = 0
 
     default_item_values = {
@@ -206,10 +213,18 @@ class BaseTestHelper(TestCase, Assertions):
 
     def setUp(self):
         self._tmpdir = self.create_temp_dir()
+        self.beetsdir = bytestring_path(self._tmpdir)
+        os.environ['BEETSDIR'] = self.beetsdir.decode()
         pass
 
     def tearDown(self):
-        pass
+        # Clean temporary folders
+        for tempdir in self._tempdirs:
+            if os.path.exists(tempdir):
+                shutil.rmtree(syspath(tempdir), ignore_errors=True)
+        self._tempdirs = []
+        self._tmpdir = None
+        self.beetsdir = None
 
     def create_item(self, **values):
         """Return an `Item` instance with sensible default values.
@@ -238,8 +253,30 @@ class BaseTestHelper(TestCase, Assertions):
         self._tempdirs.append(temp_dir)
         return temp_dir
 
+    def _copy_files_to_beetsdir(self, file_list: list):
+        if file_list:
+            for file in file_list:
+                if isinstance(file, dict) and \
+                        'file_name' in file and 'file_path' in file:
+                    src = file['file_path']
+                    file_name = file['file_name']
+                else:
+                    src = file
+                    file_name = os.path.basename(src)
+
+                if isinstance(src, bytes):
+                    src = src.decode()
+
+                if isinstance(file_name, bytes):
+                    file_name = file_name.decode()
+
+                dst = os.path.join(self.beetsdir.decode(), file_name)
+                shutil.copyfile(src, dst)
+
 
 class UnitTestHelper(BaseTestHelper):
+    config = None
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -248,6 +285,20 @@ class UnitTestHelper(BaseTestHelper):
     def setUp(self):
         super().setUp()
         self.__item_count = 0
+
+        # copy configuration file to beets dir
+        config_file = os.path.join(self._test_config_dir_.decode(),
+                                   u'default.yml')
+        file_list = [{'file_name': 'config.yaml', 'file_path': config_file}]
+        self._copy_files_to_beetsdir(file_list)
+
+        self.config = LazyConfig('beets', 'unit_tests')
+
+    def tearDown(self):
+        """Tear down after each test
+        """
+        self.config.clear()
+        super().tearDown()
 
     def create_multiple_items(self, count=10, **values):
         items = []
@@ -271,13 +322,6 @@ class UnitTestHelper(BaseTestHelper):
 
 
 class FunctionalTestHelper(BaseTestHelper):
-    _test_config_dir_ = os.path.join(bytestring_path(
-        os.path.dirname(__file__)), b'config')
-
-    _test_fixture_dir = os.path.join(bytestring_path(
-        os.path.dirname(__file__)), b'fixtures')
-
-    beetsdir = None
     __item_count = 0
 
     @classmethod
@@ -293,15 +337,13 @@ class FunctionalTestHelper(BaseTestHelper):
         """Setup before each test
         """
         super().setUp()
-        self.beetsdir = bytestring_path(self._tmpdir)
-        os.environ['BEETSDIR'] = self.beetsdir.decode()
 
     def tearDown(self):
         """Tear down after each test
         """
-        super().tearDown()
         self._teardown_beets()
         self._CFG = self._get_default_CFG()
+        super().tearDown()
 
     def setup_beets(self, cfg=None):
         if cfg is not None and type(cfg) is dict:
@@ -338,12 +380,6 @@ class FunctionalTestHelper(BaseTestHelper):
 
         # reset types updated here: beets/ui/__init__.py:1148
         library.Item._types = {'data_source': types.STRING}
-
-        # Clean temporary folders
-        for tempdir in self._tempdirs:
-            if os.path.exists(tempdir):
-                shutil.rmtree(syspath(tempdir), ignore_errors=True)
-        self._tempdirs = []
 
         if hasattr(self, 'lib'):
             if hasattr(self.lib, '_connections'):
@@ -436,26 +472,6 @@ class FunctionalTestHelper(BaseTestHelper):
 
                     new_values[key] = random_val
             self.add_single_item_to_library(**new_values)
-
-    def _copy_files_to_beetsdir(self, file_list: list):
-        if file_list:
-            for file in file_list:
-                if isinstance(file, dict) and \
-                        'file_name' in file and 'file_path' in file:
-                    src = file['file_path']
-                    file_name = file['file_name']
-                else:
-                    src = file
-                    file_name = os.path.basename(src)
-
-                if isinstance(src, bytes):
-                    src = src.decode()
-
-                if isinstance(file_name, bytes):
-                    file_name = file_name.decode()
-
-                dst = os.path.join(self.beetsdir.decode(), file_name)
-                shutil.copyfile(src, dst)
 
     @staticmethod
     def _dump_config(cfg: Subview):

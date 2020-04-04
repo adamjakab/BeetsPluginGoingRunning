@@ -25,7 +25,7 @@ from beetsplug.goingrunning import itempick
 class GoingRunningCommand(Subcommand):
     config: Subview = None
     lib: Library = None
-    query = None
+    query = []
     parser: OptionParser = None
 
     cfg_quiet = False
@@ -376,8 +376,11 @@ class GoingRunningCommand(Subcommand):
         tconf = common.get_training_attribute(training, "query")
         if tconf:
             for key in tconf.keys():
-                training_query.append(
-                    common.get_query_element_string(key, tconf.get(key)))
+                nqe = common.get_normalized_query_element(key, tconf.get(key))
+                if type(nqe) == list:
+                    training_query.extend(nqe)
+                else:
+                    training_query.append(nqe)
 
         # Append the query elements from the flavours defined on the training
         flavours = common.get_training_attribute(training, "use_flavours")
@@ -395,13 +398,6 @@ class GoingRunningCommand(Subcommand):
                   log_only=True)
 
         raw_combined_query = command_query + training_query + flavour_query
-        # combined_query = []
-        # used_keys = []
-        # for query_part in raw_combined_query:
-        #     key = parse_query_part(query_part)[0]
-        #     if key not in used_keys:
-        #         used_keys.append(key)
-        #         combined_query.append(query_part)
 
         self._say("Combined query elements: {}".
                   format(raw_combined_query), log_only=True)

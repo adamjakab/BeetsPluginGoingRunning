@@ -78,8 +78,16 @@ def get_human_readable_time(seconds):
     return "%d:%02d:%02d" % (h, m, s)
 
 
-def get_query_element_string(key, val):
-    return "{k}:{v}".format(k=key, v=val)
+def get_normalized_query_element(key, val):
+    tpl = "{k}:{v}"
+    answer = tpl.format(k=key, v=val)
+
+    if key == "genre" and type(val) == list:
+        answer = []
+        for v in val:
+            answer.append(tpl.format(k=key, v=v))
+
+    return answer
 
 def get_flavour_elements(flavour: Subview):
     elements = []
@@ -88,8 +96,13 @@ def get_flavour_elements(flavour: Subview):
         return elements
 
     for key in flavour.keys():
-        # todo: in future flavours can have "use_flavours" key to make this recursive
-        elements.append(get_query_element_string(key, flavour[key].get()))
+        # todo: in future flavours can have "use_flavours" key to make this
+        #  recursive
+        nqe = get_normalized_query_element(key, flavour[key].get())
+        if type(nqe) == list:
+            elements.extend(nqe)
+        else:
+            elements.append(nqe)
 
     return elements
 
