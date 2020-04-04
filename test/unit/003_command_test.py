@@ -1,22 +1,14 @@
 #  Copyright: Copyright (c) 2020., Adam Jakab
-#
 #  Author: Adam Jakab <adam at jakab dot pro>
-#  Created: 3/17/20, 7:09 PM
 #  License: See LICENSE.txt
-#
-#
-#  Author: Adam Jakab <adam at jakab dot pro>
-#  Created: 3/17/20, 3:28 PM
-#  License: See LICENSE.txt
-#
 
 from beetsplug.goingrunning import command
 
-from test.helper import UnitTestHelper, Assertions, get_plugin_configuration, \
+from test.helper import UnitTestHelper, get_plugin_configuration, \
     PLUGIN_NAME, PLUGIN_ALIAS, PLUGIN_SHORT_DESCRIPTION
 
 
-class CommandTest(UnitTestHelper, Assertions):
+class CommandTest(UnitTestHelper):
     """Test methods in the beetsplug.goingrunning.command module
     """
 

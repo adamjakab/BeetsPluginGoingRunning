@@ -5,12 +5,12 @@
 #  License: See LICENSE.txt
 #
 
-from test.helper import FunctionalTestHelper, Assertions, PLUGIN_NAME, \
+from test.helper import FunctionalTestHelper, PLUGIN_NAME, \
     PACKAGE_TITLE, PACKAGE_NAME, PLUGIN_VERSION, \
     get_value_separated_from_output, convert_time_to_seconds
 
 
-class CommandTest(FunctionalTestHelper, Assertions):
+class CommandTest(FunctionalTestHelper):
     """Command related tests
     """
 

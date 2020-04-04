@@ -63,8 +63,10 @@ def get_item_attribute_type_overrides():
     return _types
 
 
-# todo: try: ui.human_seconds_short
 def get_human_readable_time(seconds):
+    """Formats seconds as a short human-readable HH:MM:SS string.
+    """
+    seconds = int(seconds)
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     return "%d:%02d:%02d" % (h, m, s)

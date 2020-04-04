@@ -9,11 +9,11 @@ from logging import Logger
 
 from beetsplug.goingrunning import common
 
-from test.helper import UnitTestHelper, Assertions, get_plugin_configuration, \
+from test.helper import UnitTestHelper, get_plugin_configuration, \
     capture_log
 
 
-class CommonTest(UnitTestHelper, Assertions):
+class CommonTest(UnitTestHelper):
     """Test methods in the beetsplug.goingrunning.common module
     """
 

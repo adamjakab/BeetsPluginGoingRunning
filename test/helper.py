@@ -34,11 +34,11 @@ from beetsplug.goingrunning import common
 from six import StringIO
 
 # Values from about.py
+PACKAGE_TITLE = common.plg_ns['__PACKAGE_TITLE__']
+PACKAGE_NAME = common.plg_ns['__PACKAGE_NAME__']
 PLUGIN_NAME = common.plg_ns['__PLUGIN_NAME__']
 PLUGIN_ALIAS = common.plg_ns['__PLUGIN_ALIAS__']
 PLUGIN_SHORT_DESCRIPTION = common.plg_ns['__PLUGIN_SHORT_DESCRIPTION__']
-PACKAGE_TITLE = common.plg_ns['__PACKAGE_TITLE__']
-PACKAGE_NAME = common.plg_ns['__PACKAGE_NAME__']
 PLUGIN_VERSION = common.plg_ns['__version__']
 
 _default_logger_name_ = 'beets.{plg}'.format(plg=PLUGIN_NAME)

@@ -7,10 +7,10 @@
 
 from beets.util.confit import Subview
 
-from test.helper import FunctionalTestHelper, Assertions, PLUGIN_NAME
+from test.helper import FunctionalTestHelper, PLUGIN_NAME
 
 
-class ConfigurationTest(FunctionalTestHelper, Assertions):
+class ConfigurationTest(FunctionalTestHelper):
     """Configuration related tests
     """
 
