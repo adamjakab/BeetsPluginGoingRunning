@@ -33,8 +33,6 @@ from beetsplug import goingrunning
 from beetsplug.goingrunning import common
 from six import StringIO
 
-logging.getLogger('beets').propagate = True
-
 # Values from about.py
 PLUGIN_NAME = common.plg_ns['__PLUGIN_NAME__']
 PLUGIN_ALIAS = common.plg_ns['__PLUGIN_ALIAS__']
@@ -42,6 +40,9 @@ PLUGIN_SHORT_DESCRIPTION = common.plg_ns['__PLUGIN_SHORT_DESCRIPTION__']
 PACKAGE_TITLE = common.plg_ns['__PACKAGE_TITLE__']
 PACKAGE_NAME = common.plg_ns['__PACKAGE_NAME__']
 PLUGIN_VERSION = common.plg_ns['__version__']
+
+_default_logger_name_ = 'beets.{plg}'.format(plg=PLUGIN_NAME)
+logging.getLogger(_default_logger_name_).propagate = True
 
 
 class LogCapture(logging.Handler):
@@ -54,7 +55,7 @@ class LogCapture(logging.Handler):
 
 
 @contextmanager
-def capture_log(logger='beets'):
+def capture_log(logger=_default_logger_name_):
     """Capture Logger output
     >>> with capture_log() as logs:
     ...     log.info("Message")
@@ -240,6 +241,11 @@ class BaseTestHelper(TestCase, Assertions):
 
 
 class UnitTestHelper(BaseTestHelper):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        logging.getLogger(_default_logger_name_).set_global_level(logging.DEBUG)
+
     def setUp(self):
         super().setUp()
         self.__item_count = 0
@@ -279,12 +285,10 @@ class FunctionalTestHelper(BaseTestHelper):
     def setUpClass(cls):
         super().setUpClass()
         cls._CFG = cls._get_default_CFG()
-        pass
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        pass
 
     def setUp(self):
         """Setup before each test

@@ -2,9 +2,9 @@
 #  Author: Adam Jakab <adam at jakab dot pro>
 #  License: See LICENSE.txt
 import importlib
-import logging
 import os
 
+from beets import logging
 from beets.dbcore import types
 from beets.library import Item
 from beets.util.confit import Subview
@@ -63,6 +63,7 @@ def get_item_attribute_type_overrides():
     return _types
 
 
+# todo: try: ui.human_seconds_short
 def get_human_readable_time(seconds):
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
