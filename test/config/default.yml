@@ -43,7 +43,7 @@ goingrunning:
     q-test-1:
       alias: "Without nothing"
     q-test-2:
-      alias: "Query only"
+      alias: "Query only (different fields)"
       query:
         bpm: 100..150
         length: 120..300
@@ -61,7 +61,7 @@ goingrunning:
         year: 2015..
       use_flavours: [sunshine, 60s]
     q-test-5:
-      alias: "Query should support gender as a list"
+      alias: "Query supports gender as a list"
       query:
         genre:
           - rock
