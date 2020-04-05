@@ -6,6 +6,7 @@ import importlib
 # from beets import logging
 import logging
 import os
+from pathlib import Path
 
 from beets.dbcore import types
 from beets.library import Item
@@ -91,6 +92,7 @@ def get_normalized_query_element(key, val):
 
     return answer
 
+
 def get_flavour_elements(flavour: Subview):
     elements = []
 
@@ -108,27 +110,105 @@ def get_flavour_elements(flavour: Subview):
 
     return elements
 
+
 def get_training_attribute(training: Subview, attrib: str):
-    """Returns the attribute value from "goingrunning.trainings" for the specified training or uses the
+    """Returns the attribute value from "goingrunning.trainings" for the
+    specified training or uses the
     spacial fallback training configuration.
     """
     value = None
     if training[attrib].exists():
         value = training[attrib].get()
-    elif training.name != "goingrunning.trainings.fallback" and training.parent["fallback"].exists():
+    elif training.name != "goingrunning.trainings.fallback" and training.parent[
+        "fallback"].exists():
         fallback = training.parent["fallback"]
         value = get_training_attribute(fallback, attrib)
 
     return value
 
+
+def get_target_for_training(training: Subview):
+    answer = None
+
+    target_name = get_training_attribute(training, "target")
+    say("Finding target: {0}".format(target_name))
+
+    cfg_targets: Subview = training.parent.parent["targets"]
+    if not cfg_targets.exists():
+        say("Cannot find 'targets' node!")
+    elif not cfg_targets[target_name].exists():
+        say("Target name '{0}' is not defined!".format(target_name))
+    else:
+        answer = cfg_targets[target_name]
+
+    return answer
+
+
+def get_target_attribute_for_training(training: Subview,
+                                      attrib: str = "name"):
+    answer = None
+
+    target_name = get_training_attribute(training, "target")
+    say("Getting attribute[{0}] for target: {1}".format(attrib, target_name),
+        log_only=True)
+
+    target = get_target_for_training(training)
+    if target:
+        if attrib == "name":
+            answer = target_name
+        else:
+            answer = get_target_attribute(target, attrib)
+
+        say("Found target[{0}] attribute[{1}] path: {2}".
+            format(target_name, attrib, answer), log_only=True)
+
+    return answer
+
+
+def get_destination_path_for_training(training: Subview):
+    answer = False
+
+    target_name = get_training_attribute(training, "target")
+
+    if not target_name:
+        say("Training does not declare a `target`!".
+            format(target_name), log_only=False)
+        return answer
+
+    root = get_target_attribute_for_training(training, "device_root")
+    path = get_target_attribute_for_training(training, "device_path")
+    path = path or ""
+
+    if not root:
+        say("The target[{0}] does not declare a device root path.".
+            format(target_name), log_only=False)
+        return answer
+
+    root = Path(root).expanduser()
+    path = Path(str.strip(path, "/"))
+    dst_path = os.path.realpath(root.joinpath(path))
+
+    if not os.path.isdir(dst_path):
+        say("The target[{0}] path does not exist: {1}".
+            format(target_name, dst_path), log_only=False)
+        return answer
+
+    say("Found target[{0}] path: {0}".
+        format(target_name, dst_path), log_only=True)
+
+    return dst_path
+
+
 def get_target_attribute(target: Subview, attrib: str):
-    """Returns the attribute value from "goingrunning.targets" for the specified target.
+    """Returns the attribute value from "goingrunning.targets" for the
+    specified target.
     """
     value = None
     if target[attrib].exists():
         value = target[attrib].get()
 
     return value
+
 
 def get_duration_of_items(items):
     """

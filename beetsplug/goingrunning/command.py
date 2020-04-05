@@ -2,13 +2,7 @@
 #  Author: Adam Jakab <adam at jakab dot pro>
 #  License: See LICENSE.txt
 
-import os
-import random
-import string
-from glob import glob
 from optparse import OptionParser
-from pathlib import Path
-from shutil import copyfile
 
 from beets import library
 from beets.dbcore import query
@@ -16,8 +10,9 @@ from beets.dbcore.db import Results
 from beets.dbcore.queryparse import parse_query_part, construct_query_part
 from beets.library import Library, Item
 from beets.ui import Subcommand, decargs
-from beets.util.confit import Subview, NotFoundError
+from beets.util.confit import Subview
 from beetsplug.goingrunning import common
+from beetsplug.goingrunning import itemexport
 from beetsplug.goingrunning import itemorder
 from beetsplug.goingrunning import itempick
 
@@ -148,7 +143,7 @@ class GoingRunningCommand(Subcommand):
             return
 
         # Verify target device path path
-        if not self._get_destination_path_for_training(training):
+        if not common.get_destination_path_for_training(training):
             self._say(
                 "Invalid target!", log_only=False)
             return
@@ -199,162 +194,9 @@ class GoingRunningCommand(Subcommand):
         flds += ["play_count", "artist", "title"]
         self.display_library_items(sel_items, flds, prefix="Selected: ")
 
-        # 5) Clean, Copy, Run
-        self._clean_target_path(training)
-        self._copy_items_to_target(training, sel_items)
+        # 5) Clean, Copy, Playlist, Run
+        itemexport.generate_output(training, sel_items, self.cfg_dry_run)
         self._say("Run!", log_only=False)
-
-    def _clean_target_path(self, training: Subview):
-        target_name = common.get_training_attribute(training, "target")
-
-        if self._get_target_attribute_for_training(training, "clean_target"):
-            dst_path = self._get_destination_path_for_training(training)
-
-            self._say("Cleaning target[{0}]: {1}".
-                      format(target_name, dst_path), log_only=False)
-            song_extensions = ["mp3", "mp4", "flac", "wav", "ogg", "wma", "m3u"]
-            target_file_list = []
-            for ext in song_extensions:
-                target_file_list += glob(
-                    os.path.join(dst_path, "*.{}".format(ext)))
-
-            for f in target_file_list:
-                self._say("Deleting: {}".format(f))
-                if not self.cfg_dry_run:
-                    os.remove(f)
-
-        additional_files = self._get_target_attribute_for_training(training,
-                                                                   "delete_from_device")
-        if additional_files and len(additional_files) > 0:
-            root = self._get_target_attribute_for_training(training,
-                                                           "device_root")
-            root = Path(root).expanduser()
-
-            self._say("Deleting additional files: {0}".
-                      format(additional_files), log_only=False)
-
-            for path in additional_files:
-                path = Path(str.strip(path, "/"))
-                dst_path = os.path.realpath(root.joinpath(path))
-
-                if not os.path.isfile(dst_path):
-                    self._say(
-                        "The file to delete does not exist: {0}".format(path),
-                        log_only=True)
-                    continue
-
-                self._say("Deleting: {}".format(dst_path))
-                if not self.cfg_dry_run:
-                    os.remove(dst_path)
-
-    def _copy_items_to_target(self, training: Subview, rnd_items):
-        target_name = common.get_training_attribute(training, "target")
-        increment_play_count = common.get_training_attribute(
-            training, "increment_play_count")
-        dst_path = self._get_destination_path_for_training(training)
-        self._say("Copying to target[{0}]: {1}".
-                  format(target_name, dst_path), log_only=False)
-
-        def random_string(length=6):
-            letters = string.ascii_letters + string.digits
-            return ''.join(random.choice(letters) for i in range(length))
-
-        cnt = 0
-        for item in rnd_items:
-            src = os.path.realpath(item.get("path").decode("utf-8"))
-            if not os.path.isfile(src):
-                # todo: this is bad enough to interrupt! create option for this
-                self._say("File does not exist: {}".format(src))
-                continue
-
-            fn, ext = os.path.splitext(src)
-            gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6),
-                                               random_string(), ext)
-            dst = "{0}/{1}".format(dst_path, gen_filename)
-            self._say("Copying[{1}]: {0}".format(src, gen_filename),
-                      log_only=True)
-
-            if not self.cfg_dry_run:
-                copyfile(src, dst)
-                if increment_play_count:
-                    common.increment_play_count_on_item(item)
-
-            cnt += 1
-
-    def _get_target_for_training(self, training: Subview):
-        target_name = common.get_training_attribute(training, "target")
-        self._say("Finding target: {0}".format(target_name))
-
-        if not self.config["targets"][target_name].exists():
-            self._say(
-                "The target name[{0}] is not defined!".format(target_name))
-            return
-
-        return self.config["targets"][target_name]
-
-    def _get_target_attribute_for_training(self, training: Subview,
-                                           attrib: str = "name"):
-        target_name = common.get_training_attribute(training, "target")
-        self._say("Getting attribute[{0}] for target: {1}".format(attrib,
-                                                                  target_name),
-                  log_only=True)
-        target = self._get_target_for_training(training)
-        if not target:
-            return
-
-        if attrib == "name":
-            attrib_val = target_name
-        elif attrib in ("device_root", "device_path", "delete_from_device"):
-            # these should NOT propagate up
-            try:
-                attrib_val = target[attrib].get()
-            except NotFoundError:
-                attrib_val = None
-        else:
-            attrib_val = common.get_target_attribute(target, attrib)
-
-        self._say(
-            "Found target[{0}] attribute[{1}] path: {2}".format(target_name,
-                                                                attrib,
-                                                                attrib_val),
-            log_only=True)
-
-        return attrib_val
-
-    def _get_destination_path_for_training(self, training: Subview):
-        target_name = common.get_training_attribute(training, "target")
-
-        if not target_name:
-            self._say(
-                "Training does not declare a `target`!".
-                    format(target_name), log_only=False)
-            return
-
-        root = self._get_target_attribute_for_training(training, "device_root")
-        path = self._get_target_attribute_for_training(training, "device_path")
-        path = path or ""
-
-        if not root:
-            self._say(
-                "The target[{0}] does not declare a device root path.".
-                    format(target_name), log_only=False)
-            return
-
-        root = Path(root).expanduser()
-        path = Path(str.strip(path, "/"))
-        dst_path = os.path.realpath(root.joinpath(path))
-
-        if not os.path.isdir(dst_path):
-            self._say(
-                "The target[{0}] path does not exist: {1}".
-                    format(target_name, dst_path), log_only=False)
-            return
-
-        self._say(
-            "Found target[{0}] path: {0}".format(target_name, dst_path),
-            log_only=True)
-
-        return dst_path
 
     def _get_training_query_element_keys(self, training):
         answer = []

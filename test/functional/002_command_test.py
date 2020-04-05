@@ -87,7 +87,7 @@ class CommandTest(FunctionalTestHelper):
         logged = self.run_with_log_capture(PLUGIN_NAME, training_name)
         target_name = "inexistent_target"
         self.assertIn(
-            "The target name[{0}] is not defined!".format(target_name), logged)
+            "Target name \"{0}\" is not defined!".format(target_name), logged)
 
     def test_training_bad_target(self):
         self.setup_beets({"config_file": b"default.yml"})
