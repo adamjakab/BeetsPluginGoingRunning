@@ -199,10 +199,13 @@ class GoingRunningCommand(Subcommand):
         self._say("Run!", log_only=False)
 
     def _get_training_query_element_keys(self, training):
+        # todo: move to common
         answer = []
         query_elements = self._gather_query_elements(training)
         for el in query_elements:
-            answer.append(el.split(":")[0])
+            key = parse_query_part(el)[0]
+            if key not in answer:
+                answer.append(key)
 
         return answer
 
@@ -254,9 +257,12 @@ class GoingRunningCommand(Subcommand):
             key, term, query_class, negate = parse_query_part(query_element)
             if not key:
                 continue
-            if key not in registry.keys():
-                registry[key] = []
-            registry[key].append({
+            # treat negated keys separately
+            _reg_key = "^{}".format(key) if negate else key
+            if _reg_key not in registry.keys():
+                registry[_reg_key] = []
+            registry[_reg_key].append({
+                "key": key,
                 "term": term,
                 "query_class": query_class,
                 "negate": negate,
@@ -265,6 +271,7 @@ class GoingRunningCommand(Subcommand):
 
         def parse_and_merge_items(k, lst, cls):
             parsed_items = []
+            is_negated = lst[0]["negate"]
 
             for item in lst:
                 prefixes = {}
@@ -274,7 +281,10 @@ class GoingRunningCommand(Subcommand):
             if len(parsed_items) == 1:
                 answer = parsed_items.pop()
             else:
-                answer = query.OrQuery(parsed_items)
+                if is_negated:
+                    answer = query.AndQuery(parsed_items)
+                else:
+                    answer = query.OrQuery(parsed_items)
 
             return answer
 

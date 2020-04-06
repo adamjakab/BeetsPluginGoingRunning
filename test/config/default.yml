@@ -61,28 +61,18 @@ goingrunning:
         year: 2015..
       use_flavours: [sunshine, 60s]
     q-test-5:
-      alias: "Query supports gender as a list"
+      alias: "Query supports fields a lists"
       query:
         genre:
           - rock
           - blues
           - ska
       use_flavours: [funkymonkey]
-
-
-    #    one-hour-run:
-    #      alias: "Born to run"
-    #      query:
-    #        bpm: 150..180
-    #        length: 120..240
-    #      duration: 60
-    #      target: MPD_1
-    #    quick-run:
-    #      query:
-    #        bpm: 150..180
-    #        length: 120..240
-    #      duration: 10
-    #      target: MPD_1
+    q-test-6:
+      alias: "Query supports negated lists"
+      query:
+        genre: [rock, blues]
+        ^genre: [jazz, death metal]
     bad-target-1:
       alias: "This training does not define a target"
     bad-target-2:

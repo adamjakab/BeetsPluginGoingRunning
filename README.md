@@ -185,9 +185,10 @@ This way, from the above flavours you might add `use_flavours: [overthetop, rock
 
 
 ### Advanced queries
-When it comes to handling queries, this plugin introduces two major differences with respect to the beets core you need to be aware of. 
+When it comes to handling queries, this plugin introduces some major differences with respect to the beets core you need to be aware of. 
 
-**Recurring fields extend the selections:** You might define different flavours in which some of the same fields are defined, like the `genre` field in the `rocker` and the `metallic` flavours above. You can define a training that makes use of those flavours and optionally adding the same field through a direct query section, like this: 
+#### Recurring fields extend the selections
+You might define different flavours in which some of the same fields are defined, like the `genre` field in the `rocker` and the `metallic` flavours above. You can define a training that makes use of those flavours and optionally adding the same field through a direct query section, like this: 
 
 ```yaml
 goingrunning:
@@ -198,10 +199,11 @@ goingrunning:
       use_flavours: [rocker, metallic]
 ```
 
-The resulting query will include songs corresponding to any of the three indicated genres: `GENRE = 'Folk' OR 'Rock' OR 'Metal'`. This, of course, is applicable to all fields.
+The resulting query will include songs corresponding to any of the three indicated genres: `genre='Folk' OR genre='Rock' OR genre='Metal'`. This, of course, is applicable to all fields.
 
 
-**Fields can be used as lists:** Sometimes it is cumbersome to define a separate flavour for each additional value of a specific field. For example, it would be nice to have the above `chillout` flavour to include a list of genres instead of having to combine it with multiple flavours. Well, you can just do that by using the list notation like this:
+#### Fields can be used as lists
+Sometimes it is cumbersome to define a separate flavour for each additional value of a specific field. For example, it would be nice to have the above `chillout` flavour to include a list of genres instead of having to combine it with multiple flavours. Well, you can just do that by using the list notation like this:
 ```yaml
 goingrunning:
   flavours:
@@ -224,7 +226,18 @@ goingrunning:
         - Oldies
         - Ballad
 ```
-The resulting query will have the same effect including all indicated genres: `GENRE = 'Soul' OR 'Oldies' OR 'Ballad'`. This technique can be applied to all fields.
+The resulting query will have the same effect including all indicated genres: `genre='Soul' OR genre='Oldies' OR genre='Ballad'`. This technique can be applied to all fields.
+
+
+#### Negated fields can also be used as lists
+What is described above also applies to negated fields. That is to say, you can also negate a field and use it as a list to query your library by excluding all those values:
+```yaml
+goingrunning:
+  flavours:
+    not_good_for_running:
+      ^genre: [Jazz, Psychedelic Rock, Gospel]
+```
+When the above flavour is compiled it will result in a query excluding all indicated genres: `genre!='Jazz' AND genre!='Psychedelic Rock' AND genre!='Gospel'`. This technique can be applied to all fields.
 
 
 ### Using a separate configuration file

@@ -146,3 +146,28 @@ class CommandTest(UnitTestHelper):
             "])"
         )
         self.assertEqual(expected, str(query))
+
+    def test_gather_parse_query_elements__test_6(self):
+        plg_cfg: Subview = self.config["goingrunning"]
+        training: Subview = plg_cfg["trainings"]["q-test-6"]
+        cmd = GoingRunningCommand(plg_cfg)
+        elements = cmd._gather_query_elements(training)
+        expected = ['genre:rock', 'genre:blues',
+                    '^genre:jazz', '^genre:death metal']
+        self.assertListEqual(expected, elements)
+
+        query = cmd.parse_query_elements(elements, Item)
+        print(query)
+        expected = (
+            "AndQuery(["
+            "OrQuery(["
+            "SubstringQuery('genre', 'rock', True), "
+            "SubstringQuery('genre', 'blues', True)"
+            "]), "
+            "AndQuery(["
+            "NotQuery(SubstringQuery('genre', 'jazz', True)), "
+            "NotQuery(SubstringQuery('genre', 'death metal', True))"
+            "])"
+            "])"
+        )
+        self.assertEqual(expected, str(query))
