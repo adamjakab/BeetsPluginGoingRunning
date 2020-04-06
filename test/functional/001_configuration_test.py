@@ -7,15 +7,15 @@
 
 from beets.util.confit import Subview
 
-from test.helper import FunctionalTestHelper, Assertions, PLUGIN_NAME
+from test.helper import FunctionalTestHelper, PLUGIN_NAME
 
 
-class ConfigurationTest(FunctionalTestHelper, Assertions):
+class ConfigurationTest(FunctionalTestHelper):
     """Configuration related tests
     """
 
     def test_plugin_no_config(self):
-        self.reset_beets(config_file=b"empty.yml")
+        self.setup_beets({"config_file": b"empty.yml"})
         self.assertTrue(self.config.exists())
         self.assertTrue(self.config[PLUGIN_NAME].exists())
         self.assertIsInstance(self.config[PLUGIN_NAME], Subview)
@@ -24,13 +24,13 @@ class ConfigurationTest(FunctionalTestHelper, Assertions):
         self.assertTrue(self.config[PLUGIN_NAME]["flavours"].exists())
 
     def test_obsolete_config(self):
-        self.reset_beets(config_file=b"obsolete.yml")
-
+        self.setup_beets({"config_file": b"obsolete.yml"})
         logged = self.run_with_log_capture(PLUGIN_NAME)
         self.assertIn("INCOMPATIBLE PLUGIN CONFIGURATION", logged)
         self.assertIn("Offending key in training(training-1): song_bpm", logged)
 
     def test_default_config_sanity(self):
+        self.setup_beets({"config_file": b"default.yml"})
         self.assertTrue(self.config[PLUGIN_NAME].exists())
         cfg = self.config[PLUGIN_NAME]
 
@@ -42,6 +42,7 @@ class ConfigurationTest(FunctionalTestHelper, Assertions):
         self.assertEqual(chk_keys, cfg_keys)
 
     def test_default_config_targets(self):
+        self.setup_beets({"config_file": b"default.yml"})
         """ Check Targets"""
         cfg: Subview = self.config[PLUGIN_NAME]
         targets = cfg["targets"]
@@ -75,12 +76,14 @@ class ConfigurationTest(FunctionalTestHelper, Assertions):
         self.assertEqual("Music/", target["device_path"].get())
 
     def test_default_config_trainings(self):
+        self.setup_beets({"config_file": b"default.yml"})
         """ Check Targets"""
         cfg: Subview = self.config[PLUGIN_NAME]
         trainings = cfg["trainings"]
         self.assertTrue(trainings.exists())
 
     def test_default_config_flavours(self):
+        self.setup_beets({"config_file": b"default.yml"})
         """ Check Targets"""
         cfg: Subview = self.config[PLUGIN_NAME]
         flavours = cfg["flavours"]

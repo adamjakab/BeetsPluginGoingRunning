@@ -56,6 +56,7 @@ class BasePicker(ABC):
         self.training = training
         self.items = items
         self.duration = duration
+        self.selection = []
 
     @abstractmethod
     def _make_selection(self):
@@ -108,10 +109,13 @@ class RandomFromBinsPicker(BasePicker):
         max_overtime = 10
         sel_time = sum(l["length"] for l in self.selection)
         curr_sel = 0
-        max_sel = len(self.selection) - 1
         curr_run = 0
         max_run = len(self.bin_boundaries) * 3
         exclusions = {}
+
+        if not self.selection:
+            common.say("IMPROVEMENTS: SKIPPED (No initial selection)")
+            return
 
         # iterate through initial selection items and try to find a better
         # alternative for them
@@ -164,7 +168,7 @@ class RandomFromBinsPicker(BasePicker):
                                format(round(time_diff - new_diff)))
                     self.show_selection_status()
 
-            if curr_sel < max_sel:
+            if curr_sel < len(self.selection) - 1:
                 curr_sel += 1
             else:
                 curr_sel = 0
@@ -185,7 +189,10 @@ class RandomFromBinsPicker(BasePicker):
             if curr_run > max_run:
                 common.say("MAX HIT!")
                 break
-            low, high = self.bin_boundaries[curr_bin]
+            low, high = self._get_bin_boundaries(curr_bin)
+            if low is None or high is None:
+                curr_bin = curr_bin + 1 if curr_bin < max_bin else 0
+                continue
             index = self._get_random_item_between_boundaries(low, high)
             if index is not None:
                 item: Item = self.items[index]
@@ -202,42 +209,20 @@ class RandomFromBinsPicker(BasePicker):
                     }
                     self.selection.append(sel_data)
                     sel_time += item_len
-                    if curr_bin < max_bin:
-                        curr_bin += 1
+                    curr_bin = curr_bin + 1 if curr_bin < max_bin else 0
 
         common.say("{} INITIAL SELECTION: FINISHED".format("=" * 60))
         self.show_selection_status()
 
-    def _setup_bin_boundaries(self):
-        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items(
-            self.items, "length")
-
-        if not _avg:
-            raise ValueError("Average song length is zero!")
-
-        num_bins = round(self.duration / _avg)
-        bin_size = round(len(self.items) / num_bins)
-
-        common.say("Number of bins: {}".format(num_bins))
-        common.say("Bin size: {}".format(bin_size))
-
-        self.bin_boundaries = []
-        for bi in range(0, num_bins):
-            is_last_bin = bi == (num_bins - 1)
-            low = bi * bin_size
-            high = low + bin_size - 1
-            if is_last_bin:
-                high = len(self.items) - 1
-            self.bin_boundaries.append([low, high])
-
-        common.say("Bin boundaries: {}".format(self.bin_boundaries))
-
     def _get_item_within_length(self, bin_number,
                                 min_len, max_len, exclude_indices=None):
+        index = None
         if exclude_indices is None:
             exclude_indices = []
-        index = None
-        low, high = self.bin_boundaries[bin_number]
+
+        low, high = self._get_bin_boundaries(bin_number)
+        if low is None or high is None:
+            return index
 
         candidates = []
         for i in range(low, high):
@@ -265,6 +250,49 @@ class RandomFromBinsPicker(BasePicker):
                 break
 
         return index
+
+    def _get_bin_boundaries(self, bin_number):
+        low = None
+        high = None
+        try:
+            low, high = self.bin_boundaries[bin_number]
+        except IndexError:
+            pass
+
+        return low, high
+
+    def _setup_bin_boundaries(self):
+        self.bin_boundaries = []
+
+        if len(self.items) <= 1:
+            raise ValueError("There is only one song in the selection!")
+
+        _min, _max, _sum, _avg = common.get_min_max_sum_avg_for_items(
+            self.items, "length")
+
+        if not _avg:
+            raise ValueError("Average song length is zero!")
+
+        num_bins = round(self.duration / _avg)
+        bin_size = round(len(self.items) / num_bins)
+
+        common.say("Number of bins: {}".format(num_bins))
+        common.say("Bin size: {}".format(bin_size))
+
+        if not bin_size or bin_size * num_bins > len(self.items):
+            low = 0
+            high = len(self.items) - 1
+            self.bin_boundaries.append([low, high])
+        else:
+            for bi in range(0, num_bins):
+                is_last_bin = bi == (num_bins - 1)
+                low = bi * bin_size
+                high = low + bin_size - 1
+                if is_last_bin:
+                    high = len(self.items) - 1
+                self.bin_boundaries.append([low, high])
+
+        common.say("Bin boundaries: {}".format(self.bin_boundaries))
 
     def _get_random_item_between_boundaries(self, low, high):
         if not favour_unplayed:

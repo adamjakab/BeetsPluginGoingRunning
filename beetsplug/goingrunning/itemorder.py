@@ -1,7 +1,6 @@
 #   Copyright: Copyright (c) 2020., Adam Jakab
 #   Author: Adam Jakab <adam at jakab dot pro>
 #   License: See LICENSE.txt
-
 import operator
 from abc import ABC
 from abc import abstractmethod

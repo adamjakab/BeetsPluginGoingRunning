@@ -70,7 +70,7 @@ The following command line options are available:
 
 ## Configuration
 
-All your configuration will need to be created under the key `goingrunning`. There are three concepts you need to know to configure the plugin: targets, trainings and flavours. They are explained in detail below.
+All your configuration will need to be created under the key `goingrunning`. There are three concepts you need to know to configure the plugin: `targets`, `trainings` and `flavours`. They are explained in detail below.
 
 
 ### Targets
@@ -88,13 +88,19 @@ goingrunning:
         clean_target: yes
         delete_from_device:
           - LIBRARY.DAT
+        generate_playlist: yes
+        copy_files: yes
 ```
 
-The key `device_root` indicates where your operating system mounts the device. The key `device_path` indicates the folder inside the device to which your audio files will be copied. In the above example the final destination is `/media/MPD1/MUSIC/AUTO/`. It is assumed that the folder indicated in the `device_path` key exists. If it doesn't the plugin will exit with a warning. 
+The key `device_root` indicates where your operating system mounts the device. The key `device_path` indicates the folder inside the device to which your audio files will be copied. In the above example the final destination is `/media/MPD1/MUSIC/AUTO/`. It is assumed that the folder indicated in the `device_path` key exists. If it doesn't the plugin will exit with a warning. The device path can also be an empty string if you want to store the files in the root folder of the device.
 
 The key `clean_target`, when set to yes, instructs the plugin to clean the `device_path` folder before copying the new songs to the device. This will remove all audio songs and playlists found in that folder.
 
-Some devices might have library files or other data files which need to be deleted in order for the device to reindex the new songs. These files can be added to the `delete_from_device` key. The files listed here are relative to the `device_root` directive.
+Some devices might have library files or other data files which need to be deleted in order for the device to re-discover the new songs. These files can be added to the `delete_from_device` key. The files listed here are relative to the `device_root` directive.
+
+You can also generate a playlist by setting the `generate_playlist` option to `yes`. It will create an .m3u playlist file and store it to your `device_path` location.
+
+There might be some special conditions in which you do not want to copy files to the device. In fact, the destination folder (`device_root`/`device_path`) might refer to an ordinary folder on your computer and you might want to create only a playlist there. In this case, you want to disable the copying of the music files by setting `copy_files: no`. By default, `copy_files` is always enabled so in the above `MPD1` target it could also be omitted and files would be copied all the same.
 
 
 ### Trainings
@@ -123,7 +129,7 @@ goingrunning:
 The keys under the `query` section are exactly the same ones that you use when you are using beets for any other operation. Whatever is described in the [beets query documentation](https://beets.readthedocs.io/en/stable/reference/query.html) applies here with two restriction: you must query specific fields in the form of `field: value` and (for now) regular expressions are not supported.
 
 #### ordering
-Your songs are ordered based on a scoring system. What you indicate under the `ordering` section is the fields by which the songs will be ordered and the weight each one of them will have on the final score. The weight can go from -100 to 100. Negative numbers indicate a reverse ordering. (...probably need more explanation?...)
+At the time being there is only one ordering algorithm (`ScoreBasedLinearPermutation`) which orders your songs based on a scoring system. What you indicate under the `ordering` section is the fields by which the songs will be ordered. Each field will have a weight from -100 to 100 indicating how important that field is with respect to the others. Negative numbers indicate a reverse ordering. (@todo: this probably needs an example.)
 
 #### use_flavours
 You will find that many of the query specification that you come up with will be repeated across different trainings. To reduce repetition and at the same time to be able to combine many different recipes you can use flavours. Similarly to targets, instead of defining the queries directly on your training you can define queries in a separate section called `flavours` (see below) and then use the `use_flavours` key to indicate which flavours to use. The order in which flavours are indicated is important: the first one has the highest priority meaning that it will overwrite any keys that might be found in subsequent flavours.
@@ -133,7 +139,6 @@ The duration is expressed in minutes and serves the purpose of defining the tota
 
 #### target
 This key indicates to which target (defined in the `targets` section) your songs will be copied to.
-
 
 #### the `fallback` training
 You might also define a special `fallback` training:
@@ -146,6 +151,9 @@ goingrunning:
 ```
 
 Any key not defined in a specific training will be looked up from the `fallback` training. So, if in the `10K` example you were to remove the `target` key, it would be looked up from the `fallback` training and your songs would be copied to the `my_other_device` target.
+
+#### Play count and favouring unplayed songs
+In the default configuration of the plugin, on the `fallback` training there are two disabled options that you might want to consider enabling: `increment_play_count` and `favour_unplayed`. They are meant to be used together. The `increment_play_count` option, on copying your songs to your device, will increment the `play_count` attribute by one and store it in your library and on your media file. The `favour_unplayed` option will instruct the algorithm that picks the songs from your selection to favour the songs that have lower `play_count`. This feature will make you discover songs in your library that you might have never heard. At the same time it ensures that the proposed songs are always changed even if you keep your selection query and your ordering unchanged. 
 
 
 ### Flavours
@@ -164,16 +172,72 @@ goingrunning:
       genre: Rock
     metallic:
       genre: Metal
-  sunshine:
+    sunshine:
       genre: Reggae
     60s:
       year: 1960..1969
     chillout:
       bpm: 1..120
-      mood_happy: 0.5..0.99
+      mood_happy: 0.5..1
 ```
 
 This way, from the above flavours you might add `use_flavours: [overthetop, rock, 60s]` to one training and `use_flavours: [overthetop, metallic]` to another so they will share the same `overthetop` intensity definition whilst having different genre preferences. Similarly, your recovery session might use `use_flavours: [chillout, sunshine]`.
+
+
+### Advanced queries
+When it comes to handling queries, this plugin introduces some major differences with respect to the beets core you need to be aware of. 
+
+#### Recurring fields extend the selections
+You might define different flavours in which some of the same fields are defined, like the `genre` field in the `rocker` and the `metallic` flavours above. You can define a training that makes use of those flavours and optionally adding the same field through a direct query section, like this: 
+
+```yaml
+goingrunning:
+  trainings:
+    HM:
+      query:
+        genre: Folk
+      use_flavours: [rocker, metallic]
+```
+
+The resulting query will include songs corresponding to any of the three indicated genres: `genre='Folk' OR genre='Rock' OR genre='Metal'`. This, of course, is applicable to all fields.
+
+
+#### Fields can be used as lists
+Sometimes it is cumbersome to define a separate flavour for each additional value of a specific field. For example, it would be nice to have the above `chillout` flavour to include a list of genres instead of having to combine it with multiple flavours. Well, you can just do that by using the list notation like this:
+```yaml
+goingrunning:
+  flavours:
+    chillout:
+      bpm: 1..120
+      mood_happy: 0.5..1
+      genre: [Soul, Oldies, Ballad]
+```
+
+or like this:
+
+```yaml
+goingrunning:
+  flavours:
+    chillout:
+      bpm: 1..120
+      mood_happy: 0.5..1
+      genre:
+        - Soul
+        - Oldies
+        - Ballad
+```
+The resulting query will have the same effect including all indicated genres: `genre='Soul' OR genre='Oldies' OR genre='Ballad'`. This technique can be applied to all fields.
+
+
+#### Negated fields can also be used as lists
+What is described above also applies to negated fields. That is to say, you can also negate a field and use it as a list to query your library by excluding all those values:
+```yaml
+goingrunning:
+  flavours:
+    not_good_for_running:
+      ^genre: [Jazz, Psychedelic Rock, Gospel]
+```
+When the above flavour is compiled it will result in a query excluding all indicated genres: `genre!='Jazz' AND genre!='Psychedelic Rock' AND genre!='Gospel'`. This technique can be applied to all fields.
 
 
 ### Using a separate configuration file
@@ -205,10 +269,11 @@ Do the same as above but today you feel Ska:
 
 
 ## Issues
-If something is not working as expected please use the Issue tracker.
-If the documentation is not clear please use the Issue tracker.
-If you have a feature request please use the Issue tracker.
-In any other situation please use the Issue tracker.
+
+- If something is not working as expected please use the Issue tracker.
+- If the documentation is not clear please use the Issue tracker.
+- If you have a feature request please use the Issue tracker.
+- In any other situation please use the Issue tracker.
 
 
 ## Roadmap

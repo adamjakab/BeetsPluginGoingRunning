@@ -1,12 +1,28 @@
 # CHANGELOG
 
-## v1.1.3 (in development)
+## v1.2.1 (in development)
 
 ### New features:
+- creating playlists on target
+- possibility to disable song copy (playlist only)
+- negated lists can also be used
+- fields in queries can now be used as lists
+- fields in different flavours now expand the selection (instead of substitution)
+- maximize unheard song proposal by incrementing play_count on export
 
 
 ### Fixes
+- multiple logging issues
 
+
+## v1.2.0
+
+### New features:
+- introduced `play_count` handling and `favour_unplayed` based song selection
+
+### Fixes
+- multiple lines in logging
+- trainings without target
 
 
 ## v1.1.2

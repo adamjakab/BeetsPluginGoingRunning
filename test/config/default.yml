@@ -40,19 +40,39 @@ goingrunning:
       use_flavours: [sunshine]
       duration: 10
       target: MPD_1
-    one-hour-run:
-      alias: "Born to run"
+    q-test-1:
+      alias: "Without nothing"
+    q-test-2:
+      alias: "Query only (different fields)"
       query:
-        bpm: 150..180
-        length: 120..240
-      duration: 60
-      target: MPD_1
-    quick-run:
+        bpm: 100..150
+        length: 120..300
+        genre: hard rock
+    q-test-3:
+      alias: "Query with one additional flavour (different fields)"
       query:
-        bpm: 150..180
-        length: 120..240
-      duration: 10
-      target: MPD_1
+        bpm: 100..150
+        length: 120..300
+      use_flavours: [sunshine]
+    q-test-4:
+      alias: "Query with multiple additional flavours (repeated fields)"
+      query:
+        bpm: 100..150
+        year: 2015..
+      use_flavours: [sunshine, 60s]
+    q-test-5:
+      alias: "Query supports fields a lists"
+      query:
+        genre:
+          - rock
+          - blues
+          - ska
+      use_flavours: [funkymonkey]
+    q-test-6:
+      alias: "Query supports negated lists"
+      query:
+        genre: [rock, blues]
+        ^genre: [jazz, death metal]
     bad-target-1:
       alias: "This training does not define a target"
     bad-target-2:
@@ -66,5 +86,10 @@ goingrunning:
     60s:
       year: 1960..1969
     sunshine:
-      genre: Reggae
+      genre: reggae
+    funkymonkey:
+      genre: [funk, Rockabilly, Disco]
+
+
+
 

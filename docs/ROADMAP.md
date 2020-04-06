@@ -17,7 +17,6 @@ goingrunning:
     targets:
       SONY-1:
         create_training_folder: yes
-        create_playlist: yes
 ```
 
 
@@ -42,10 +41,7 @@ goingrunning:
             use_flavours: [chillout, sunshine]
             duration: 150
 ```    
-  
-- maximize unheard song proposal(optional) by:
-    - incrementing listen count on export
-    - adding it to the query and proposing songs with lower counts
+
 - enable song merging and exporting all songs merged into one single file (optional)
 - enable audio TTS files to give instructions during training: "Run for 10K at 4:45. RUN!" exporting it as mp3 files and adding it into the song list.
 

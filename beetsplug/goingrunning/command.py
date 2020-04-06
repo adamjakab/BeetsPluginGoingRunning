@@ -2,21 +2,17 @@
 #  Author: Adam Jakab <adam at jakab dot pro>
 #  License: See LICENSE.txt
 
-import os
-import random
-import string
-from glob import glob
 from optparse import OptionParser
-from pathlib import Path
-from shutil import copyfile
 
 from beets import library
+from beets.dbcore import query
 from beets.dbcore.db import Results
-from beets.dbcore.queryparse import parse_query_part
-from beets.library import Library, Item, parse_query_parts
+from beets.dbcore.queryparse import parse_query_part, construct_query_part
+from beets.library import Library, Item
 from beets.ui import Subcommand, decargs
-from beets.util.confit import Subview, NotFoundError
+from beets.util.confit import Subview
 from beetsplug.goingrunning import common
+from beetsplug.goingrunning import itemexport
 from beetsplug.goingrunning import itemorder
 from beetsplug.goingrunning import itempick
 
@@ -24,7 +20,7 @@ from beetsplug.goingrunning import itempick
 class GoingRunningCommand(Subcommand):
     config: Subview = None
     lib: Library = None
-    query = None
+    query = []
     parser: OptionParser = None
 
     cfg_quiet = False
@@ -147,7 +143,7 @@ class GoingRunningCommand(Subcommand):
             return
 
         # Verify target device path path
-        if not self._get_destination_path_for_training(training):
+        if not common.get_destination_path_for_training(training):
             self._say(
                 "Invalid target!", log_only=False)
             return
@@ -160,8 +156,6 @@ class GoingRunningCommand(Subcommand):
             self._say("Number of songs available: {}".format(len(lib_items)),
                       log_only=False)
             return
-
-
 
         # Check count
         if len(lib_items) < 1:
@@ -200,174 +194,24 @@ class GoingRunningCommand(Subcommand):
         flds += ["play_count", "artist", "title"]
         self.display_library_items(sel_items, flds, prefix="Selected: ")
 
-        # 5) Clea, Copy, Run
-        self._clean_target_path(training)
-        self._copy_items_to_target(training, sel_items)
+        # 5) Clean, Copy, Playlist, Run
+        itemexport.generate_output(training, sel_items, self.cfg_dry_run)
         self._say("Run!", log_only=False)
 
-    def _clean_target_path(self, training: Subview):
-        target_name = common.get_training_attribute(training, "target")
-
-        if self._get_target_attribute_for_training(training, "clean_target"):
-            dst_path = self._get_destination_path_for_training(training)
-
-            self._say("Cleaning target[{0}]: {1}".
-                      format(target_name, dst_path), log_only=False)
-            song_extensions = ["mp3", "mp4", "flac", "wav", "ogg", "wma", "m3u"]
-            target_file_list = []
-            for ext in song_extensions:
-                target_file_list += glob(
-                    os.path.join(dst_path, "*.{}".format(ext)))
-
-            for f in target_file_list:
-                self._say("Deleting: {}".format(f))
-                if not self.cfg_dry_run:
-                    os.remove(f)
-
-        additional_files = self._get_target_attribute_for_training(training,
-                                                                   "delete_from_device")
-        if additional_files and len(additional_files) > 0:
-            root = self._get_target_attribute_for_training(training,
-                                                           "device_root")
-            root = Path(root).expanduser()
-
-            self._say("Deleting additional files: {0}".
-                      format(additional_files), log_only=False)
-
-            for path in additional_files:
-                path = Path(str.strip(path, "/"))
-                dst_path = os.path.realpath(root.joinpath(path))
-
-                if not os.path.isfile(dst_path):
-                    self._say(
-                        "The file to delete does not exist: {0}".format(path),
-                        log_only=True)
-                    continue
-
-                self._say("Deleting: {}".format(dst_path))
-                if not self.cfg_dry_run:
-                    os.remove(dst_path)
-
-    def _copy_items_to_target(self, training: Subview, rnd_items):
-        target_name = common.get_training_attribute(training, "target")
-        increment_play_count = common.get_training_attribute(
-            training, "increment_play_count")
-        dst_path = self._get_destination_path_for_training(training)
-        self._say("Copying to target[{0}]: {1}".
-                  format(target_name, dst_path), log_only=False)
-
-        def random_string(length=6):
-            letters = string.ascii_letters + string.digits
-            return ''.join(random.choice(letters) for i in range(length))
-
-        cnt = 0
-        for item in rnd_items:
-            src = os.path.realpath(item.get("path").decode("utf-8"))
-            if not os.path.isfile(src):
-                # todo: this is bad enough to interrupt! create option for this
-                self._say("File does not exist: {}".format(src))
-                continue
-
-            fn, ext = os.path.splitext(src)
-            gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6),
-                                               random_string(), ext)
-            dst = "{0}/{1}".format(dst_path, gen_filename)
-            self._say("Copying[{1}]: {0}".format(src, gen_filename),
-                      log_only=True)
-
-            if not self.cfg_dry_run:
-                copyfile(src, dst)
-                if increment_play_count:
-                    common.increment_play_count_on_item(item)
-
-            cnt += 1
-
-    def _get_target_for_training(self, training: Subview):
-        target_name = common.get_training_attribute(training, "target")
-        self._say("Finding target: {0}".format(target_name))
-
-        if not self.config["targets"][target_name].exists():
-            self._say(
-                "The target name[{0}] is not defined!".format(target_name))
-            return
-
-        return self.config["targets"][target_name]
-
-    def _get_target_attribute_for_training(self, training: Subview,
-                                           attrib: str = "name"):
-        target_name = common.get_training_attribute(training, "target")
-        self._say("Getting attribute[{0}] for target: {1}".format(attrib,
-                                                                  target_name),
-                  log_only=True)
-        target = self._get_target_for_training(training)
-        if not target:
-            return
-
-        if attrib == "name":
-            attrib_val = target_name
-        elif attrib in ("device_root", "device_path", "delete_from_device"):
-            # these should NOT propagate up
-            try:
-                attrib_val = target[attrib].get()
-            except NotFoundError:
-                attrib_val = None
-        else:
-            attrib_val = common.get_target_attribute(target, attrib)
-
-        self._say(
-            "Found target[{0}] attribute[{1}] path: {2}".format(target_name,
-                                                                attrib,
-                                                                attrib_val),
-            log_only=True)
-
-        return attrib_val
-
-    def _get_destination_path_for_training(self, training: Subview):
-        target_name = common.get_training_attribute(training, "target")
-
-        if not target_name:
-            self._say(
-                "Training does not declare a `target`!".
-                    format(target_name), log_only=False)
-            return
-
-        root = self._get_target_attribute_for_training(training, "device_root")
-        path = self._get_target_attribute_for_training(training, "device_path")
-        path = path or ""
-
-        if not root:
-            self._say(
-                "The target[{0}] does not declare a device root path.".
-                    format(target_name), log_only=False)
-            return
-
-        root = Path(root).expanduser()
-        path = Path(str.strip(path, "/"))
-        dst_path = os.path.realpath(root.joinpath(path))
-
-        if not os.path.isdir(dst_path):
-            self._say(
-                "The target[{0}] path does not exist: {1}".
-                    format(target_name, dst_path), log_only=False)
-            return
-
-        self._say(
-            "Found target[{0}] path: {0}".format(target_name, dst_path),
-            log_only=True)
-
-        return dst_path
-
     def _get_training_query_element_keys(self, training):
+        # todo: move to common
         answer = []
         query_elements = self._gather_query_elements(training)
         for el in query_elements:
-            answer.append(el.split(":")[0])
+            key = parse_query_part(el)[0]
+            if key not in answer:
+                answer.append(key)
 
         return answer
 
     def _gather_query_elements(self, training: Subview):
-        """Sum all query elements and order them (strongest to weakest):
-        command -> training -> flavours
+        """Sum all query elements into one big list ordered from strongest to
+        weakest: command -> training -> flavours
         """
         command_query = self.query
         training_query = []
@@ -377,8 +221,11 @@ class GoingRunningCommand(Subcommand):
         tconf = common.get_training_attribute(training, "query")
         if tconf:
             for key in tconf.keys():
-                training_query.append(
-                    common.get_query_element_string(key, tconf.get(key)))
+                nqe = common.get_normalized_query_element(key, tconf.get(key))
+                if type(nqe) == list:
+                    training_query.extend(nqe)
+                else:
+                    training_query.append(nqe)
 
         # Append the query elements from the flavours defined on the training
         flavours = common.get_training_attribute(training, "use_flavours")
@@ -395,26 +242,70 @@ class GoingRunningCommand(Subcommand):
         self._say("Flavour query elements: {}".format(flavour_query),
                   log_only=True)
 
-        # Remove duplicate keys (first one wins)
         raw_combined_query = command_query + training_query + flavour_query
-        combined_query = []
-        used_keys = []
-        for query_part in raw_combined_query:
-            key = parse_query_part(query_part)[0]
-            if key not in used_keys:
-                used_keys.append(key)
-                combined_query.append(query_part)
 
-        self._say("Combined query elements: {}".format(combined_query),
-                  log_only=True)
+        self._say("Combined query elements: {}".
+                  format(raw_combined_query), log_only=True)
 
-        return combined_query
+        return raw_combined_query
+
+    def parse_query_elements(self, query_elements, model_cls):
+        registry = {}
+
+        # Iterate through elements and group them in a registry by field name
+        for query_element in query_elements:
+            key, term, query_class, negate = parse_query_part(query_element)
+            if not key:
+                continue
+            # treat negated keys separately
+            _reg_key = "^{}".format(key) if negate else key
+            if _reg_key not in registry.keys():
+                registry[_reg_key] = []
+            registry[_reg_key].append({
+                "key": key,
+                "term": term,
+                "query_class": query_class,
+                "negate": negate,
+                "q_string": query_element
+            })
+
+        def parse_and_merge_items(k, lst, cls):
+            parsed_items = []
+            is_negated = lst[0]["negate"]
+
+            for item in lst:
+                prefixes = {}
+                qp = construct_query_part(cls, prefixes, item["q_string"])
+                parsed_items.append(qp)
+
+            if len(parsed_items) == 1:
+                answer = parsed_items.pop()
+            else:
+                if is_negated:
+                    answer = query.AndQuery(parsed_items)
+                else:
+                    answer = query.OrQuery(parsed_items)
+
+            return answer
+
+        query_parts = []
+        for key in registry.keys():
+            reg_item_list = registry[key]
+            parsed_and_merged = parse_and_merge_items(
+                key, reg_item_list, model_cls)
+            self._say("{}: {}".format(key, parsed_and_merged))
+            query_parts.append(parsed_and_merged)
+
+        if len(query_parts) == 0:
+            query_parts.append(query.TrueQuery())
+
+        return query.AndQuery(query_parts)
 
     def _retrieve_library_items(self, training: Subview):
         """Returns the results of the library query for a specific training
-        The storing/overriding/restoring of the library.Item._types is made
-        necessary
-        by this issue: https://github.com/beetbox/beets/issues/3520
+        The storing/overriding/restoring of the library.Item._types
+        is made necessary by this issue:
+        https://github.com/beetbox/beets/issues/3520
         Until the issue is solved this 'hack' is necessary.
         """
         full_query = self._gather_query_elements(training)
@@ -425,7 +316,7 @@ class GoingRunningCommand(Subcommand):
         library.Item._types.update(override_types)
 
         # Execute the query parsing (using our own type overrides)
-        parsed_query, parsed_ordering = parse_query_parts(full_query, Item)
+        parsed_query = self.parse_query_elements(full_query, Item)
 
         # Restore the original types
         library.Item._types = original_types.copy()
