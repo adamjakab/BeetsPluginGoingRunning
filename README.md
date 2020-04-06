@@ -100,7 +100,7 @@ Some devices might have library files or other data files which need to be delet
 
 You can also generate a playlist by setting the `generate_playlist` option to `yes`. It will create an .m3u playlist file and store it to your `device_path` location.
 
-There might be some special conditions in which you do not want to copy files to the device. In fact, the destination folder (`device_root`/`device_path`) might refer to an ordinary folder on your computer and you might want to create only a playlist there. In this case, you want to disable the copying of the music files by setting `copy_files: no`.
+There might be some special conditions in which you do not want to copy files to the device. In fact, the destination folder (`device_root`/`device_path`) might refer to an ordinary folder on your computer and you might want to create only a playlist there. In this case, you want to disable the copying of the music files by setting `copy_files: no`. By default, `copy_files` is always enabled so in the above `MPD1` target it could also be omitted and files would be copied all the same.
 
 
 ### Trainings

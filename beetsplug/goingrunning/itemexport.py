@@ -1,6 +1,7 @@
 #   Copyright: Copyright (c) 2020., Adam Jakab
 #   Author: Adam Jakab <adam at jakab dot pro>
 #   License: See LICENSE.txt
+
 import os
 import random
 import string
@@ -75,8 +76,12 @@ class ItemExport:
     def _copy_items(self):
         target_name = common.get_training_attribute(self.training, "target")
 
-        if not common.get_target_attribute_for_training(self.training,
-                                                        "copy_files"):
+        # The copy_files is only False when it is explicitly declared so
+        copy_files = common.get_target_attribute_for_training(
+            self.training, "copy_files")
+        copy_files = False if copy_files == False else True
+
+        if not copy_files:
             common.say("Copying to target[{0}] was skipped (copy_files=no).".
                        format(target_name))
             return
@@ -93,12 +98,17 @@ class ItemExport:
             return ''.join(random.choice(letters) for i in range(length))
 
         cnt = 0
+        # todo: disable alive bar when running in verbose mode
+        # from beets import logging as beetslogging
+        # beets_log = beetslogging.getLogger("beets")
+        # print(beets_log.getEffectiveLevel())
+
         with alive_bar(len(self.items)) as bar:
             for item in self.items:
                 src = util.displayable_path(item.get("path"))
                 if not os.path.isfile(src):
                     # todo: this is bad enough to interrupt! create option
-                    #  for this
+                    # for this
                     common.say("File does not exist: {}".format(src))
                     continue
 
