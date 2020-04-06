@@ -1,6 +1,15 @@
 # CHANGELOG
 
-## v1.2.1 (in development)
+## v1.2.2 (in development)
+
+### New features:
+
+
+### Fixes
+
+
+
+## v1.2.1
 
 ### New features:
 - creating playlists on target
@@ -10,9 +19,9 @@
 - fields in different flavours now expand the selection (instead of substitution)
 - maximize unheard song proposal by incrementing play_count on export
 
-
 ### Fixes
 - multiple logging issues
+
 
 
 ## v1.2.0
@@ -23,6 +32,7 @@
 ### Fixes
 - multiple lines in logging
 - trainings without target
+
 
 
 ## v1.1.2
