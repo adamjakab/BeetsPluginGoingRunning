@@ -166,7 +166,7 @@ def get_target_attribute_for_training(training: Subview,
 
 
 def get_destination_path_for_training(training: Subview):
-    answer = False
+    answer = None
 
     target_name = get_training_attribute(training, "target")
 
@@ -219,7 +219,10 @@ def get_duration_of_items(items):
     if isinstance(items, list):
         for item in items:
             try:
-                total_time += item.get("length")
+                length = item.get("length")
+                if not length or length <= 0:
+                    raise ValueError("Invalid length value!")
+                total_time += length
             except TypeError:
                 pass
             except ValueError:
@@ -266,14 +269,15 @@ def get_min_max_sum_avg_for_items(items, field_name):
     return _min, _max, _sum, _avg
 
 
-def increment_play_count_on_item(item: Item):
+def increment_play_count_on_item(item: Item, store=True, write=True):
     # clear_dirty is necessary to make sure that `ordering_score` and
     # `ordering_info` will not get stored to the library
     item.clear_dirty()
     item["play_count"] = item.get("play_count", 0) + 1
-    item.store()
-    item.write()
-
+    if store:
+        item.store()
+    if write:
+        item.write()
 
 def get_class_instance(module_name, class_name):
     try:

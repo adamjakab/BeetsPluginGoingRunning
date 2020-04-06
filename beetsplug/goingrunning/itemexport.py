@@ -53,7 +53,8 @@ class ItemExport:
         lines.append(header)
 
         for item in self.items:
-            path = item.get("exportpath", item.get("path").decode())
+            path = util.displayable_path(item.get("exportpath",
+                                                  item.get("path")))
             if path:
                 path = util.syspath(path)
                 line = "{path}\n".format(path=path)
@@ -90,7 +91,7 @@ class ItemExport:
 
         cnt = 0
         for item in self.items:
-            src = os.path.realpath(item.get("path").decode("utf-8"))
+            src = util.displayable_path(item.get("path"))
             if not os.path.isfile(src):
                 # todo: this is bad enough to interrupt! create option for this
                 common.say("File does not exist: {}".format(src))
@@ -107,7 +108,7 @@ class ItemExport:
                 util.copy(src, dst)
 
                 # store the file_name for the playlist
-                item["exportpath"] = gen_filename
+                item["exportpath"] = util.bytestring_path(gen_filename)
 
                 if increment_play_count:
                     common.increment_play_count_on_item(item)
