@@ -44,6 +44,7 @@ plugins:
 
 Check if plugin is loaded with `beet version`. It should list 'goingrunning' amongst the loaded plugins.
 
+If you already have the plugin installed but a newer version is available you can use `pip install --upgrade beets-goingrunning` to upgrade it.
 
 ## Usage
 
