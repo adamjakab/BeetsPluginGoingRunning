@@ -5,6 +5,7 @@
 from optparse import OptionParser
 
 from beets import library
+from beets import logging
 from beets.dbcore import query
 from beets.dbcore.db import Results
 from beets.dbcore.queryparse import parse_query_part, construct_query_part
@@ -22,6 +23,8 @@ class GoingRunningCommand(Subcommand):
     lib: Library = None
     query = []
     parser: OptionParser = None
+
+    verbose_log = False
 
     cfg_quiet = False
     cfg_count = False
@@ -82,6 +85,10 @@ class GoingRunningCommand(Subcommand):
 
         self.lib = lib
         self.query = decargs(arguments)
+
+        # Determine if -v option was set for more verbose logging
+        logger = logging.getLogger('beets')
+        self.verbose_log = True if logger.level == logging.DEBUG else False
 
         # TEMPORARY: Verify configuration upgrade!
         # There is a major backward incompatible upgrade in version 1.1.1
@@ -338,12 +345,20 @@ class GoingRunningCommand(Subcommand):
             kwargs = {}
             for field in fields:
                 fld_val = None
+
+                if field == "play_count" and not hasattr(item, field):
+                    item[field] = 0
+
                 if hasattr(item, field):
                     fld_val = item[field]
 
-                    if type(fld_val) in [float, int]:
+                    if type(fld_val) in [float]:
                         fld_val = round(fld_val, 3)
                         fld_val = "{:7.3f}".format(fld_val)
+
+                    if type(fld_val) in [int]:
+                        fld_val = round(fld_val, 1)
+                        fld_val = "{:7.1f}".format(fld_val)
 
                 kwargs[field] = fld_val
             try:
@@ -363,12 +378,20 @@ class GoingRunningCommand(Subcommand):
         self._say("Available trainings:", log_only=False)
         for training_name in training_names:
             self.list_training_attributes(training_name)
+        if not self.verbose_log:
+            self._say("Use `beet -v run -l` to list the training attributes",
+                      log_only=False)
 
     def list_training_attributes(self, training_name: str):
         if not self.config["trainings"].exists() or not \
                 self.config["trainings"][training_name].exists():
             self._say("Training[{0}] does not exist.".format(training_name),
                       is_error=True)
+            return
+
+        # Just output the list of the names of the available trainings
+        if not self.verbose_log:
+            self._say("{0}".format(training_name), log_only=False)
             return
 
         display_name = "[   {}   ]".format(training_name)

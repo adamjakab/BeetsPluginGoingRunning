@@ -6,6 +6,8 @@ import importlib
 # from beets import logging
 import logging
 import os
+import random
+import string
 from pathlib import Path
 
 from beets.dbcore import types
@@ -113,8 +115,7 @@ def get_flavour_elements(flavour: Subview):
 
 def get_training_attribute(training: Subview, attrib: str):
     """Returns the attribute value from "goingrunning.trainings" for the
-    specified training or uses the
-    spacial fallback training configuration.
+    specified training or uses the special fallback training configuration.
     """
     value = None
     if training[attrib].exists():
@@ -292,3 +293,8 @@ def get_class_instance(module_name, class_name):
         raise RuntimeError("Instance creation error! {}".format(err))
 
     return instance
+
+
+def get_random_string(length=6):
+    letters = string.ascii_letters + string.digits
+    return ''.join(random.choice(letters) for i in range(length))

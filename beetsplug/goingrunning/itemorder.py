@@ -92,6 +92,8 @@ class ScoreBasedLinearPermutation(BasePermutation):
 
     def _score_items(self):
 
+        common.say("Scoring {} items...".format(len(self.items)))
+
         # Score the library items
         for item in self.items:
             item["ordering_score"] = 0
@@ -135,14 +137,9 @@ class ScoreBasedLinearPermutation(BasePermutation):
             # ))
 
     def _build_order_info(self):
-        cfg_ordering = {}
+        cfg_ordering = common.get_training_attribute(self.training, "ordering")
         fields = []
-
-        common.say("Scoring {} items...".format(len(self.items)))
-
-        if self.training["ordering"].exists() and \
-                len(self.training["ordering"].keys()) > 0:
-            cfg_ordering = self.training["ordering"].get()
+        if cfg_ordering:
             fields = list(cfg_ordering.keys())
 
         default_field_data = {

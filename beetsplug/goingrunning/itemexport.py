@@ -1,13 +1,11 @@
 #   Copyright: Copyright (c) 2020., Adam Jakab
 #   Author: Adam Jakab <adam at jakab dot pro>
 #   License: See LICENSE.txt
-
+import hashlib
 import os
-import random
-import string
+import shutil
 import tempfile
 from datetime import datetime
-from glob import glob
 from pathlib import Path
 
 from alive_progress import alive_bar
@@ -37,6 +35,8 @@ class ItemExport:
         self._generate_playist()
 
     def _generate_playist(self):
+        training_name = self._get_cleaned_training_name()
+        playlist_name = self._get_training_name()
         target_name = common.get_training_attribute(self.training, "target")
 
         if not common.get_target_attribute_for_training(self.training,
@@ -46,10 +46,10 @@ class ItemExport:
                        format(target_name), log_only=False)
             return
 
-        dst_path = common.get_destination_path_for_training(self.training)
-        training_name = str(self.training.name).split(".").pop()
-        playlist_filename = "{}.m3u".format(training_name)
-        dst = "{0}/{1}".format(dst_path, playlist_filename)
+        dst_path = Path(common.get_destination_path_for_training(self.training))
+        dst_sub_dir = dst_path.joinpath(training_name)
+        playlist_filename = "{}.m3u".format(playlist_name)
+        dst = dst_sub_dir.joinpath(playlist_filename)
 
         lines = [
             "# Playlist generated for training '{}' on {}". \
@@ -74,6 +74,7 @@ class ItemExport:
         util.remove(tmp_playlist)
 
     def _copy_items(self):
+        training_name = self._get_cleaned_training_name()
         target_name = common.get_training_attribute(self.training, "target")
 
         # The copy_files is only False when it is explicitly declared so
@@ -88,14 +89,14 @@ class ItemExport:
 
         increment_play_count = common.get_training_attribute(
             self.training, "increment_play_count")
-        dst_path = common.get_destination_path_for_training(self.training)
-        common.say("Copying to target[{0}]: {1}".
-                   format(target_name, dst_path))
+        dst_path = Path(common.get_destination_path_for_training(self.training))
 
-        # todo: move to common
-        def random_string(length=6):
-            letters = string.ascii_letters + string.digits
-            return ''.join(random.choice(letters) for i in range(length))
+        dst_sub_dir = dst_path.joinpath(training_name)
+        if not os.path.isdir(dst_sub_dir):
+            os.mkdir(dst_sub_dir)
+
+        common.say("Copying to target[{0}]: {1}".
+                   format(target_name, dst_sub_dir))
 
         cnt = 0
         # todo: disable alive bar when running in verbose mode
@@ -113,9 +114,12 @@ class ItemExport:
                     continue
 
                 fn, ext = os.path.splitext(src)
-                gen_filename = "{0}_{1}{2}".format(str(cnt).zfill(6),
-                                                   random_string(), ext)
-                dst = "{0}/{1}".format(dst_path, gen_filename)
+                gen_filename = "{0}_{1}{2}" \
+                    .format(str(cnt).zfill(6), common.get_random_string(), ext)
+
+                dst = dst_sub_dir.joinpath(gen_filename)
+                # dst = "{0}/{1}".format(dst_path, gen_filename)
+
                 common.say("Copying[{1}]: {0}".format(src, gen_filename))
 
                 if not self.cfg_dry_run:
@@ -131,25 +135,31 @@ class ItemExport:
                 bar()
 
     def _clean_target(self):
+        training_name = self._get_cleaned_training_name()
         target_name = common.get_training_attribute(self.training, "target")
+        clean_target = common.get_target_attribute_for_training(
+            self.training, "clean_target")
 
-        if common.get_target_attribute_for_training(self.training,
-                                                    "clean_target"):
-            dst_path = common.get_destination_path_for_training(self.training)
+        if clean_target is False:
+            return
 
-            common.say("Cleaning target[{0}]: {1}".
-                       format(target_name, dst_path))
-            song_extensions = ["mp3", "mp4", "flac", "wav", "ogg", "wma", "m3u"]
-            target_file_list = []
-            for ext in song_extensions:
-                target_file_list += glob(
-                    os.path.join(dst_path, "*.{}".format(ext)))
+        dst_path = Path(common.get_destination_path_for_training(self.training))
 
-            for f in target_file_list:
-                common.say("Deleting: {}".format(f))
-                if not self.cfg_dry_run:
-                    os.remove(f)
+        # Clean entire target
+        dst_sub_dir = dst_path
 
+        # Only clean specific training folder
+        if clean_target == "training":
+            dst_sub_dir = dst_path.joinpath(training_name)
+
+        common.say("Cleaning target[{0}]: {1}".
+                   format(target_name, dst_sub_dir))
+
+        if os.path.isdir(dst_sub_dir):
+            shutil.rmtree(dst_sub_dir)
+            os.mkdir(dst_sub_dir)
+
+        # Clean additional files
         additional_files = common.get_target_attribute_for_training(
             self.training,
             "delete_from_device")
@@ -174,3 +184,15 @@ class ItemExport:
                 common.say("Deleting: {}".format(dst_path))
                 if not self.cfg_dry_run:
                     os.remove(dst_path)
+
+    def _get_training_name(self):
+        # This will be the name of the playlist file
+        training_name = str(self.training.name).split(".").pop()
+        return training_name
+
+    def _get_cleaned_training_name(self):
+        # Some MPDs do not work well with folder names longer than 8 chars
+        training_name = self._get_training_name()
+        hash8 = hashlib.sha1(training_name.encode("UTF-8")) \
+                    .hexdigest().upper()[:8]
+        return hash8
