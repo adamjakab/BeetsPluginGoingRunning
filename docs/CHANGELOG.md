@@ -1,12 +1,15 @@
 # CHANGELOG
 
-## v1.2.2 (in development)
+
+## v1.2.2
 
 ### New features:
-
+- multiple trainings/playlists on MPD device using 'clean_target: training'
+- songs on device are now stored on separate folders for each training
 
 ### Fixes
-
+- ordering on fallback training is now honoured
+- some minor ordering/song picking fixes
 
 
 ## v1.2.1
