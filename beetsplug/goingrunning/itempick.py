@@ -1,7 +1,7 @@
 #   Copyright: Copyright (c) 2020., Adam Jakab
 #   Author: Adam Jakab <adam at jakab dot pro>
 #   License: See LICENSE.txt
-
+import math
 from abc import ABC
 from abc import abstractmethod
 from random import randint
@@ -73,6 +73,20 @@ class BasePicker(ABC):
             answer.append(item)
 
         return answer
+
+    # def _show_items_in_bins(self):
+    #     max_bin = len(self.bin_boundaries)
+    #     for bi in range(0, max_bin):
+    #         low, high = self._get_bin_boundaries(bi)
+    #         print("===BIN({}): {} - {}".format(bi, low, high))
+    #         for ii in range(low, high):
+    #             print("[{}: {}]: {}".format(bi, ii, self.items[ii]))
+    #
+    # def _show_selected_items(self):
+    #     for sel_data in self.selection:
+    #         index = sel_data["index"]
+    #         item = self.items[index]
+    #         print(">SEL::: {}: {}".format(sel_data, item))
 
 
 class TopPicker(BasePicker):
@@ -190,9 +204,7 @@ class RandomFromBinsPicker(BasePicker):
                 common.say("MAX HIT!")
                 break
             low, high = self._get_bin_boundaries(curr_bin)
-            if low is None or high is None:
-                curr_bin = curr_bin + 1 if curr_bin < max_bin else 0
-                continue
+
             index = self._get_random_item_between_boundaries(low, high)
             if index is not None:
                 item: Item = self.items[index]
@@ -209,7 +221,8 @@ class RandomFromBinsPicker(BasePicker):
                     }
                     self.selection.append(sel_data)
                     sel_time += item_len
-                    curr_bin = curr_bin + 1 if curr_bin < max_bin else 0
+                    curr_bin = curr_bin + 1 \
+                        if curr_bin < max_bin else max_bin
 
         common.say("{} INITIAL SELECTION: FINISHED".format("=" * 60))
         self.show_selection_status()
@@ -274,7 +287,7 @@ class RandomFromBinsPicker(BasePicker):
             raise ValueError("Average song length is zero!")
 
         num_bins = round(self.duration / _avg)
-        bin_size = round(len(self.items) / num_bins)
+        bin_size = math.floor(len(self.items) / num_bins)
 
         common.say("Number of bins: {}".format(num_bins))
         common.say("Bin size: {}".format(bin_size))
