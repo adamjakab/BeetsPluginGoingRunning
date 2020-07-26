@@ -345,12 +345,20 @@ class GoingRunningCommand(Subcommand):
             kwargs = {}
             for field in fields:
                 fld_val = None
+
+                if field == "play_count" and not hasattr(item, field):
+                    item[field] = 0
+
                 if hasattr(item, field):
                     fld_val = item[field]
 
-                    if type(fld_val) in [float, int]:
+                    if type(fld_val) in [float]:
                         fld_val = round(fld_val, 3)
                         fld_val = "{:7.3f}".format(fld_val)
+
+                    if type(fld_val) in [int]:
+                        fld_val = round(fld_val, 1)
+                        fld_val = "{:7.1f}".format(fld_val)
 
                 kwargs[field] = fld_val
             try:
