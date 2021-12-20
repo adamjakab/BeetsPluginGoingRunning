@@ -10,7 +10,7 @@ from pathlib import Path
 
 from alive_progress import alive_bar
 from beets import util
-from beets.util.confit import Subview
+from confuse import Subview
 from beetsplug.goingrunning import common
 
 

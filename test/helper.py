@@ -27,7 +27,7 @@ from beets.util import (
     bytestring_path,
     displayable_path,
 )
-from beets.util.confit import Subview, Dumper, LazyConfig, ConfigSource
+from confuse import Subview, Dumper, LazyConfig, ConfigSource
 from beetsplug import goingrunning
 from beetsplug.goingrunning import common
 from six import StringIO

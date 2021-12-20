@@ -2,7 +2,7 @@
 #  Author: Adam Jakab <adam at jakab dot pro>
 #  License: See LICENSE.txt
 from beets.library import Item
-from beets.util.confit import Subview
+from confuse import Subview
 from beetsplug.goingrunning import GoingRunningCommand
 from beetsplug.goingrunning import command
 
