@@ -1,5 +1,6 @@
-## JetBrains
+## IDE Assets (JetBrains/Eclipse)
 .idea/
+.project
 
 ## OS specific
 .DS_Store
