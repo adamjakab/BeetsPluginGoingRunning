@@ -11,7 +11,7 @@ from beets.dbcore.db import Results
 from beets.dbcore.queryparse import parse_query_part, construct_query_part
 from beets.library import Library, Item
 from beets.ui import Subcommand, decargs
-from beets.util.confit import Subview
+from confuse import Subview
 from beetsplug.goingrunning import common
 from beetsplug.goingrunning import itemexport
 from beetsplug.goingrunning import itemorder

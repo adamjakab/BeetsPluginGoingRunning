@@ -6,7 +6,7 @@ from abc import ABC
 from abc import abstractmethod
 from random import uniform
 
-from beets.util.confit import Subview
+from confuse import Subview
 from beetsplug.goingrunning import common
 
 permutations = {
