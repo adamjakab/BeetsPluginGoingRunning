@@ -1,6 +1,8 @@
-## IDE Assets (JetBrains/Eclipse)
+## IDE (JetBrains/Eclipse)
 .idea/
 .project
+.pydevproject
+.settings
 
 ## OS specific
 .DS_Store
