@@ -4,10 +4,10 @@
 
 import os
 
-from beets import mediafile
+import mediafile
 from beets.dbcore import types
 from beets.plugins import BeetsPlugin
-from beets.util.confit import ConfigSource, load_yaml
+from confuse import ConfigSource, load_yaml
 from beetsplug.goingrunning.command import GoingRunningCommand
 
 

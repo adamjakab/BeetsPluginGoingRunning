@@ -7,7 +7,7 @@ from abc import abstractmethod
 from random import randint
 
 from beets.library import Item
-from beets.util.confit import Subview
+from confuse import Subview
 from beetsplug.goingrunning import common
 
 pickers = {

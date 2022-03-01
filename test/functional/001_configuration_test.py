@@ -5,7 +5,7 @@
 #  License: See LICENSE.txt
 #
 
-from beets.util.confit import Subview
+from confuse import Subview
 
 from test.helper import FunctionalTestHelper, PLUGIN_NAME
 

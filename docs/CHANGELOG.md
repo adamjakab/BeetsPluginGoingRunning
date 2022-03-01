@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## v1.2.3
+
+### New features:
+
+### Fixes
+
+
 
 ## v1.2.2
 
@@ -10,6 +17,7 @@
 ### Fixes
 - ordering on fallback training is now honoured
 - some minor ordering/song picking fixes
+
 
 
 ## v1.2.1

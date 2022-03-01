@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning.svg?branch=master)](https://travis-ci.org/adamjakab/BeetsPluginGoingRunning)
 [![Coverage Status](https://coveralls.io/repos/github/adamjakab/BeetsPluginGoingRunning/badge.svg?branch=master)](https://coveralls.io/github/adamjakab/BeetsPluginGoingRunning?branch=master)
 [![PyPi](https://img.shields.io/pypi/v/beets-goingrunning.svg)](https://pypi.org/project/beets-goingrunning/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/beets-goingrunning.svg)](https://pypi.org/project/beets-goingrunning/)
@@ -44,6 +43,7 @@ plugins:
 
 Check if plugin is loaded with `beet version`. It should list 'goingrunning' amongst the loaded plugins.
 
+If you already have the plugin installed but a newer version is available you can use `pip install --upgrade beets-goingrunning` to upgrade it.
 
 ## Usage
 
