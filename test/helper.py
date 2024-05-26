@@ -18,7 +18,6 @@ import six
 import yaml
 from beets import logging, library
 from beets import plugins
-from beets import ui
 from beets import util
 from beets.dbcore import types
 from beets.library import Item
@@ -45,6 +44,7 @@ logging.getLogger(_default_logger_name_).propagate = False
 
 
 class LogCapture(logging.Handler):
+
     def __init__(self):
         super(LogCapture, self).__init__()
         self.messages = []
@@ -177,6 +177,7 @@ def has_program(cmd, args=['--version']):
 
 
 class Assertions(object):
+
     def assertIsFile(self: TestCase, path):
         self.assertTrue(os.path.isfile(syspath(path)),
                         msg=u'Path is not a file: {0}'.format(
@@ -313,7 +314,8 @@ class UnitTestHelper(BaseTestHelper):
                             values[key][1]) == int:
                         random_val = randint(values[key][0], values[key][1])
                     else:
-                        raise ValueError("Elements for key({}) are neither float nor int!")
+                        raise ValueError(
+                            "Elements for key({}) are neither float nor int!")
 
                     new_values[key] = random_val
             items.append(self.create_item(**new_values))
