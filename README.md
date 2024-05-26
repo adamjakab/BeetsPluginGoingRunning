@@ -286,6 +286,16 @@ Do the same as above but today you feel Ska:
 
 Please check the [ROADMAP](./docs/ROADMAP.md) file. If there is a feature you would like to see but which is not planned, create a feature request in the Issue tracker.
 
+## Other plugins by the same author
+
+- [beets-goingrunning](https://github.com/adamjakab/BeetsPluginGoingRunning)
+- [beets-xtractor](https://github.com/adamjakab/BeetsPluginXtractor)
+- [beets-yearfixer](https://github.com/adamjakab/BeetsPluginYearFixer)
+- [beets-autofix](https://github.com/adamjakab/BeetsPluginAutofix)
+- [beets-describe](https://github.com/adamjakab/BeetsPluginDescribe)
+- [beets-bpmanalyser](https://github.com/adamjakab/BeetsPluginBpmAnalyser)
+- [beets-template](https://github.com/adamjakab/BeetsPluginTemplate)
+
 ## Final Remarks
 
 Enjoy!
