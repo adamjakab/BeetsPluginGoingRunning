@@ -49,7 +49,7 @@ class ConfigurationTest(FunctionalTestHelper):
         self.assertTrue(targets.exists())
 
         self.assertIsInstance(targets, Subview)
-        self.assertEquals(["MPD_1", "MPD_2", "MPD_3"], list(targets.get().keys()))
+        self.assertEqual(["MPD_1", "MPD_2", "MPD_3"], list(targets.get().keys()))
 
         # MPD 1
         target = targets["MPD_1"]
